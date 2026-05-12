@@ -3933,8 +3933,23 @@ Slackwater — Thames Barrier Operations</div>
         </div>
 
         <div class="of-section">
-          <div class="of-label">Root Cause — why did it REALLY happen?</div>
-          <textarea class="of-textarea" id="of-cause" placeholder="Not what happened — why. e.g. 'Third-party inspection not communicated at morning briefing'"></textarea>
+          <div class="of-label">Primary Cause Category</div>
+          <div class="of-chips" id="of-chips-causeCat">
+            <button class="of-chip" data-g="causeCat" onclick="ofChip(this,'causeCat')">INFORMATION FAILURE</button>
+            <button class="of-chip" data-g="causeCat" onclick="ofChip(this,'causeCat')">COORDINATION FAILURE</button>
+            <button class="of-chip" data-g="causeCat" onclick="ofChip(this,'causeCat')">PLANNING FAILURE</button>
+            <button class="of-chip" data-g="causeCat" onclick="ofChip(this,'causeCat')">PERMIT / REGULATORY</button>
+            <button class="of-chip" data-g="causeCat" onclick="ofChip(this,'causeCat')">RESOURCE FAILURE</button>
+            <button class="of-chip" data-g="causeCat" onclick="ofChip(this,'causeCat')">ENVIRONMENTAL</button>
+          </div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-top:5px;line-height:1.6">
+            Information = nobody was told · Coordination = contractors didn't communicate · Planning = not anticipated · Resource = people or plant unavailable
+          </div>
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Root Cause — what specifically happened?</div>
+          <textarea class="of-textarea" id="of-cause" placeholder="e.g. 'Third-party inspection not flagged at morning briefing — DiveCo had no warning until Rendel arrived at 14:45'"></textarea>
         </div>
 
         <div class="of-section">
@@ -5030,7 +5045,8 @@ var ofState = {
   event: null,
   constraint: null,
   prev: null,
-  recovery: null
+  recovery: null,
+  causeCat: null
 };
 
 // Load Airtable key
@@ -5122,6 +5138,7 @@ window.ofSubmit = function(){
     timeLostHrs: hours,
     estimatedCost: cost,
     preventability: ofState.prev,
+    causeCat: ofState.causeCat,
     rootCause: cause,
     recoveryAction: (ofState.recovery || '') + (recoveryOther ? (ofState.recovery ? ' — '+recoveryOther : recoveryOther) : ''),
     lessonsLearned: lessons
@@ -5147,6 +5164,7 @@ window.ofSubmit = function(){
         'Time Lost (hrs)': event.timeLostHrs,
         'Estimated Cost (£)': event.estimatedCost,
         'Preventability': event.preventability,
+        'Cause Category': event.causeCat,
         'Root Cause': event.rootCause,
         'Recovery Action': event.recoveryAction,
         'Lessons Learned': event.lessonsLearned
@@ -5219,6 +5237,7 @@ function ofRender(events){
       '<div class="of-ev-site">'+ofEsc(ev.site||'')+'</div>'+
       '<div class="of-ev-meta">'+
         (ev.constraintType ? '<span class="of-ev-tag" style="color:var(--amber);border-color:rgba(255,149,0,.3)">'+ofEsc(ev.constraintType)+'</span>' : '')+
+        (ev.causeCat ? '<span class="of-ev-tag" style="color:var(--text3);border-color:var(--border)">'+ofEsc(ev.causeCat)+'</span>' : '')+
         (ev.labourAffected ? '<span class="of-ev-tag" style="color:var(--text2)">'+ev.labourAffected+' people</span>' : '')+
         (ev.timeLostHrs ? '<span class="of-ev-tag" style="color:var(--text2)">'+ev.timeLostHrs+'h lost</span>' : '')+
         (ev.estimatedCost ? '<span class="of-ev-tag" style="color:var(--stop)">£'+ev.estimatedCost.toLocaleString()+'</span>' : '')+
@@ -5248,17 +5267,38 @@ function ofRenderPatterns(events){
     if(e.constraintType){ constraints[e.constraintType] = (constraints[e.constraintType]||0)+1; }
   });
 
-  var sorted = Object.entries(constraints).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var sorted = Object.entries(constraints).sort(function(a,b){ return b[1]-a[1]; }).slice(0,4);
+  var causeSorted = Object.entries(prevTypes).sort(function(a,b){ return b[1]-a[1]; }).slice(0,3);
   var max = sorted.length ? sorted[0][1] : 1;
 
-  body.innerHTML = sorted.map(function(pair){
-    var pct = Math.round(pair[1]/max*100);
-    return '<div class="of-pat-row">'+
-      '<div class="of-pat-label">'+pair[0]+'</div>'+
-      '<div class="of-pat-bar-wrap"><div class="of-pat-bar" style="width:'+pct+'%"></div></div>'+
-      '<div class="of-pat-n">'+pair[1]+'</div>'+
-    '</div>';
-  }).join('');
+  var causeHtml = '';
+  // Build cause category section using causeCat field
+  var causeCats = {};
+  events.forEach(function(e){ if(e.causeCat){ causeCats[e.causeCat] = (causeCats[e.causeCat]||0)+1; } });
+  var causeSortedReal = Object.entries(causeCats).sort(function(a,b){ return b[1]-a[1]; }).slice(0,3);
+  var cmax = causeSortedReal.length ? causeSortedReal[0][1] : 1;
+  if(causeSortedReal.length){
+    causeHtml = '<div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text3);margin:8px 0 6px">CAUSE CATEGORIES</div>'+
+    causeSortedReal.map(function(pair){
+      var pct = Math.round(pair[1]/cmax*100);
+      return '<div class="of-pat-row">'+
+        '<div class="of-pat-label" style="color:var(--text3)">'+pair[0]+'</div>'+
+        '<div class="of-pat-bar-wrap"><div class="of-pat-bar" style="width:'+pct+'%;background:var(--amber)"></div></div>'+
+        '<div class="of-pat-n" style="color:var(--amber)">'+pair[1]+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  body.innerHTML =
+    '<div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text3);margin-bottom:6px">CONSTRAINT TYPES</div>'+
+    sorted.map(function(pair){
+      var pct = Math.round(pair[1]/max*100);
+      return '<div class="of-pat-row">'+
+        '<div class="of-pat-label">'+pair[0]+'</div>'+
+        '<div class="of-pat-bar-wrap"><div class="of-pat-bar" style="width:'+pct+'%"></div></div>'+
+        '<div class="of-pat-n">'+pair[1]+'</div>'+
+      '</div>';
+    }).join('')+causeHtml;
 }
 
 // Init
