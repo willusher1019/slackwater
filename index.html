@@ -845,6 +845,17 @@ var msgs = [];
 var loading = false;
 var SITES = {'thames barrier':'barrier2026','m25 depot':'m25ops','hornsea wind':'hornsea3','mark':'test'};
 
+/* ── LIVE DATE HELPER ── */
+function swToday(){
+  var d = new Date();
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var hh = String(d.getHours()).padStart(2,'0');
+  var mm = String(d.getMinutes()).padStart(2,'0');
+  return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' · ' + hh + ':' + mm + ' local time';
+}
+window.swToday = swToday;
+
 /* ── SCREEN NAVIGATION ── */
 function _hideAll(){
   var ids = ['landing-screen','login-screen','data-login-screen','app','data-portal'];
@@ -1040,7 +1051,7 @@ function sendAi(){
     }, 900);
     return;
   }
-  var SYS = "You are Slackwater — AI operational intelligence for the Thames Barrier Millennium Bolt Replacement programme. Respond clearly in plain English. Be specific — name people, permits, exact thresholds.\n\nSITE: Thames Barrier, Woolwich. LEAVES: B and G. BOLTS: 1,200 total.\n\nCONSTRAINTS: Wind hard stop 15 m/s (all works), 10 m/s (Apollo crane only). No leaf access ±90 mins high water. CTC mandatory for all personnel. DiveCo ERT mandatory before any leaf access. No crane lifts over water during arm operations.\n\nTASK LOG: Anode cutting Leaf G (07 May): 09:20–11:52, 24 anodes, 6.3 min each, 2 workers, ~13 total on task. Anode taping Leaf B (08 May): 09:45–11:00, 24 anodes, 3.1 min each, 2 workers. Anode cutting Leaf B afternoon (08 May): 13:35–14:35 aborted, 12 of 24 cut, rising tide. Mobilisation time: 33 mins from MOB to arm.\n\nCRITICAL: Hot Works Permit expires tomorrow. Confined Space Permit missing. Scaffold inspection Leaf B expires 2 days. RAMS expires 10 May. BB CTC expires 12 May. C. James and F. Mensah — no CTC. Leaf G PTW pending EA director.\n\nWEEKEND: Sat wind 17 m/s, Sun 19 m/s — all works suspended. Best window: Tue 13 May (4h+, wind 7 m/s).";
+  var SYS = "You are Slackwater — AI operational intelligence for the Thames Barrier Millennium Bolt Replacement programme. Respond clearly in plain English. Be specific — name people, permits, exact thresholds.\n\nTODAY: " + swToday() + "\n\nSITE: Thames Barrier, Woolwich. LEAVES: B and G. BOLTS: 1,200 total.\n\nCONSTRAINTS: Wind hard stop 15 m/s (all works), 10 m/s (Apollo crane only). No leaf access ±90 mins high water. CTC mandatory for all personnel. DiveCo ERT mandatory before any leaf access. No crane lifts over water during arm operations.\n\nTASK LOG: Anode cutting Leaf G (07 May): 09:20–11:52, 24 anodes, 6.3 min each, 2 workers, ~13 total on task. Anode taping Leaf B (08 May): 09:45–11:00, 24 anodes, 3.1 min each, 2 workers. Anode cutting Leaf B afternoon (08 May): 13:35–14:35 aborted, 12 of 24 cut, rising tide. Mobilisation time: 33 mins from MOB to arm.\n\nCRITICAL: Hot Works Permit expires tomorrow. Confined Space Permit missing. Scaffold inspection Leaf B expires 2 days. RAMS expires 10 May. BB CTC expires 12 May. C. James and F. Mensah — no CTC. Leaf G PTW pending EA director.\n\nWEEKEND: Sat wind 17 m/s, Sun 19 m/s — all works suspended. Best window: Tue 13 May (4h+, wind 7 m/s).";
   var history = msgs.map(function(m){ return {role: m.r==='agent'?'assistant':'user', content: m.c}; });
   fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -1841,7 +1852,7 @@ function handleDocFile(file){
       content = '[Binary document: ' + file.name + ', ' + Math.round(file.size/1024) + 'KB]';
     }
 
-    var prompt = 'You are the Slackwater operational intelligence system. A document called "' + file.name + '" has been uploaded for a construction/infrastructure site.' +
+    var prompt = 'You are the Slackwater operational intelligence system. TODAY: ' + swToday() + '. A document called "' + file.name + '" has been uploaded for the Thames Barrier Millennium Bolt Replacement programme, Woolwich SE18.' +
       (content.startsWith('[Binary') ? '' : '\n\nDocument content (first 8000 chars):\n' + content) +
       '\n\nPlease analyse this document and extract the following in a structured way:\n\n' +
       '1. DOCUMENT TYPE — What type of document is this? (PTW, RA, Method Statement, RAMS, Dive Plan, Lift Plan, etc.)\n' +
@@ -4120,9 +4131,9 @@ const CDATA={
     staff:[{n:'B. Crane',r:'Appointed Person (Lifting)',c:true,t:'06:30'},{n:'T. Rigby',r:'Crane Operator',c:true,t:'06:30'},{n:'S. Holt',r:'Slinger / Signaller',c:true,t:'06:30'},{n:'P. Doyle',r:'Crane Supervisor',c:true,t:'07:00'}]}
 };
 
-const SYS=`You are Slackwater — AI operational intelligence for the Thames Barrier Millennium Bolt Replacement programme. Respond clearly and concisely in plain English. Be specific — name people, permits, exact thresholds. No jargon unless necessary.
+function swGetSys(){ return `You are Slackwater — AI operational intelligence for the Thames Barrier Millennium Bolt Replacement programme. Respond clearly and concisely in plain English. Be specific — name people, permits, exact thresholds. No jargon unless necessary.
 
-TODAY: Wednesday 7 May 2026. SITE: Thames Barrier, Woolwich. LEAVES: B and G. BOLTS: 1,200 total (600 per leaf). Target: November 2026.
+TODAY: ${swToday()}. SITE: Thames Barrier, Woolwich. LEAVES: B and G. BOLTS: 1,200 total (600 per leaf). Target: November 2026.
 
 CONFIRMED CONSTRAINTS:
 - Wind hard stop ALL works: 15 m/s
@@ -4146,7 +4157,7 @@ TOMORROW (Thu 08 May): Tidal window 05:10–08:55 (3h 45m, falling, good). Wind 
 
 WEEKEND: Sat wind 17 m/s, Sun wind 19 m/s — all works suspended both days.
 BEST WINDOW: Tuesday 13 May — 4h+ falling tide, wind 7 m/s.
-WORKING HOURS: 07:00–17:00. Overtime 1.5x outside those hours.`;
+WORKING HOURS: 07:00–17:00. Overtime 1.5x outside those hours.`; }
 
 let msgs=[], loading=false, curC='bb';
 
@@ -4254,7 +4265,7 @@ async function sendAi(){
   try{
     var apiKey=window._swApiKey||'';
     if(!apiKey){msgs.push({r:'agent',c:'No API key set. Please paste your Anthropic API key in the bar below and click ACTIVATE.'});var tp5=document.getElementById('typing');if(tp5)tp5.remove();loading=false;btn.disabled=false;renderMsgs();return;}
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1000,system:SYS,messages:msgs.map(m=>({role:m.r==='agent'?'assistant':'user',content:m.c}))})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1000,system:swGetSys(),messages:msgs.map(m=>({role:m.r==='agent'?'assistant':'user',content:m.c}))})});
     const data=await res.json();
     msgs.push({r:'agent',c:data.content.map(x=>x.text||'').join('')});
   }catch(e){msgs.push({r:'agent',c:'Connection error — please try again.'});}
@@ -5448,7 +5459,7 @@ async function plParse(){
   status.textContent = 'Reading your notes...';
   status.style.color = '#00C4D4';
 
-  var prompt = 'You are parsing a raw construction site log for the Thames Barrier Millennium Bolt Replacement programme. Extract two things:\n\n1. TASKS — every distinct task or activity. For each return:\n{\n  "taskName": string,\n  "date": "' + (date||'unknown') + '",\n  "location": one of exactly: "Arm B (Bravo)"|"Arm G (Golf)"|"Leaf B (Bravo)"|"Leaf G (Golf)"|"Pier 3"|"Pier 4"|"Pier 8"|"Pier 9"|"Vessel"|"MOB "|"Other",\n  "timeIn": "HH:MM",\n  "timeOut": "HH:MM",\n  "crewSize": number,\n  "productiveWorkers": number,\n  "contractor": "DiveCo"|"Balfour Beatty"|"All Task"|"Apollo Crane Services"|"Environment Agency"|"Multiple",\n  "notes": "one paragraph with crew, what happened, blockers, anything notable"\n}\n\n2. OPERATIONAL EVENTS — only if there are delays, stand-downs, aborted tasks, constraints, or anything that cost time or money. For each return:\n{\n  "workPackage": "task name this relates to",\n  "date": "' + (date||'unknown') + '",\n  "eventType": "STANDDOWN"|"DELAY"|"ABORT"|"CONSTRAINT BREACH"|"NEAR MISS"|"EQUIPMENT FAILURE"|"WEATHER HOLD"|"PERMIT ISSUE",\n  "constraintType": "TIDAL WINDOW"|"MINIMUM CREW"|"PERMIT/PTW"|"WEATHER/WIND"|"THIRD PARTY"|"EQUIPMENT"|"REGULATORY"|"ACCESS"|"OTHER",\n  "labourAffected": number,\n  "timeLostHrs": decimal hours,\n  "estimatedCost": GBP integer (use £85/person/hr as labour rate),\n  "preventability": "FORESEEABLE AND PREVENTABLE"|"FORESEEABLE BUT UNAVOIDABLE"|"NOT FORESEEABLE"|"UNDER REVIEW",\n  "causeCat": "INFORMATION FAILURE"|"COORDINATION FAILURE"|"PLANNING FAILURE"|"PERMIT / REGULATORY"|"RESOURCE FAILURE"|"ENVIRONMENTAL",\n  "rootCause": "specific explanation",\n  "recovery": "what was done instead",\n  "lessonsLearned": "what should change"\n}\n\nReturn ONLY this JSON object, no other text:\n{"tasks": [...], "opEvents": [...]}\n\nRaw log:\n' + raw;
+  var prompt = 'You are parsing a raw construction site log for the Thames Barrier Millennium Bolt Replacement programme.\n\nTODAY (when this is being submitted): ' + swToday() + '. Notes are from: ' + (date||'date unspecified') + '.\n\nExtract two things:\n\n1. TASKS — every distinct task or activity. For each return:\n{\n  "taskName": string,\n  "date": "' + (date||'unknown') + '",\n  "location": one of exactly: "Arm B (Bravo)"|"Arm G (Golf)"|"Leaf B (Bravo)"|"Leaf G (Golf)"|"Pier 3"|"Pier 4"|"Pier 8"|"Pier 9"|"Vessel"|"MOB "|"Other",\n  "timeIn": "HH:MM",\n  "timeOut": "HH:MM",\n  "crewSize": number,\n  "productiveWorkers": number,\n  "contractor": "DiveCo"|"Balfour Beatty"|"All Task"|"Apollo Crane Services"|"Environment Agency"|"Multiple",\n  "notes": "one paragraph with crew, what happened, blockers, anything notable"\n}\n\n2. OPERATIONAL EVENTS — only if there are delays, stand-downs, aborted tasks, constraints, or anything that cost time or money. For each return:\n{\n  "workPackage": "task name this relates to",\n  "date": "' + (date||'unknown') + '",\n  "eventType": "STANDDOWN"|"DELAY"|"ABORT"|"CONSTRAINT BREACH"|"NEAR MISS"|"EQUIPMENT FAILURE"|"WEATHER HOLD"|"PERMIT ISSUE",\n  "constraintType": "TIDAL WINDOW"|"MINIMUM CREW"|"PERMIT/PTW"|"WEATHER/WIND"|"THIRD PARTY"|"EQUIPMENT"|"REGULATORY"|"ACCESS"|"OTHER",\n  "labourAffected": number,\n  "timeLostHrs": decimal hours,\n  "estimatedCost": GBP integer (use £85/person/hr as labour rate),\n  "preventability": "FORESEEABLE AND PREVENTABLE"|"FORESEEABLE BUT UNAVOIDABLE"|"NOT FORESEEABLE"|"UNDER REVIEW",\n  "causeCat": "INFORMATION FAILURE"|"COORDINATION FAILURE"|"PLANNING FAILURE"|"PERMIT / REGULATORY"|"RESOURCE FAILURE"|"ENVIRONMENTAL",\n  "rootCause": "specific explanation",\n  "recovery": "what was done instead",\n  "lessonsLearned": "what should change"\n}\n\nReturn ONLY this JSON object, no other text:\n{"tasks": [...], "opEvents": [...]}\n\nRaw log:\n' + raw;
 
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
