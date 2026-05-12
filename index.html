@@ -2456,7 +2456,7 @@ async function swLoadWasteCounter(){
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey) return; // show hardcoded defaults if no key
   try {
-    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100&fields[]=Estimated%20Cost%20(%C2%A3)';
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100&fields%5B%5D=' + encodeURIComponent('Estimated Cost (£)');
     var records = [], offset = null;
     do {
       var res = await fetch(url + (offset ? '&offset='+offset : ''), {headers:{'Authorization':'Bearer '+atKey}});
@@ -4202,7 +4202,9 @@ WEEKEND: Sat wind 17 m/s, Sun wind 19 m/s — all works suspended both days.
 BEST WINDOW: Tuesday 13 May — 4h+ falling tide, wind 7 m/s.
 WORKING HOURS: 07:00–17:00. Overtime 1.5x outside those hours.`; }
 
-let msgs=[], loading=false, curC='bb';
+// msgs and loading already declared globally — reset them for this portal context
+msgs=[]; loading=false;
+var curC='bb';
 
 
 function showTab(id,btn){
