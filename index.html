@@ -1381,26 +1381,36 @@ async function fetchLiveForecast(){
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
+        model: 'claude-opus-4-5',
         max_tokens: 1000,
-        tools: [{"type": "web_search_20250305", "name": "web_search"}],
         messages: [{role: 'user', content: prompt}]
       })
     });
 
     var data = await res.json();
+
+    /* catch API-level errors (bad key, model not found, quota, etc.) */
+    if(!res.ok || data.error){
+      var msg = (data.error && data.error.message) ? data.error.message : 'API error ' + res.status;
+      throw new Error(msg);
+    }
+
     var fullText = (data.content || []).map(function(x){ return x.text || ''; }).join('');
 
-    // Parse JSON and narrative
+    /* parse JSON array */
     var jsonMatch = fullText.match(/\[[\s\S]*?\]/);
     var narrativeMatch = fullText.match(/NARRATIVE:([\s\S]*)/);
+    var gotCards = false;
 
     if(jsonMatch){
       try {
         var days = JSON.parse(jsonMatch[0]);
-        renderForecastCards(days);
+        if(days && days.length){
+          renderForecastCards(days);
+          gotCards = true;
+        }
       } catch(e) {
-        console.error('JSON parse error:', e);
+        console.error('Forecast JSON parse error:', e, jsonMatch[0]);
       }
     }
 
@@ -1410,11 +1420,28 @@ async function fetchLiveForecast(){
     }
 
     if(loading) loading.style.display = 'none';
-    if(output) output.style.display = 'block';
+
+    if(gotCards){
+      if(output) output.style.display = 'block';
+      var timeEl = document.getElementById('forecast-time');
+      if(timeEl) timeEl.textContent = dateStr + ' · ' + timeStr;
+    } else {
+      /* got a response but couldn't parse cards — show useful message */
+      if(empty){
+        empty.style.display = 'block';
+        var emDiv = empty.querySelector('div');
+        if(emDiv) emDiv.textContent = 'Forecast received but could not be parsed. Try refreshing.';
+      }
+    }
 
   } catch(err) {
     if(loading) loading.style.display = 'none';
-    if(empty) { empty.style.display = 'block'; empty.querySelector('div:last-child').textContent = 'Error: ' + err.message; }
+    if(empty){
+      empty.style.display = 'block';
+      var emDiv = empty.querySelector('div');
+      if(emDiv) emDiv.textContent = 'Error: ' + err.message;
+    }
+    console.error('Forecast fetch error:', err);
   }
 
   clearInterval(stepTimer);
