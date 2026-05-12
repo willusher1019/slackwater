@@ -836,9 +836,86 @@ footer{
   color:#00C4D4;
   letter-spacing:2px;
 }
+
+/* ── INTRO OVERLAY ── */
+#sw-intro{
+  position:fixed;inset:0;z-index:99999;
+  background:#03070C;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:all;
+}
+#sw-intro.sw-exit{
+  animation:swCurtainUp 0.9s cubic-bezier(0.76,0,0.24,1) forwards;
+}
+@keyframes swCurtainUp{
+  0%{transform:translateY(0)}
+  100%{transform:translateY(-100%)}
+}
+#sw-intro-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(52px,9vw,128px);
+  color:#EDF6FF;
+  letter-spacing:0.08em;
+  opacity:0;
+  transform:translateY(10px) scale(0.97);
+  animation:swLogoIn 1s cubic-bezier(0.16,1,0.3,1) 0.15s forwards;
+}
+@keyframes swLogoIn{
+  0%{opacity:0;transform:translateY(10px) scale(0.97);letter-spacing:0.02em}
+  60%{opacity:1}
+  100%{opacity:1;transform:translateY(0) scale(1);letter-spacing:0.18em}
+}
+#sw-intro-line{
+  height:1px;
+  width:0;
+  background:linear-gradient(90deg,transparent,#00C4D4 40%,#00C4D4 60%,transparent);
+  margin:18px 0 14px;
+  opacity:0;
+  animation:swLineIn 0.7s ease 0.95s forwards;
+}
+@keyframes swLineIn{
+  0%{width:0;opacity:0}
+  30%{opacity:1}
+  100%{width:clamp(180px,35vw,440px);opacity:1}
+}
+#sw-intro-tag{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#00C4D4;
+  letter-spacing:5px;
+  text-transform:uppercase;
+  opacity:0;
+  animation:swTagIn 0.6s ease 1.45s forwards;
+}
+@keyframes swTagIn{
+  0%{opacity:0;transform:translateY(4px)}
+  100%{opacity:0.85;transform:translateY(0)}
+}
 </style>
 </head>
 <body>
+
+<!-- ── INTRO OVERLAY ── -->
+<div id="sw-intro">
+  <div id="sw-intro-logo">SLACKWATER</div>
+  <div id="sw-intro-line"></div>
+  <div id="sw-intro-tag">Operational Intelligence</div>
+</div>
+<script>
+/* ── INTRO DISMISS ── */
+(function(){
+  /* animations finish at ~2.05s (tag: 1.45s delay + 0.6s). Hold 0.55s → lift at 2.6s */
+  setTimeout(function(){
+    var intro = document.getElementById('sw-intro');
+    if(intro){ intro.classList.add('sw-exit'); }
+    setTimeout(function(){
+      var intro = document.getElementById('sw-intro');
+      if(intro){ intro.style.display='none'; }
+    }, 920);
+  }, 2600);
+})();
+</script>
+
 <script>
 /* ── SLACKWATER GLOBAL STATE ── */
 var msgs = [];
