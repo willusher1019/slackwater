@@ -2314,7 +2314,30 @@ function submitTask(){
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', function(){
   showLanding();
+  swLoadWasteCounter();
 });
+
+/* ── LIVE WASTE COUNTER — pulls from Airtable Operational Log ── */
+async function swLoadWasteCounter(){
+  var atKey = localStorage.getItem('sw_at_key') || '';
+  if(!atKey) return; // show hardcoded defaults if no key
+  try {
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100&fields[]=Estimated%20Cost%20(%C2%A3)';
+    var records = [], offset = null;
+    do {
+      var res = await fetch(url + (offset ? '&offset='+offset : ''), {headers:{'Authorization':'Bearer '+atKey}});
+      var data = await res.json();
+      if(data.records) records = records.concat(data.records);
+      offset = data.offset || null;
+    } while(offset);
+    var total = records.reduce(function(sum, r){ return sum + (r.fields['Estimated Cost (£)'] || 0); }, 0);
+    var count = records.length;
+    var totalEl = document.getElementById('lp-waste-total');
+    var countEl = document.getElementById('lp-waste-events');
+    if(totalEl && total > 0) totalEl.textContent = '£' + total.toLocaleString('en-GB');
+    if(countEl && count > 0) countEl.textContent = count;
+  } catch(e){ /* silently keep defaults */ }
+}
 </script>
 
 <div id="landing-screen">
@@ -2344,12 +2367,19 @@ document.addEventListener('DOMContentLoaded', function(){
     CREWS TO DO<br>
     <span class="accent" data-text="NOTHING.">NOTHING.</span>
   </h1>
-  <p class="hero-sub" style="font-size:clamp(13px,1.4vw,16px);color:var(--frost2);margin-bottom:8px">
+  <p style="font-size:clamp(15px,1.6vw,19px);color:#EDF6FF;font-weight:500;line-height:1.5;margin-bottom:14px;max-width:680px;font-style:italic">"We tell infrastructure programme managers whether tomorrow's work should go ahead — and why — before the crews leave home."</p>
+  <p class="hero-sub" style="font-size:clamp(13px,1.4vw,16px);color:var(--frost2);margin-bottom:10px">
     The night-before decision system for infrastructure sites. One verdict by 20:00: proceed, delay, or cancel — with the full reasoning behind it.
   </p>
-  <p style="font-family:var(--mono);font-size:11px;color:var(--frost3);letter-spacing:1px;margin-bottom:28px">
-    Built for PMs running tidal, weather, rail possession, or permit-constrained sites.
-  </p>
+  <!-- CONSTRAINT TYPE STRIP — improvement 8: site-agnostic framing -->
+  <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px">
+    <span style="font-family:var(--mono);font-size:9px;color:#00C4D4;border:1px solid rgba(0,196,212,0.3);padding:4px 10px;border-radius:2px;letter-spacing:0.5px">🌊 TIDAL WINDOWS</span>
+    <span style="font-family:var(--mono);font-size:9px;color:#A8C4DC;border:1px solid rgba(168,196,220,0.2);padding:4px 10px;border-radius:2px;letter-spacing:0.5px">🚆 RAIL POSSESSIONS</span>
+    <span style="font-family:var(--mono);font-size:9px;color:#A8C4DC;border:1px solid rgba(168,196,220,0.2);padding:4px 10px;border-radius:2px;letter-spacing:0.5px">🛣️ LANE CLOSURES</span>
+    <span style="font-family:var(--mono);font-size:9px;color:#A8C4DC;border:1px solid rgba(168,196,220,0.2);padding:4px 10px;border-radius:2px;letter-spacing:0.5px">✈️ AIRSIDE WINDOWS</span>
+    <span style="font-family:var(--mono);font-size:9px;color:#A8C4DC;border:1px solid rgba(168,196,220,0.2);padding:4px 10px;border-radius:2px;letter-spacing:0.5px">🔐 PERMIT READINESS</span>
+    <span style="font-family:var(--mono);font-size:9px;color:#A8C4DC;border:1px solid rgba(168,196,220,0.2);padding:4px 10px;border-radius:2px;letter-spacing:0.5px">👷 MINIMUM CREW</span>
+  </div>
   <div class="hero-btns">
     <button class="btn-primary" onclick="showLogin()">TRY THE LIVE DEMO — NO SIGNUP</button>
     <button class="btn-secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">SEE HOW IT WORKS ↓</button>
@@ -2382,6 +2412,32 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="incident-cost">
       <div class="num" style="color:#FF9500">1</div>
       <div class="lbl">ABSENTEE<br>FULL STAND-DOWN</div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE WASTE COUNTER — improvement 2 -->
+<div style="background:rgba(255,59,59,0.04);border-top:1px solid rgba(255,59,59,0.15);border-bottom:1px solid rgba(255,59,59,0.15);padding:28px 0">
+  <div class="section-inner" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;padding-top:0;padding-bottom:0">
+    <div style="text-align:center;padding:16px 20px;border-right:1px solid rgba(255,59,59,0.15)">
+      <div style="font-family:var(--display);font-size:44px;color:#FF3B3B;line-height:1;letter-spacing:1px" id="lp-waste-total">£10,040</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#6A90AA;letter-spacing:2px;margin-top:6px">PREVENTABLE WASTE LOGGED</div>
+      <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:3px">and counting — live from site</div>
+    </div>
+    <div style="text-align:center;padding:16px 20px;border-right:1px solid rgba(255,59,59,0.15)">
+      <div style="font-family:var(--display);font-size:44px;color:#FF9500;line-height:1;letter-spacing:1px" id="lp-waste-events">2</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#6A90AA;letter-spacing:2px;margin-top:6px">OPERATIONAL EVENTS LOGGED</div>
+      <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:3px">Thames Barrier · May 2026</div>
+    </div>
+    <div style="text-align:center;padding:16px 20px;border-right:1px solid rgba(255,59,59,0.15)">
+      <div style="font-family:var(--display);font-size:44px;color:#FF3B3B;line-height:1;letter-spacing:1px">100%</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#6A90AA;letter-spacing:2px;margin-top:6px">ASSESSED PREVENTABLE</div>
+      <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:3px">foreseeable the night before</div>
+    </div>
+    <div style="text-align:center;padding:16px 20px">
+      <div style="font-family:var(--display);font-size:44px;color:#00C4D4;line-height:1;letter-spacing:1px">£0</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#6A90AA;letter-spacing:2px;margin-top:6px">COST WITH SLACKWATER</div>
+      <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:3px">right information · night before</div>
     </div>
   </div>
 </div>
@@ -2512,6 +2568,52 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <div class="h-line"></div>
 
+
+<!-- COMPETITIVE POSITIONING — improvement 6 -->
+<div class="h-line"></div>
+<section>
+  <div class="section-inner">
+    <div class="section-kicker reveal">MARKET POSITION</div>
+    <div class="section-title reveal">NOBODY OWNS<br>THIS SPACE.</div>
+    <p style="font-size:16px;color:var(--frost2);line-height:1.85;font-weight:300;max-width:640px;margin-bottom:40px" class="reveal">The go/no-go decision for constrained infrastructure works is currently made by a programme manager with a phone, a spreadsheet, and a weather app. No software exists to do it systematically. That is Slackwater's uncontested space.</p>
+    <div class="reveal" style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(0,196,212,0.3)">
+            <th style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#6A90AA;text-align:left;padding:10px 16px;font-weight:400">COMPANY</th>
+            <th style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#6A90AA;text-align:left;padding:10px 16px;font-weight:400">WHAT THEY SOLVE</th>
+            <th style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#6A90AA;text-align:left;padding:10px 16px;font-weight:400">WHERE SLACKWATER IS DIFFERENT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(26,51,80,0.6)">
+            <td style="padding:14px 16px;color:#A8C4DC;font-family:var(--mono);font-size:11px;font-weight:600">Procore / Autodesk</td>
+            <td style="padding:14px 16px;color:#6A90AA;line-height:1.6">Office-layer project management — documents, drawings, RFIs</td>
+            <td style="padding:14px 16px;color:#B8D4EA;line-height:1.6">We solve the ground-level operational layer. What happens on site, not in the office.</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(26,51,80,0.6)">
+            <td style="padding:14px 16px;color:#A8C4DC;font-family:var(--mono);font-size:11px;font-weight:600">Buildots</td>
+            <td style="padding:14px 16px;color:#6A90AA;line-height:1.6">Progress tracking via cameras on hard hats. Indoor buildings only.</td>
+            <td style="padding:14px 16px;color:#B8D4EA;line-height:1.6">We solve constraint-governed environments — tidal, weather, regulatory. Entirely different problem.</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(26,51,80,0.6)">
+            <td style="padding:14px 16px;color:#A8C4DC;font-family:var(--mono);font-size:11px;font-weight:600">Mastt / Firmus</td>
+            <td style="padding:14px 16px;color:#6A90AA;line-height:1.6">Pre-construction document and cost management</td>
+            <td style="padding:14px 16px;color:#B8D4EA;line-height:1.6">We operate during delivery — in the shift, not before it starts.</td>
+          </tr>
+          <tr style="background:rgba(0,196,212,0.04);border:1px solid rgba(0,196,212,0.2)">
+            <td style="padding:14px 16px;color:#00C4D4;font-family:var(--mono);font-size:11px;font-weight:700">Nobody</td>
+            <td style="padding:14px 16px;color:#6A90AA;line-height:1.6">Go/no-go decision for constrained infrastructure works</td>
+            <td style="padding:14px 16px;color:#00C4D4;font-weight:600;line-height:1.6">This is Slackwater's uncontested space.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:20px;padding:16px 20px;background:rgba(0,196,212,0.04);border:1px solid rgba(0,196,212,0.15);border-radius:4px;font-family:var(--mono);font-size:10px;color:#6A90AA;letter-spacing:0.5px;line-height:1.8" class="reveal">
+      <span style="color:#FF9500;font-weight:700">POSITIONING RULE:</span> Slackwater is not construction software. The category is <strong style="color:#EDF6FF">operational intelligence for infrastructure delivery</strong> — a category that does not yet exist and that Slackwater is building.
+    </div>
+  </div>
+</section>
 
 <!-- WORK WITH ME SECTION -->
 <section style="background:var(--ink2);border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);position:relative;z-index:2">
@@ -3781,6 +3883,77 @@ Slackwater — Thames Barrier Operations</div>
         </div>
       </div>
 
+      <!-- PATTERNS EMERGING — improvement 7 -->
+      <div style="background:#0A1828;border:1px solid rgba(0,196,212,0.2);border-radius:6px;overflow:hidden">
+        <div style="background:rgba(0,196,212,0.05);border-bottom:1px solid rgba(0,196,212,0.15);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;letter-spacing:3px;margin-bottom:4px">PATTERNS EMERGING · LIVE</div>
+            <div style="font-size:16px;font-weight:600;color:#EDF6FF">What the data is already showing</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;text-align:right">3 patterns observed<br>from 2 operational days</div>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#060E18;border:1px solid #1A3350;border-left:3px solid #FF9500;border-radius:4px;padding:14px">
+            <div style="font-family:var(--mono);font-size:8px;color:#FF9500;letter-spacing:2px;margin-bottom:6px">PATTERN 01 · OBSERVED TWICE</div>
+            <div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:5px">Third-party schedules not communicated at morning briefing</div>
+            <div style="font-size:12px;color:#6A90AA;line-height:1.7">7 May: EA gate check overran — not flagged in briefing. 11 May: Rendel Ltd inspection not communicated until they arrived at 14:45. Both caused significant productive time loss. Systemic information gap between BB site coordination and DiveCo operational planning.</div>
+          </div>
+          <div style="background:#060E18;border:1px solid #1A3350;border-left:3px solid #FF3B3B;border-radius:4px;padding:14px">
+            <div style="font-family:var(--mono);font-size:8px;color:#FF6B6B;letter-spacing:2px;margin-bottom:6px">PATTERN 02 · OBSERVED ONCE</div>
+            <div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:5px">One absentee cascades to full primary task stand-down</div>
+            <div style="font-size:12px;color:#6A90AA;line-height:1.7">Minimum crew requirements for arm access are strict and binary. One absence tips the whole operation. No fallback task was pre-planned. 13 people redeployed ad-hoc to secondary tasks with no pre-briefed plan.</div>
+          </div>
+          <div style="background:#060E18;border:1px solid #1A3350;border-left:3px solid #3A5A72;border-radius:4px;padding:14px">
+            <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:2px;margin-bottom:6px">PATTERN 03 · OBSERVED ACROSS BOTH TASKS</div>
+            <div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:5px">Productive worker ratio is structurally low — and misunderstood</div>
+            <div style="font-size:12px;color:#6A90AA;line-height:1.7">Anode cutting 7 May: 2 productive workers from ~13 on task (15%). This is not inefficiency — it is the structural reality of confined space and ERT-governed operations. The BB site manager who arrived and cited "inefficiency" did not understand this. The data makes it explainable and defensible.</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(0,196,212,0.04);border:1px solid rgba(0,196,212,0.1);border-radius:3px;font-family:var(--mono);font-size:9px;color:#3A5A72;line-height:1.8">
+            These patterns emerge automatically as operational events are logged. With 50+ events, the system begins generating predictive prevention rules.
+          </div>
+        </div>
+      </div>
+
+      <!-- PREVENTION RULES GENERATED — improvement 3 -->
+      <div style="background:#0A1828;border:1px solid rgba(0,217,110,0.2);border-radius:6px;overflow:hidden">
+        <div style="background:rgba(0,217,110,0.04);border-bottom:1px solid rgba(0,217,110,0.15);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-family:var(--mono);font-size:8px;color:#00D96E;letter-spacing:3px;margin-bottom:4px">PREVENTION RULES GENERATED</div>
+            <div style="font-size:16px;font-weight:600;color:#EDF6FF">What the system has learned</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;text-align:right">3 rules active<br>from 2 incidents</div>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:13px;background:#060E18;border:1px solid #1A3350;border-radius:4px">
+            <div style="width:28px;height:28px;background:rgba(0,217,110,0.1);border:1px solid rgba(0,217,110,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#00D96E;flex-shrink:0">R1</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:4px">Confirm full crew by 19:00 the night before</div>
+              <div style="font-size:12px;color:#6A90AA;line-height:1.6">If minimum crew not confirmed: issue DELAY verdict and activate pre-planned fallback task. Do not wait until 07:30 morning briefing to discover a crew shortfall.</div>
+              <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:5px">Source: 11 May incident · Constraint: MINIMUM CREW</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:13px;background:#060E18;border:1px solid #1A3350;border-radius:4px">
+            <div style="width:28px;height:28px;background:rgba(0,217,110,0.1);border:1px solid rgba(0,217,110,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#00D96E;flex-shrink:0">R2</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:4px">Pre-plan one fallback task for every shift</div>
+              <div style="font-size:12px;color:#6A90AA;line-height:1.6">Every shift plan must include a minimum-crew fallback task — tidal-independent, no arm access required. If primary task is stood down, crews have a pre-briefed plan, not an improvised one.</div>
+              <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:5px">Source: 11 May incident · Constraint: MINIMUM CREW · PLANNING FAILURE</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:13px;background:#060E18;border:1px solid #1A3350;border-radius:4px">
+            <div style="width:28px;height:28px;background:rgba(0,217,110,0.1);border:1px solid rgba(0,217,110,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#00D96E;flex-shrink:0">R3</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:4px">All third-party schedules confirmed at morning briefing</div>
+              <div style="font-size:12px;color:#6A90AA;line-height:1.6">Any third-party inspection, gate check, or EA operation that could affect the day's tidal window must be confirmed at 07:30 briefing. Any unconfirmed third-party schedule = flag for immediate resolution before mobilisation.</div>
+              <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:5px">Source: 7 May + 11 May · Constraint: THIRD-PARTY · COORDINATION FAILURE</div>
+            </div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(0,217,110,0.04);border:1px solid rgba(0,217,110,0.1);border-radius:3px;font-family:var(--mono);font-size:9px;color:#3A5A72;line-height:1.8">
+            Rules are generated automatically when the same constraint type causes a delay more than once. They feed directly into the nightly brief and go/no-go checklist.
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -4088,7 +4261,8 @@ Slackwater — Thames Barrier Operations</div>
         <div class="kv"><span class="kl">Leaves in scope</span><span class="kv-val">B &amp; G</span></div>
         <div class="kv"><span class="kl">Bolts total</span><span class="kv-val">1,200</span></div>
         <div class="kv"><span class="kl">Today's task</span><span class="kv-val">Anode cutting</span></div>
-        <div class="kv"><span class="kl">Vessel efficiency</span><span class="kv-val" style="color:var(--stop)">25%</span></div>
+        <div class="kv"><span class="kl">Vessel efficiency</span><span class="kv-val" style="color:var(--stop)" title="2 productive workers from ~13 on task. Structurally correct for ERT-governed confined space ops — not inefficiency.">25% ⓘ</span></div>
+        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;line-height:1.6;padding:5px 0 3px;border-top:1px solid rgba(26,51,80,0.4);margin-top:3px">2 productive / 13 on task · Confined space ERT requirement. Structurally correct — not inefficiency.</div>
         <div class="kv"><span class="kl">Critical alerts</span><span class="kv-val" style="color:var(--stop)">5</span></div>
         <div class="kv"><span class="kl">Mobilising tomorrow</span><span class="kv-val">22</span></div>
         <div class="kv"><span class="kl">Daily burn rate</span><span class="kv-val">~£13,000</span></div>
