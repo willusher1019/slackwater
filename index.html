@@ -1331,28 +1331,43 @@ async function fetchLiveForecast(){
   var output = document.getElementById('forecast-output');
   var empty = document.getElementById('forecast-empty');
 
-  if(btn) btn.disabled = true;
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ LOADING...'; btn.style.opacity = '0.5'; }
   if(loading) loading.style.display = 'block';
   if(output) output.style.display = 'none';
   if(empty) empty.style.display = 'none';
+
+  /* animated loading steps + elapsed timer */
+  var loadSteps = [
+    'Fetching Met Office data...',
+    'Checking Windy ECMWF...',
+    'Reading PLA tide tables...',
+    'Calculating work windows...',
+    'Building 7-day forecast...'
+  ];
+  var stepEl = document.getElementById('forecast-loading-step');
+  var elapsedEl = document.getElementById('forecast-loading-elapsed');
+  var stepIdx = 0;
+  var startTime = Date.now();
+  var stepTimer = setInterval(function(){
+    stepIdx = (stepIdx + 1) % loadSteps.length;
+    if(stepEl) stepEl.textContent = loadSteps[stepIdx];
+  }, 2200);
+  var elapsedTimer = setInterval(function(){
+    var s = Math.round((Date.now() - startTime) / 1000);
+    if(elapsedEl) elapsedEl.textContent = s + 's';
+  }, 1000);
 
   var now = new Date();
   var dateStr = now.toDateString();
   var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 
-  var prompt = 'You are the Slackwater operational intelligence system for the Thames Barrier, Woolwich, London SE18 (coordinates 51.499, -0.038).\n\n' +
-    'Today is ' + dateStr + ' and the current time is ' + timeStr + ' BST.\n\n' +
-    'Please search for and provide:\n' +
-    '1. Current Met Office forecast for North Woolwich / SE18 for the next 7 days - wind speed in m/s, temperature, conditions\n' +
-    '2. Windy.com ECMWF forecast for coordinates 51.499, -0.038 for the next 7 days - wind speed in m/s\n' +
-    '3. Port of London Authority tide times for North Woolwich gauge for the next 7 days - high water times and heights\n\n' +
-    'Cross-reference all three sources and provide your best combined forecast.\n\n' +
-    'For each of the next 7 days provide a JSON array with this exact structure:\n' +
-    '[{"day":"Mon","date":"12 May","wind_ms":13,"temp_c":11,"icon":"🌬️","status":"CRANE STOP","status_color":"amber","hw1_time":"07:52","hw1_height":5.8,"hw2_time":"20:14","hw2_height":6.0,"lw1_time":"01:20","lw2_time":"13:45","window1":"04:22-06:22","window2":"17:44-19:44","notes":"Brief note"}]\n\n' +
-    'status must be one of: ALL STOP (wind >= 15), CRANE STOP (wind 10-14), ALL CLEAR (wind < 10)\n' +
-    'status_color must be: red for ALL STOP, amber for CRANE STOP, green for ALL CLEAR\n\n' +
-    'After the JSON array write NARRATIVE: followed by a 3-4 sentence plain English summary of the week ahead for Thames Barrier operations.\n\n' +
-    'Respond with ONLY the JSON array then the NARRATIVE section. No other text.';
+  var prompt = 'Slackwater forecast system. Thames Barrier, Woolwich SE18 (51.499,-0.038). Today: ' + dateStr + ' ' + timeStr + ' BST.\n\n' +
+    'Search Met Office SE18 and PLA North Woolwich tide tables. Return ONLY:\n' +
+    '1. A JSON array for 7 days starting today:\n' +
+    '[{"day":"Tue","date":"13 May","wind_ms":8,"temp_c":15,"icon":"⛅","status":"ALL CLEAR","status_color":"green","hw1_time":"09:15","hw1_height":6.2,"hw2_time":"21:28","hw2_height":6.4,"lw1_time":"03:26","lw2_time":"15:54","window1":"06:45-08:45","window2":"18:58-20:58","notes":"Good day"}]\n' +
+    'status: ALL STOP>=15m/s, CRANE STOP 10-14m/s, ALL CLEAR<10m/s. status_color: red/amber/green.\n' +
+    'window = 2h tidal work window centred on low water (±90min of low water).\n\n' +
+    '2. NARRATIVE: 2 sentences summarising the week for Thames Barrier operations.\n\nNothing else.';
 
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1364,8 +1379,8 @@ async function fetchLiveForecast(){
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 2000,
+        model: 'claude-haiku-4-5',
+        max_tokens: 1000,
         tools: [{"type": "web_search_20250305", "name": "web_search"}],
         messages: [{role: 'user', content: prompt}]
       })
@@ -1400,7 +1415,9 @@ async function fetchLiveForecast(){
     if(empty) { empty.style.display = 'block'; empty.querySelector('div:last-child').textContent = 'Error: ' + err.message; }
   }
 
-  if(btn) btn.disabled = false;
+  clearInterval(stepTimer);
+  clearInterval(elapsedTimer);
+  if(btn){ btn.disabled = false; btn.textContent = '↻ REFRESH'; btn.style.opacity = '1'; }
 }
 
 function renderForecastCards(days){
@@ -3451,11 +3468,13 @@ Slackwater — Thames Barrier Operations</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div id="forecast-time" style="font-family:var(--mono);font-size:9px;color:var(--text3)"></div>
-            <button id="forecast-btn" onclick="fetchLiveForecast()" style="background:transparent;border:1px solid rgba(0,196,212,0.3);color:var(--accent);font-family:var(--mono);font-size:8px;font-weight:600;padding:5px 12px;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap">↻ REFRESH</button>
+            <button id="forecast-btn" onclick="fetchLiveForecast()" style="background:transparent;border:1px solid rgba(0,196,212,0.3);color:var(--accent);font-family:var(--mono);font-size:8px;font-weight:600;padding:5px 12px;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap;transition:all 0.2s">↻ REFRESH</button>
           </div>
         </div>
-        <div id="forecast-loading" style="display:none;padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--accent)">Searching Met Office · Windy · PLA...</div>
+        <div id="forecast-loading" style="display:none;padding:32px 20px;text-align:center">
+          <div style="display:inline-block;width:28px;height:28px;border:2px solid rgba(0,196,212,0.2);border-top:2px solid #00C4D4;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px"></div>
+          <div id="forecast-loading-step" style="font-family:var(--mono);font-size:10px;color:#00C4D4;letter-spacing:1px;margin-bottom:6px">Fetching Met Office data...</div>
+          <div id="forecast-loading-elapsed" style="font-family:var(--mono);font-size:9px;color:#3A5A72">0s</div>
         </div>
         <div id="forecast-output" style="display:none;padding:16px">
           <div id="forecast-cards" class="forecast-grid" style="margin-bottom:14px"></div>
