@@ -4274,6 +4274,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     <div style="display:flex;border-top:1px solid #1A3350">
       <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer">OPERATIONAL LOG</button>
       <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">TASK LOG</button>
+      <button id="dp-tab-pastelog" onclick="dpShowTab('pastelog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">PASTE LOG</button>
       <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">DOCUMENTS</button>
     </div>
   </div>
@@ -4281,6 +4282,44 @@ document.addEventListener('DOMContentLoaded',()=>{
   <!-- DP: OPERATIONAL LOG TAB -->
   <div id="dp-oplog" style="height:calc(100vh - 94px);display:flex;flex-direction:column;overflow:hidden">
     <!-- Operational log injected here by JS -->
+  </div>
+
+  <!-- DP: PASTE LOG TAB -->
+  <div id="dp-pastelog" style="display:none;height:calc(100vh - 94px);overflow-y:auto">
+    <div style="max-width:860px;margin:0 auto;padding:32px 20px">
+
+      <div style="margin-bottom:24px">
+        <div style="font-family:var(--display);font-size:22px;color:#00C4D4;letter-spacing:2px;margin-bottom:6px">PASTE YOUR DAY'S LOG</div>
+        <div style="font-family:var(--mono);font-size:11px;color:#3A5A72;line-height:1.7">Write notes during the day however suits you — phone, voice memo, paper. Paste them here at the end of the day. AI reads them and builds the task entries. You review, correct if needed, then save to Airtable.</div>
+      </div>
+
+      <!-- INPUT AREA -->
+      <div id="pl-input-section">
+        <div style="margin-bottom:10px">
+          <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">DATE THESE NOTES ARE FROM</label>
+          <input id="pl-date" type="date" style="background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:9px 11px;font-size:13px;outline:none;border-radius:4px;font-family:var(--mono)" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">YOUR NOTES — paste exactly as written, any format</label>
+          <textarea id="pl-raw" rows="14" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:12px;font-size:13px;font-family:var(--mono);line-height:1.7;outline:none;border-radius:4px;resize:vertical" placeholder="e.g.&#10;7:30 morning briefing starts&#10;7:45 briefing done&#10;8:47 Jack Hogie Idris into Golf leaf — jet washing&#10;11:40 Hogie done. Lunch.&#10;..." onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button onclick="plParse()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:11px 28px;cursor:pointer;border-radius:4px" onmouseover="this.style.background='#00A8B8'" onmouseout="this.style.background='#00C4D4'">PARSE WITH AI →</button>
+          <div id="pl-status" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
+        </div>
+      </div>
+
+      <!-- PARSED RESULTS -->
+      <div id="pl-results" style="display:none;margin-top:32px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="font-family:var(--display);font-size:16px;color:#EBF5FF;letter-spacing:2px">PARSED TASKS — review before saving</div>
+          <button onclick="plSaveAll()" id="pl-save-btn" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:9px 20px;cursor:pointer;border-radius:4px">SAVE ALL TO AIRTABLE →</button>
+        </div>
+        <div id="pl-cards"></div>
+        <div id="pl-save-status" style="display:none;margin-top:16px;padding:14px;background:rgba(0,196,212,0.08);border:1px solid rgba(0,196,212,0.2);border-radius:4px;font-family:var(--mono);font-size:11px;color:#00C4D4"></div>
+      </div>
+
+    </div>
   </div>
 
   <!-- DP: TASK LOG + OVERVIEW TAB -->
@@ -5197,7 +5236,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* ── DATA PORTAL TABS ── */
 function dpShowTab(tab){
-  ['oplog','tasklog','documents'].forEach(function(t){
+  ['oplog','tasklog','pastelog','documents'].forEach(function(t){
     var el = document.getElementById('dp-'+t);
     var btn = document.getElementById('dp-tab-'+t);
     if(el) el.style.display = t===tab ? (t==='oplog'?'flex':'block') : 'none';
@@ -5208,8 +5247,163 @@ function dpShowTab(tab){
     }
   });
   if(tab==='oplog'){ ofMountInPortal(); ofShowAtStatus(); ofRender(ofLoad()); }
+  if(tab==='pastelog'){ plInit(); }
 }
 window.dpShowTab = dpShowTab;
+
+/* ══════════════════════════════════
+   PASTE LOG — AI log parser
+   ══════════════════════════════════ */
+var plParsed = [];
+
+function plInit(){
+  var d = document.getElementById('pl-date');
+  if(d && !d.value){
+    var now = new Date();
+    d.value = now.toISOString().slice(0,10);
+  }
+}
+
+async function plParse(){
+  var raw = (document.getElementById('pl-raw')||{}).value||'';
+  var date = (document.getElementById('pl-date')||{}).value||'';
+  if(!raw.trim()){ alert('Paste your notes first.'); return; }
+  var status = document.getElementById('pl-status');
+  var apiKey = window._swApiKey || '';
+
+  if(!apiKey){
+    status.textContent = 'No AI key set — paste your Anthropic key into the AI tab of the demo first.';
+    status.style.color = '#FF4444';
+    return;
+  }
+
+  status.textContent = 'Reading your notes...';
+  status.style.color = '#00C4D4';
+
+  var prompt = 'You are parsing a raw construction site log into structured task records for the Thames Barrier Millennium Bolt Replacement programme.\n\nExtract every distinct task or event from the log below. For each one return a JSON object with these fields (only include fields you can determine):\n- taskName: string\n- date: "' + (date||'unknown') + '"\n- location: one of exactly: "Arm B (Bravo)", "Arm G (Golf)", "Leaf B (Bravo)", "Leaf G (Golf)", "Pier 3", "Pier 4", "Pier 8", "Pier 9", "Vessel", "MOB ", "Other"\n- timeIn: "HH:MM" 24h\n- timeOut: "HH:MM" 24h\n- crewSize: number\n- productiveWorkers: number\n- contractor: one of: "DiveCo", "Balfour Beatty", "All Task", "Apollo Crane Services", "Environment Agency", "Multiple"\n- notes: one paragraph — include crew names and roles, what went well, any blockers or delays, anything notable. Be specific.\n\nReturn ONLY a JSON array, no other text. Example: [{"taskName":"...","date":"...","timeIn":"...","notes":"..."}]\n\nRaw log:\n' + raw;
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    // Strip markdown code fences if present
+    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    plParsed = JSON.parse(text);
+    status.textContent = plParsed.length + ' tasks found — review below';
+    status.style.color = '#00C4D4';
+    plRender();
+  } catch(e) {
+    status.textContent = 'Parse error: ' + e.message;
+    status.style.color = '#FF4444';
+    console.error(e);
+  }
+}
+
+function plRender(){
+  var results = document.getElementById('pl-results');
+  var cards = document.getElementById('pl-cards');
+  if(!results || !cards) return;
+  results.style.display = 'block';
+
+  var locationOpts = ['','Arm B (Bravo)','Arm G (Golf)','Leaf B (Bravo)','Leaf G (Golf)','Pier 3','Pier 4','Pier 8','Pier 9','Vessel','MOB ','Other'];
+  var contractorOpts = ['','DiveCo','Balfour Beatty','All Task','Apollo Crane Services','Environment Agency','Multiple'];
+
+  cards.innerHTML = plParsed.map(function(t,i){
+    var locOpts = locationOpts.map(function(o){ return '<option value="'+o+'"'+(o===t.location?' selected':'')+'>'+o+'</option>'; }).join('');
+    var conOpts = contractorOpts.map(function(o){ return '<option value="'+o+'"'+(o===t.contractor?' selected':'')+'>'+o+'</option>'; }).join('');
+    return '<div id="pl-card-'+i+'" style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;padding:18px;margin-bottom:14px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+        '<div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:2px">TASK '+(i+1)+'</div>' +
+        '<button onclick="plRemove('+i+')" style="font-family:var(--mono);font-size:8px;color:#FF4444;background:transparent;border:1px solid rgba(255,68,68,0.3);padding:3px 10px;cursor:pointer;border-radius:3px">REMOVE</button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">' +
+        '<div style="grid-column:span 3"><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">TASK NAME</label>' +
+        '<input data-f="taskName" data-i="'+i+'" value="'+(t.taskName||'')+'" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" oninput="plUpdate('+i+',\'taskName\',this.value)"></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">DATE</label>' +
+        '<input data-f="date" data-i="'+i+'" value="'+(t.date||'')+'" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" oninput="plUpdate('+i+',\'date\',this.value)"></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">TIME IN</label>' +
+        '<input type="time" data-f="timeIn" data-i="'+i+'" value="'+(t.timeIn||'')+'" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" oninput="plUpdate('+i+',\'timeIn\',this.value)"></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">TIME OUT</label>' +
+        '<input type="time" data-f="timeOut" data-i="'+i+'" value="'+(t.timeOut||'')+'" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" oninput="plUpdate('+i+',\'timeOut\',this.value)"></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">LOCATION</label>' +
+        '<select style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" onchange="plUpdate('+i+',\'location\',this.value)">'+locOpts+'</select></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">CREW SIZE</label>' +
+        '<input type="number" value="'+(t.crewSize||'')+'" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" oninput="plUpdate('+i+',\'crewSize\',parseInt(this.value)||undefined)"></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">PRODUCTIVE WORKERS</label>' +
+        '<input type="number" value="'+(t.productiveWorkers||'')+'" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" oninput="plUpdate('+i+',\'productiveWorkers\',parseInt(this.value)||undefined)"></div>' +
+        '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">CONTRACTOR</label>' +
+        '<select style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;outline:none;border-radius:3px" onchange="plUpdate('+i+',\'contractor\',this.value)">'+conOpts+'</select></div>' +
+      '</div>' +
+      '<div><label style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:4px">NOTES — edit anything the AI got wrong</label>' +
+      '<textarea rows="3" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:7px 10px;font-size:12px;font-family:var(--mono);line-height:1.6;outline:none;border-radius:3px;resize:vertical" oninput="plUpdate('+i+',\'notes\',this.value)">'+(t.notes||'')+'</textarea></div>' +
+    '</div>';
+  }).join('');
+}
+
+function plUpdate(i, field, val){
+  if(plParsed[i]) plParsed[i][field] = val;
+}
+
+function plRemove(i){
+  plParsed.splice(i,1);
+  plRender();
+}
+
+async function plSaveAll(){
+  var btn = document.getElementById('pl-save-btn');
+  var saveStatus = document.getElementById('pl-save-status');
+  var atKey = localStorage.getItem('sw_at_key') || '';
+  if(!atKey){ alert('No Airtable key set — add sw_at_key to localStorage first.'); return; }
+  if(!plParsed.length){ alert('No tasks to save.'); return; }
+
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  saveStatus.style.display = 'block';
+  saveStatus.textContent = 'Saving to Airtable...';
+
+  var ok = 0, fail = 0;
+  var BASE = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log';
+
+  for(var i=0; i<plParsed.length; i++){
+    var t = plParsed[i];
+    var d = t.date || '';
+    var fields = { 'Task Name': t.taskName || 'Untitled task', 'Date': d };
+    if(t.location) fields['Location'] = t.location;
+    if(t.timeIn && d) fields['Time In'] = d+'T'+t.timeIn+':00.000Z';
+    if(t.timeOut && d) fields['Time Out'] = d+'T'+t.timeOut+':00.000Z';
+    if(t.crewSize) fields['Crew Size'] = t.crewSize;
+    if(t.productiveWorkers !== undefined) fields['Productive Workers'] = t.productiveWorkers;
+    if(t.notes) fields['Notes'] = (t.contractor ? 'Contractor: '+t.contractor+' | ' : '') + t.notes;
+
+    try {
+      var res = await fetch(BASE, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer '+atKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: fields })
+      });
+      var data = await res.json();
+      if(data.id){ ok++; } else { fail++; console.error('Failed:', data); }
+    } catch(e){ fail++; console.error(e); }
+    await new Promise(function(r){ setTimeout(r,300); });
+  }
+
+  btn.textContent = 'SAVE ALL TO AIRTABLE →'; btn.disabled = false;
+  saveStatus.textContent = '✓ '+ok+' tasks saved to Airtable' + (fail ? ' · '+fail+' failed (check console)' : '') + ' — refresh Airtable to see them.';
+  saveStatus.style.color = fail ? '#F59E0B' : '#00C4D4';
+  if(!fail){ plParsed = []; document.getElementById('pl-raw').value = ''; document.getElementById('pl-results').style.display = 'none'; document.getElementById('pl-status').textContent = ''; }
+}
 
 /* Mount operational log HTML into the portal tab */
 function ofMountInPortal(){
