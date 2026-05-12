@@ -4934,16 +4934,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   }
 
-  window.dlDeleteDoc = async function(id, encodedPath){
-    if(!confirm('Delete this document?')) return;
-    var path = decodeURIComponent(encodedPath);
-    if(hasSB()){
-      try { await fetch(sbUrl()+'/storage/v1/object/Documents/'+path,{method:'DELETE',headers:{'Authorization':'Bearer '+sbKey(),'apikey':sbKey()}}); } catch(e){}
-      try { await fetch(sbUrl()+'/rest/v1/site_documents?id=eq.'+id,{method:'DELETE',headers:{'apikey':sbKey(),'Authorization':'Bearer '+sbKey()}}); } catch(e){}
-      await dlLoadSB(); return;
-    }
-    DL.docs = DL.docs.filter(function(d){ return d.id !== id; });
-    dlSaveLocal(); dlRender();
+  window.dlDeleteDoc = function(id, encodedPath){
+    var filename = '';
+    var doc = DL.docs.find(function(d){ return d.id === id; });
+    if(doc) filename = doc.filename || 'this document';
+
+    // Styled confirmation modal
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML =
+      '<div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;padding:24px;max-width:380px;width:100%">'+
+        '<div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#FF3B3B;margin-bottom:10px">DELETE DOCUMENT</div>'+
+        '<div style="font-family:var(--mono);font-size:12px;color:#EDF6FF;margin-bottom:6px;line-height:1.5">Are you sure you want to delete:</div>'+
+        '<div style="font-family:var(--mono);font-size:11px;color:#00C4D4;margin-bottom:16px;word-break:break-all">'+filename+'</div>'+
+        '<div style="font-family:var(--mono);font-size:10px;color:#6A90AA;margin-bottom:20px;line-height:1.6">This will permanently remove the file from storage. This cannot be undone.</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button id="dl-del-cancel" style="flex:1;padding:10px;background:none;border:1px solid #1A3350;color:#6A90AA;font-family:var(--mono);font-size:10px;letter-spacing:1px;cursor:pointer;border-radius:3px">CANCEL</button>'+
+          '<button id="dl-del-confirm" style="flex:1;padding:10px;background:rgba(255,59,59,0.15);border:1px solid rgba(255,59,59,0.4);color:#FF3B3B;font-family:var(--mono);font-size:10px;letter-spacing:1px;cursor:pointer;border-radius:3px;font-weight:700">DELETE</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+
+    document.getElementById('dl-del-cancel').onclick = function(){ document.body.removeChild(overlay); };
+    overlay.onclick = function(e){ if(e.target===overlay) document.body.removeChild(overlay); };
+
+    document.getElementById('dl-del-confirm').onclick = async function(){
+      document.getElementById('dl-del-confirm').textContent = 'DELETING...';
+      document.getElementById('dl-del-confirm').disabled = true;
+      var path = decodeURIComponent(encodedPath);
+      if(hasSB()){
+        try { await fetch(sbUrl()+'/storage/v1/object/Documents/'+path,{method:'DELETE',headers:{'Authorization':'Bearer '+sbKey(),'apikey':sbKey()}}); } catch(e){}
+      }
+      DL.docs = DL.docs.filter(function(d){ return d.id !== id; });
+      dlSaveLocal(); dlRender();
+      document.body.removeChild(overlay);
+    };
   };
 
   window.dlFilterCat = function(cat, el){
