@@ -1397,21 +1397,27 @@ async function fetchLiveForecast(){
 
     var fullText = (data.content || []).map(function(x){ return x.text || ''; }).join('');
 
-    /* parse JSON array */
-    var jsonMatch = fullText.match(/\[[\s\S]*?\]/);
-    var narrativeMatch = fullText.match(/NARRATIVE:([\s\S]*)/);
+    /* strip markdown code fences in case model wrapped the JSON */
+    var cleanText = fullText.replace(/```[a-z]*\n?/g,'').replace(/```/g,'');
+
+    /* greedy match — first [ to LAST ] so brackets inside notes strings don't truncate */
+    var jsonMatch = cleanText.match(/(\[[\s\S]*\])/);
+    var narrativeMatch = cleanText.match(/NARRATIVE:([\s\S]*)/);
     var gotCards = false;
 
     if(jsonMatch){
       try {
-        var days = JSON.parse(jsonMatch[0]);
+        var days = JSON.parse(jsonMatch[1]);
         if(days && days.length){
           renderForecastCards(days);
           gotCards = true;
         }
       } catch(e) {
-        console.error('Forecast JSON parse error:', e, jsonMatch[0]);
+        console.error('Forecast JSON parse error:', e);
+        console.log('Raw excerpt:', fullText.substring(0,600));
       }
+    } else {
+      console.log('No JSON array found. Response excerpt:', fullText.substring(0,600));
     }
 
     if(narrativeMatch){
