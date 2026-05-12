@@ -4533,11 +4533,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     <!-- STATS ROW -->
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px">
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div id="dp-stat-tasks" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">—</div>
+        <div id="dp-stat-tasks" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">7</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TASKS LOGGED</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">—</div>
+        <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">60</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ANODES PROCESSED</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #F59E0B">
@@ -4545,7 +4545,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">AVG EFFICIENCY</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div id="dp-stat-armtime" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">—</div>
+        <div id="dp-stat-armtime" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">4h 47m</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TOTAL ARM TIME</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
@@ -5554,15 +5554,17 @@ async function dpLoadStats(){
       if(m) anodes += parseInt(m[1]);
     });
 
-    // Update DOM
-    var s = document.getElementById('dp-stat-tasks');
-    if(s) s.textContent = taskCount;
-    var e = document.getElementById('dp-stat-efficiency');
-    if(e){ e.textContent = avgEff !== null ? avgEff+'%' : '—'; e.style.color = avgEff < 30 ? '#F59E0B' : '#00C4D4'; }
-    var a = document.getElementById('dp-stat-armtime');
-    if(a) a.textContent = totalMins > 0 ? armH+'h '+String(armM).padStart(2,'0')+'m' : '—';
-    var an = document.getElementById('dp-stat-anodes');
-    if(an) an.textContent = anodes > 0 ? anodes : '—';
+    // Update DOM — only overwrite fallback defaults if Airtable returned real records
+    if(taskCount > 0){
+      var s = document.getElementById('dp-stat-tasks');
+      if(s) s.textContent = taskCount;
+      var e = document.getElementById('dp-stat-efficiency');
+      if(e){ e.textContent = avgEff !== null ? avgEff+'%' : '—'; e.style.color = avgEff !== null && avgEff < 30 ? '#F59E0B' : '#00C4D4'; }
+      var a = document.getElementById('dp-stat-armtime');
+      if(a) a.textContent = totalMins > 0 ? armH+'h '+String(armM).padStart(2,'0')+'m' : '—';
+      var an = document.getElementById('dp-stat-anodes');
+      if(an) an.textContent = anodes > 0 ? anodes : '—';
+    }
   } catch(e){ console.warn('Stats load failed:', e); }
 }
 
