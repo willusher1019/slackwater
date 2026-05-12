@@ -668,19 +668,25 @@ footer{
   transition:all 0.3s ease;
 }
 .day-card {
-  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease, z-index 0s;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, opacity 0.2s ease;
   position:relative;
   z-index:1;
-  cursor:default;
+  cursor:pointer;
 }
 .day-card:hover {
-  transform: scale(1.32) translateY(-10px);
+  transform: scale(1.48) translateY(-14px);
   z-index:10;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,196,212,0.25);
 }
-.forecast-grid:hover .day-card:not(:hover) {
-  opacity:0.75;
-  transform: scale(0.97);
+.day-card.dc-pinned {
+  transform: scale(1.55) translateY(-16px) !important;
+  z-index:20 !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.75), 0 0 0 2px rgba(0,196,212,0.55) !important;
+}
+.forecast-grid:hover .day-card:not(:hover):not(.dc-pinned),
+.forecast-grid.has-pinned .day-card:not(.dc-pinned) {
+  opacity:0.6;
+  transform: scale(0.95);
 }
 
 /* ── DOCK EFFECT — ALERTS ── */
@@ -1433,8 +1439,36 @@ function renderForecastCards(days){
       (d.window2 ? '<div style="font-family:var(--mono);font-size:7px;color:#00C4D4">✓ ' + d.window2 + '</div>' : '') +
       '</div>';
 
+    /* click to pin / unpin */
+    card.addEventListener('click', function(e){
+      e.stopPropagation();
+      var grid = container;
+      var alreadyPinned = card.classList.contains('dc-pinned');
+      /* unpin everything */
+      grid.querySelectorAll('.dc-pinned').forEach(function(c){ c.classList.remove('dc-pinned'); });
+      grid.classList.remove('has-pinned');
+      /* pin this one unless it was already pinned (toggle off) */
+      if(!alreadyPinned){
+        card.classList.add('dc-pinned');
+        grid.classList.add('has-pinned');
+      }
+    });
+
     container.appendChild(card);
   });
+
+  /* clicking anywhere outside the grid unpins */
+  if(!window._swForecastDocListener){
+    window._swForecastDocListener = true;
+    document.addEventListener('click', function(e){
+      var grid = document.getElementById('forecast-cards');
+      if(!grid) return;
+      if(!grid.contains(e.target)){
+        grid.querySelectorAll('.dc-pinned').forEach(function(c){ c.classList.remove('dc-pinned'); });
+        grid.classList.remove('has-pinned');
+      }
+    });
+  }
 }
 
 
