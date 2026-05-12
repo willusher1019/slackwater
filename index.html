@@ -4863,13 +4863,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   async function dlLoadSB(){
-    try {
-      var res = await fetch(sbUrl()+'/rest/v1/site_documents?site=eq.Thames%20Barrier&select=*&order=uploaded_at.desc',{
-        headers:{'apikey':sbKey(),'Authorization':'Bearer '+sbKey()}
-      });
-      if(res.ok){ DL.docs = await res.json(); dlRender(); }
-      else { dlLoadLocal(); }
-    } catch(e){ dlLoadLocal(); }
+    // Documents stored in localStorage (file metadata) + Supabase Storage (files)
+    dlLoadLocal();
   }
 
   function dlSetupDrop(){
@@ -4924,20 +4919,16 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     if(hasSB()){
       try {
-        var r = await fetch(sbUrl()+'/storage/v1/object/documents/'+path,{
+        var r = await fetch(sbUrl()+'/storage/v1/object/Documents/'+path,{
           method:'POST',
           headers:{'Authorization':'Bearer '+sbKey(),'apikey':sbKey(),'Content-Type':file.type||'application/octet-stream','x-upsert':'true'},
           body:file
         });
-        if(r.ok||r.status===200||r.status===201) publicUrl = sbUrl()+'/storage/v1/object/public/documents/'+path;
+        if(r.ok||r.status===200||r.status===201) publicUrl = sbUrl()+'/storage/v1/object/public/Documents/'+path;
       } catch(e){}
-      try {
-        await fetch(sbUrl()+'/rest/v1/site_documents',{
-          method:'POST',
-          headers:{'apikey':sbKey(),'Authorization':'Bearer '+sbKey(),'Content-Type':'application/json','Prefer':'return=minimal'},
-          body:JSON.stringify({site:'Thames Barrier',filename:file.name,category:cat,size_bytes:file.size,storage_path:path,public_url:publicUrl,uploaded_by:'Will'})
-        });
-      } catch(e){}
+      // Save record locally — no database table required
+      DL.docs.unshift({id:'dl'+ts+Math.random().toString(36).slice(2,6),filename:file.name,category:cat,size_bytes:file.size,storage_path:path,public_url:publicUrl,uploaded_at:new Date().toISOString()});
+      dlSaveLocal();
     } else {
       DL.docs.unshift({id:'dl'+ts+Math.random().toString(36).slice(2,6),filename:file.name,category:cat,size_bytes:file.size,storage_path:path,public_url:'',uploaded_at:new Date().toISOString()});
     }
@@ -4947,7 +4938,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!confirm('Delete this document?')) return;
     var path = decodeURIComponent(encodedPath);
     if(hasSB()){
-      try { await fetch(sbUrl()+'/storage/v1/object/documents/'+path,{method:'DELETE',headers:{'Authorization':'Bearer '+sbKey(),'apikey':sbKey()}}); } catch(e){}
+      try { await fetch(sbUrl()+'/storage/v1/object/Documents/'+path,{method:'DELETE',headers:{'Authorization':'Bearer '+sbKey(),'apikey':sbKey()}}); } catch(e){}
       try { await fetch(sbUrl()+'/rest/v1/site_documents?id=eq.'+id,{method:'DELETE',headers:{'apikey':sbKey(),'Authorization':'Bearer '+sbKey()}}); } catch(e){}
       await dlLoadSB(); return;
     }
