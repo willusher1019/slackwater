@@ -1335,7 +1335,10 @@ function renderForecastCards(days){
     var border = borderMap[d.status_color] || 'rgba(0,196,212,0.25)';
 
     var card = document.createElement('div');
+    card.className = 'day-card';
     card.style.cssText = 'background:' + bg + ';border:1px solid ' + border + ';border-radius:6px;padding:10px 8px;text-align:center;' + (isToday ? 'border-top:2px solid ' + col + ';' : '');
+
+    var lwStr = [d.lw1_time, d.lw2_time].filter(Boolean).join(' · ');
 
     card.innerHTML =
       '<div style="font-family:var(--mono);font-size:9px;color:' + (isToday ? col : 'var(--text3)') + ';font-weight:700;margin-bottom:6px">' + d.day.toUpperCase() + ' ' + d.date + (isToday ? ' · TODAY' : '') + '</div>' +
@@ -1347,6 +1350,7 @@ function renderForecastCards(days){
       '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;margin-top:2px">' +
       '<div style="font-family:var(--mono);font-size:7px;color:var(--accent);font-weight:600;margin-bottom:3px">TIDES</div>' +
       (d.hw1_time ? '<div style="font-family:var(--mono);font-size:8px;color:var(--text2)">HW ' + d.hw1_time + ' (' + d.hw1_height + 'm)</div>' : '') +
+      (lwStr ? '<div style="font-family:var(--mono);font-size:7px;color:#3A5A72;margin:1px 0">LW ' + lwStr + '</div>' : '') +
       (d.hw2_time ? '<div style="font-family:var(--mono);font-size:8px;color:var(--text2)">HW ' + d.hw2_time + ' (' + d.hw2_height + 'm)</div>' : '') +
       (d.window1 ? '<div style="font-family:var(--mono);font-size:7px;color:#00C4D4;margin-top:3px">✓ ' + d.window1 + '</div>' : '') +
       (d.window2 ? '<div style="font-family:var(--mono);font-size:7px;color:#00C4D4">✓ ' + d.window2 + '</div>' : '') +
@@ -3327,140 +3331,27 @@ Slackwater — Thames Barrier Operations</div>
   <div id="t-tides" style="height:calc(100vh - 54px);display:none;overflow-y:auto;background:var(--bg)">
     <div class="sarea" style="padding:20px;gap:16px">
 
-      <!-- 7-DAY WIND FORECAST -->
+      <!-- AI 7-DAY FORECAST -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden">
         <div style="padding:12px 16px;background:rgba(0,0,0,0.2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
           <div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--accent);font-weight:600;letter-spacing:1px">7-DAY WIND FORECAST — THAMES BARRIER</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">General stop: 15 m/s &nbsp;·&nbsp; Apollo crane stop: 10 m/s &nbsp;·&nbsp; Source: Windy ECMWF</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--accent);font-weight:600;letter-spacing:1px">7-DAY OPERATIONAL FORECAST — THAMES BARRIER</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">General stop: 15 m/s &nbsp;·&nbsp; Apollo crane stop: 10 m/s &nbsp;·&nbsp; AI cross-references Met Office · Windy ECMWF · PLA North Woolwich</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="forecast-time" style="font-family:var(--mono);font-size:9px;color:var(--text3)"></div>
+            <button id="forecast-btn" onclick="fetchLiveForecast()" style="background:transparent;border:1px solid rgba(0,196,212,0.3);color:var(--accent);font-family:var(--mono);font-size:8px;font-weight:600;padding:5px 12px;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap">↻ REFRESH</button>
           </div>
         </div>
-        <div class="forecast-grid">
-
-          <!-- MON 11 TODAY -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center;border-top:3px solid #00C4D4">
-            <div style="font-family:var(--display);font-size:16px;color:#00C4D4;letter-spacing:2px;margin-bottom:2px">MON 11</div>
-            <div style="font-family:var(--mono);font-size:7px;color:#00C4D4;letter-spacing:1px;margin-bottom:6px">TODAY</div>
-            <div style="font-size:13px;margin-bottom:4px">🌬️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">11°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(245,158,11,0.15);color:#F59E0B;border:1px solid rgba(245,158,11,0.3);margin-bottom:8px">CRANE ↓ 13m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 07:08 (6.0m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 01:00 · 13:34</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 19:30 (6.2m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 03:38–05:38</div>
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 16:00–18:00</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TUE 12 ALL STOP -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center;border:1px solid rgba(255,68,68,0.25)">
-            <div style="font-family:var(--display);font-size:16px;color:#A8C4DC;letter-spacing:2px;margin-bottom:8px">TUE 12</div>
-            <div style="font-size:13px;margin-bottom:4px">🌧️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">9°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(255,68,68,0.15);color:#FF4444;border:1px solid rgba(255,68,68,0.3);margin-bottom:8px">ALL STOP 17m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 07:52 (5.8m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 01:45 · 14:18</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 20:14 (6.0m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#FF4444;font-weight:600">✗ Wind stop all day</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TUE 12 -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center;border:1px solid #1A3350;border-radius:4px">
-            <div style="font-family:var(--display);font-size:16px;color:#A8C4DC;letter-spacing:2px;margin-bottom:8px">TUE 12</div>
-            <div style="font-size:13px;margin-bottom:4px">🌧️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">9°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(255,68,68,0.15);color:#FF4444;border:1px solid rgba(255,68,68,0.3);margin-bottom:8px">ALL STOP 17m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 07:52 (5.8m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 01:45 · 14:18</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 20:14 (6.0m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#FF4444;font-weight:600">✗ Wind stop all day</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- WED 13 -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center;border:1px solid #1A3350;border-radius:4px">
-            <div style="font-family:var(--display);font-size:16px;color:#A8C4DC;letter-spacing:2px;margin-bottom:8px">WED 13</div>
-            <div style="font-size:13px;margin-bottom:4px">🌧️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">8°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(255,68,68,0.15);color:#FF4444;border:1px solid rgba(255,68,68,0.3);margin-bottom:8px">ALL STOP 19m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 08:40 (5.6m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 02:35 · 15:06</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 21:02 (5.8m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#FF4444;font-weight:600">✗ Wind stop all day</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- THU 14 -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center">
-            <div style="font-family:var(--display);font-size:16px;color:#A8C4DC;letter-spacing:2px;margin-bottom:8px">THU 14</div>
-            <div style="font-size:13px;margin-bottom:4px">🌧️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">10°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(245,158,11,0.15);color:#F59E0B;border:1px solid rgba(245,158,11,0.3);margin-bottom:8px">CRANE ↓ 12m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 09:32 (5.5m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 03:28 · 16:00</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 21:56 (5.7m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 06:02–08:02</div>
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 18:26–20:26</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- FRI 15 BEST -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center;border:1px solid #1A3350;border-radius:4px">
-            <div style="font-family:var(--display);font-size:16px;color:#00C4D4;letter-spacing:2px;margin-bottom:8px">FRI 15 ★</div>
-            <div style="font-size:13px;margin-bottom:4px">☁️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">13°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(0,196,212,0.15);color:#00C4D4;border:1px solid rgba(0,196,212,0.3);margin-bottom:8px">ALL CLEAR 7m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 10:29 (5.4m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 04:22 · 16:55</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 22:55 (5.6m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 06:59–08:59</div>
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 19:25–21:25</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- SAT 16 -->
-          <div class="day-card" style="background:#0A1828;padding:14px 10px;text-align:center;border:1px solid #1A3350;border-radius:4px">
-            <div style="font-family:var(--display);font-size:16px;color:#A8C4DC;letter-spacing:2px;margin-bottom:8px">SAT 17</div>
-            <div style="font-size:13px;margin-bottom:4px">☁️</div>
-            <div style="font-size:13px;font-weight:600;color:#EBF5FF;margin-bottom:6px">15°C</div>
-            <div style="font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;background:rgba(0,196,212,0.15);color:#00C4D4;border:1px solid rgba(0,196,212,0.3);margin-bottom:8px">ALL CLEAR 6m/s</div>
-            <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:3px">
-              <div style="font-family:var(--mono);font-size:8px;color:#00C4D4;font-weight:700;letter-spacing:1px">TIDES</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 11:30 (5.5m)</div>
-              <div style="font-family:var(--mono);font-size:8px;color:#3A5A72">LW 05:20 · 17:55</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#EBF5FF;font-weight:600">HW 23:56 (5.7m)</div>
-              <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px">
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 08:00–10:00</div>
-                <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;font-weight:600">✓ 20:26–22:26</div>
-              </div>
-            </div>
-          </div>
-
+        <div id="forecast-loading" style="display:none;padding:20px;text-align:center">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--accent)">Searching Met Office · Windy · PLA...</div>
+        </div>
+        <div id="forecast-output" style="display:none;padding:16px">
+          <div id="forecast-cards" class="forecast-grid" style="margin-bottom:14px"></div>
+          <div id="forecast-narrative" style="background:rgba(0,196,212,0.04);border:1px solid rgba(0,196,212,0.12);border-radius:4px;padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.8"></div>
+        </div>
+        <div id="forecast-empty" style="padding:20px;text-align:center">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Activate API key in AI Agent tab to enable live forecast</div>
         </div>
       </div>
 
@@ -3477,29 +3368,6 @@ Slackwater — Thames Barrier Operations</div>
           style="width:100%;height:400px;border:none" frameborder="0"></iframe>
       </div>
 
-      <!-- AI FORECAST — AUTO LOADS -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden">
-        <div style="padding:12px 16px;background:rgba(0,196,212,0.06);border-bottom:1px solid rgba(0,196,212,0.15);display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--accent);font-weight:600;letter-spacing:1px">AI OPERATIONAL FORECAST — THAMES BARRIER</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">Cross-referencing Met Office · Windy ECMWF · PLA North Woolwich</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div id="forecast-time" style="font-family:var(--mono);font-size:9px;color:var(--text3)"></div>
-            <button id="forecast-btn" onclick="fetchLiveForecast()" style="background:transparent;border:1px solid rgba(0,196,212,0.3);color:var(--accent);font-family:var(--mono);font-size:8px;font-weight:600;padding:5px 12px;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap">↻ REFRESH</button>
-          </div>
-        </div>
-        <div id="forecast-loading" style="display:none;padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--accent)">Searching Met Office · Windy · PLA...</div>
-        </div>
-        <div id="forecast-output" style="display:none;padding:16px">
-          <div id="forecast-cards" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:14px"></div>
-          <div id="forecast-narrative" style="background:rgba(0,196,212,0.04);border:1px solid rgba(0,196,212,0.12);border-radius:4px;padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.8"></div>
-        </div>
-        <div id="forecast-empty" style="padding:20px;text-align:center">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Activate API key in AI Agent tab to enable live forecast</div>
-        </div>
-      </div>
 
       <!-- SOURCE LINKS -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
