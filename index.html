@@ -4007,6 +4007,24 @@ Slackwater — Thames Barrier Operations</div>
         </div>
 
         <div class="of-section">
+  <div class="of-label">Constraint Chain <span style="color:var(--text3);font-weight:400">— is this linked to another event?</span></div>
+  <div class="of-row" style="gap:8px;align-items:flex-start">
+    <div style="flex:1">
+      <select class="of-input" id="of-chain-type">
+        <option value="">Standalone event</option>
+        <option value="PRIMARY">PRIMARY — this triggered a chain</option>
+        <option value="CAUSED BY">CAUSED BY — consequence of earlier event</option>
+        <option value="CONCURRENT">CONCURRENT — alongside another event</option>
+        <option value="FOLLOW-ON">FOLLOW-ON — recovery consequence</option>
+      </select>
+    </div>
+    <div style="flex:1">
+      <input type="text" class="of-input" id="of-chain-ref" placeholder="Link to event (e.g. EA gate check 07 May)">
+    </div>
+  </div>
+</div>
+
+        <div class="of-section">
           <div class="of-label">Event Type</div>
           <div class="of-chips" id="of-chips-event">
             <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">DELAYED START</button>
@@ -4025,6 +4043,17 @@ Slackwater — Thames Barrier Operations</div>
         </div>
 
         <div class="of-section">
+  <div class="of-label">Impact Classification <span style="color:var(--text3);font-weight:400">— standardised taxonomy</span></div>
+  <div class="of-chips" id="of-chips-impact">
+    <button class="of-chip" data-g="impact" onclick="ofChip(this,'impact')" style="border-color:rgba(255,59,59,0.35)">PROGRAMME CRITICAL</button>
+    <button class="of-chip" data-g="impact" onclick="ofChip(this,'impact')">COST IMPACT ONLY</button>
+    <button class="of-chip" data-g="impact" onclick="ofChip(this,'impact')">REPORTABLE EVENT</button>
+    <button class="of-chip" data-g="impact" onclick="ofChip(this,'impact')">NEAR MISS</button>
+    <button class="of-chip" data-g="impact" onclick="ofChip(this,'impact')">LEARNING EVENT</button>
+  </div>
+</div>
+
+        <div class="of-section">
           <div class="of-label">Constraint Type — what caused it?</div>
           <div class="of-chips" id="of-chips-constraint">
             <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">TIDE</button>
@@ -4038,6 +4067,21 @@ Slackwater — Thames Barrier Operations</div>
             <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">LOGISTICS</button>
           </div>
         </div>
+
+        <div class="of-section">
+  <div class="of-label">Observed Symptom <span style="color:var(--text3);font-weight:400">— what was visible on site?</span></div>
+  <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:6px;line-height:1.6">Select the symptom — the actual root operational constraint is captured below</div>
+  <div class="of-chips" id="of-chips-symptom">
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">LABOUR IDLE</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">TASK STOPPED</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">TASK ABORTED</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">DELAYED START</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">REDUCED OUTPUT</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">PLANT IDLE</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">WINDOW MISSED</button>
+    <button class="of-chip" data-g="symptom" onclick="ofChip(this,'symptom')">CREW REDEPLOYED</button>
+  </div>
+</div>
 
         <div class="of-row">
           <div class="of-section">
@@ -4096,6 +4140,43 @@ Slackwater — Thames Barrier Operations</div>
           </div>
           <input type="text" class="of-input" id="of-recovery-other" placeholder="Additional detail (optional)">
         </div>
+
+        <div class="of-row">
+  <div class="of-section">
+    <div class="of-label">Recovery Duration (hrs)</div>
+    <input type="number" class="of-input" id="of-recovery-hrs" placeholder="0.0" step="0.5" min="0">
+  </div>
+  <div class="of-section">
+    <div class="of-label">Recovery Effectiveness</div>
+    <div class="of-chips" id="of-chips-recov-eff">
+      <button class="of-chip" data-g="recovEff" onclick="ofChip(this,'recovEff')">FULL</button>
+      <button class="of-chip" data-g="recovEff" onclick="ofChip(this,'recovEff')">PARTIAL</button>
+      <button class="of-chip" data-g="recovEff" onclick="ofChip(this,'recovEff')">MINIMAL</button>
+      <button class="of-chip" data-g="recovEff" onclick="ofChip(this,'recovEff')">NONE</button>
+    </div>
+  </div>
+</div>
+
+        <div class="of-row">
+  <div class="of-section">
+    <div class="of-label">Evidence Source</div>
+    <div class="of-chips" id="of-chips-evidence">
+      <button class="of-chip" data-g="evidence" onclick="ofChip(this,'evidence')">WITNESSED</button>
+      <button class="of-chip" data-g="evidence" onclick="ofChip(this,'evidence')">CONTRACTOR REPORTED</button>
+      <button class="of-chip" data-g="evidence" onclick="ofChip(this,'evidence')">MANAGER ESTIMATED</button>
+      <button class="of-chip" data-g="evidence" onclick="ofChip(this,'evidence')">DOCUMENTED</button>
+      <button class="of-chip" data-g="evidence" onclick="ofChip(this,'evidence')">INFERRED</button>
+    </div>
+  </div>
+  <div class="of-section">
+    <div class="of-label">Data Confidence</div>
+    <div class="of-chips" id="of-chips-confidence">
+      <button class="of-chip" data-g="confidence" onclick="ofChip(this,'confidence')" style="border-color:rgba(0,217,110,0.35)">HIGH</button>
+      <button class="of-chip" data-g="confidence" onclick="ofChip(this,'confidence')">MEDIUM</button>
+      <button class="of-chip" data-g="confidence" onclick="ofChip(this,'confidence')" style="border-color:rgba(255,149,0,0.35)">LOW</button>
+    </div>
+  </div>
+</div>
 
         <div class="of-section">
           <div class="of-label">Lessons Learned <span style="color:var(--text3)">(optional)</span></div>
@@ -5759,7 +5840,12 @@ var ofState = {
   constraint: null,
   prev: null,
   recovery: null,
-  causeCat: null
+  causeCat: null,
+  impact: null,
+  symptom: null,
+  recovEff: null,
+  evidence: null,
+  confidence: null
 };
 
 // Load Airtable key
@@ -5856,7 +5942,15 @@ window.ofSubmit = function(){
     causeCat: ofState.causeCat,
     rootCause: cause,
     recoveryAction: (ofState.recovery || '') + (recoveryOther ? (ofState.recovery ? ' — '+recoveryOther : recoveryOther) : ''),
-    lessonsLearned: lessons
+    lessonsLearned: lessons,
+    chainType: (document.getElementById('of-chain-type')||{}).value || '',
+    chainRef: (document.getElementById('of-chain-ref')||{}).value.trim() || '',
+    impactClass: ofState.impact || '',
+    symptom: ofState.symptom || '',
+    recoveryDurationHrs: parseFloat((document.getElementById('of-recovery-hrs')||{}).value) || 0,
+    recoveryEffectiveness: ofState.recovEff || '',
+    evidenceSource: ofState.evidence || '',
+    dataConfidence: ofState.confidence || ''
   };
 
   var events = ofLoad();
@@ -5882,7 +5976,15 @@ window.ofSubmit = function(){
         'Cause Category': event.causeCat,
         'Root Cause': event.rootCause,
         'Recovery Action': event.recoveryAction,
-        'Lessons Learned': event.lessonsLearned
+        'Lessons Learned': event.lessonsLearned,
+        'Chain Type': event.chainType,
+        'Chain Reference': event.chainRef,
+        'Impact Classification': event.impactClass,
+        'Symptom': event.symptom,
+        'Recovery Duration (hrs)': event.recoveryDurationHrs,
+        'Recovery Effectiveness': event.recoveryEffectiveness,
+        'Evidence Source': event.evidenceSource,
+        'Data Confidence': event.dataConfidence
       }})
     }).catch(function(){});
   }
@@ -5894,12 +5996,12 @@ window.ofSubmit = function(){
 };
 
 window.ofClearForm = function(){
-  ['of-site','of-pkg','of-labour','of-hours','of-cost-inp','of-cause','of-recovery-other','of-lessons'].forEach(function(id){
+  ['of-site','of-pkg','of-labour','of-hours','of-cost-inp','of-cause','of-recovery-other','of-lessons','of-chain-type','of-chain-ref','of-recovery-hrs'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = id==='of-site'?'':id==='of-date'?el.value:'';
   });
   document.querySelectorAll('.of-chip').forEach(function(b){ b.classList.remove('on','on-a','on-r','on-g'); });
-  ofState = { event:null, constraint:null, prev:null, recovery:null };
+  ofState = { event:null, constraint:null, prev:null, recovery:null, causeCat:null, impact:null, symptom:null, recovEff:null, evidence:null, confidence:null };
   ofInitDate();
 };
 
