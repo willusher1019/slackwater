@@ -4537,8 +4537,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TASKS LOGGED</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">60</div>
-        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ANODES PROCESSED</div>
+        <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">36</div>
+        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ANODES CUT</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #F59E0B">
         <div id="dp-stat-efficiency" style="font-family:var(--display);font-size:38px;color:#F59E0B;line-height:1;letter-spacing:1px">—</div>
@@ -5538,11 +5538,12 @@ async function dpLoadStats(){
     });
     var armH = Math.floor(totalMins/60), armM = Math.round(totalMins%60);
 
-    // Anodes — only count from anode cutting/taping tasks, using Unit Count field or Notes fallback
+    // Anodes — only count from anode CUTTING tasks (not taping/labelling — those are prep, not removal)
     var anodes = 0;
     records.forEach(function(r){
       var taskName = (r.fields['Task Name'] || '').toLowerCase();
-      if(!taskName.includes('anode')) return; // only count anode tasks
+      if(!taskName.includes('anode')) return;
+      if(!taskName.includes('cut')) return; // taping/labelling excluded — only count cut (removed) anodes
       // Prefer dedicated Unit Count field
       if(r.fields['Unit Count'] && parseInt(r.fields['Unit Count']) > 0){
         anodes += parseInt(r.fields['Unit Count']);
