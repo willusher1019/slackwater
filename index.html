@@ -674,19 +674,21 @@ footer{
   cursor:pointer;
 }
 .day-card:hover {
-  transform: scale(1.48) translateY(-14px);
+  transform: scale(1.32) translateY(-8px);
   z-index:10;
-  box-shadow: 0 20px 56px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,196,212,0.25);
+  background:#0D1F35 !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.75), 0 0 0 1px rgba(0,196,212,0.2);
 }
 .day-card.dc-pinned {
-  transform: scale(1.55) translateY(-16px) !important;
+  transform: scale(1.36) translateY(-10px) !important;
   z-index:20 !important;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.75), 0 0 0 2px rgba(0,196,212,0.55) !important;
+  background:#0D1F35 !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.9), 0 0 0 2px rgba(0,196,212,0.6) !important;
 }
 .forecast-grid:hover .day-card:not(:hover):not(.dc-pinned),
 .forecast-grid.has-pinned .day-card:not(.dc-pinned) {
-  opacity:0.6;
-  transform: scale(0.95);
+  opacity:0.55;
+  transform: scale(0.96);
 }
 
 /* ── DOCK EFFECT — ALERTS ── */
