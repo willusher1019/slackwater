@@ -4073,7 +4073,7 @@ Slackwater — Thames Barrier Operations</div>
 </div>
 
 <script>
-const SITES={'thames barrier':'barrier2026','m25 depot':'m25ops','hornsea wind':'hornsea3','mark':'test'};
+// SITES already declared in earlier script block
 const CDATA={
   ea:{title:'Environment Agency — Works Progress',note:'S. Clarke confirms go/no-go by 06:00 daily. EA retains unconditional operational override.',
     works:[{t:'Daily tidal go/no-go confirmation',p:100,s:'ONGOING',l:null,b:null},{t:'Leaf B gate operation consent',p:100,s:'COMPLETE',l:'B',b:null},{t:'Leaf G gate operation consent',p:80,s:'IN PROGRESS',l:'G',b:'Director sign-off pending'},{t:'Environmental impact monitoring',p:60,s:'IN PROGRESS',l:null,b:null}],
@@ -5286,7 +5286,7 @@ function dpShowTab(tab){
       btn.style.background = t===tab ? 'rgba(0,196,212,0.05)' : 'transparent';
     }
   });
-  if(tab==='oplog'){ ofMountInPortal(); ofShowAtStatus(); ofRender(ofLoad()); }
+  if(tab==='oplog'){ ofMountInPortal(); if(typeof ofShowAtStatus==='function') ofShowAtStatus(); ofRender(ofLoad()); }
   if(tab==='tasklog'){ dpLoadStats(); }
   if(tab==='pastelog'){ plInit(); }
 }
@@ -5299,7 +5299,8 @@ var plParsed = { tasks: [], opEvents: [] };
 
 function plSaveKey(){
   var inp = document.getElementById('pl-key-inp');
-  var key = inp ? inp.value.trim() : '';
+  // Strip non-ASCII characters (invisible Unicode chars break fetch headers)
+  var key = (inp ? inp.value : '').replace(/[^\x20-\x7E]/g, '').trim();
   if(!key){ alert('Paste your Anthropic API key first.'); return; }
   localStorage.setItem('sw_api_key', key);
   window._swApiKey = key;
@@ -5407,6 +5408,10 @@ async function plParse(){
     status.style.color = '#FF4444';
     return;
   }
+
+  // Sanitise key — strip any invisible Unicode that breaks fetch headers
+  apiKey = apiKey.replace(/[^\x20-\x7E]/g, '').trim();
+  if(!apiKey){ status.textContent = 'Key invalid — remove and re-paste it.'; status.style.color='#FF4444'; return; }
 
   status.textContent = 'Reading your notes...';
   status.style.color = '#00C4D4';
