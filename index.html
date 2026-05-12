@@ -1024,7 +1024,7 @@ function doDataLogin(){
 
 /* ── TABS ── */
 function showTab(id,btn){
-  ['overview','brief','contractors','tides','documents','upload','vessel','ai','cases'].forEach(function(t){
+  ['overview','brief','contractors','tides','documents','vessel','ai','cases'].forEach(function(t){
     var el = document.getElementById('t-'+t);
     if(el) el.style.display = 'none';
   });
@@ -2981,7 +2981,6 @@ lines.forEach((line, i) => {
       <button class="tab" onclick="showTab('contractors',this)">CONTRACTORS</button>
       <button class="tab" onclick="showTab('tides',this)">TIDES & WEATHER</button>
       <button class="tab" onclick="showTab('documents',this)">DOCUMENTS</button>
-      <button class="tab" onclick="showTab('upload',this)">UPLOAD DOCS</button>
       <button class="tab" onclick="showTab('cases',this)" style="color:#FF9500">CASE STUDIES</button>
       <button class="tab" onclick="showTab('ai',this)">AI AGENT</button>
     </div>
@@ -3581,136 +3580,6 @@ Slackwater — Thames Barrier Operations</div>
         <div class="dr"><div class="dn">River Traffic Coordination Notice</div><div class="dt">OPERATIONAL</div><div class="dd ok">207d</div><span class="db valid">VALID</span></div>
         <div class="dr"><div class="dn">CTC Clearance — Apollo</div><div class="dt">SECURITY</div><div class="dd ok">208d</div><span class="db valid">VALID</span></div>
       </div></div>
-    </div>
-  </div>
-
-
-  <!-- UPLOAD DOCUMENTS TAB -->
-  <div id="t-upload" style="height:calc(100vh - 68px);display:none;overflow-y:auto;background:var(--bg)">
-    <div style="max-width:860px;margin:0 auto;padding:20px 20px 60px;display:flex;flex-direction:column;gap:14px">
-
-      <!-- HEADER -->
-      <div>
-        <div style="font-family:var(--display);font-size:28px;letter-spacing:2px;color:#EDF6FF;margin-bottom:6px">DOCUMENT INTELLIGENCE</div>
-        <div style="font-size:13px;color:#3A5A72;line-height:1.7">Upload any site document. Claude reads it and extracts every constraint, threshold, expiry date and operational requirement. Answers are used to update the live operational model.</div>
-      </div>
-
-      <!-- SUPABASE STATUS BANNER -->
-      <div id="supabase-banner" style="background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.25);border-radius:6px;padding:12px 16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:16px">🔗</div>
-        <div style="flex:1">
-          <div style="font-family:var(--mono);font-size:9px;color:#FF9500;font-weight:700;letter-spacing:1px;margin-bottom:3px">STORAGE NOT CONNECTED</div>
-          <div style="font-size:12px;color:#B8D4EA;line-height:1.6">Documents are analysed by AI but not stored permanently. Connect Supabase to store all documents with permanent URLs. <span style="color:#FF9500">See setup guide below →</span></div>
-        </div>
-        <div id="supabase-connected-badge" style="display:none;font-family:var(--mono);font-size:9px;color:#00D96E;padding:4px 10px;border:1px solid rgba(0,217,110,0.3);border-radius:3px">● CONNECTED</div>
-      </div>
-
-      <!-- DROP ZONE -->
-      <div id="drop-zone"
-        onclick="document.getElementById('file-inp').click()"
-        ondragover="event.preventDefault();document.getElementById('drop-zone').classList.add('dz-over')"
-        ondragleave="document.getElementById('drop-zone').classList.remove('dz-over')"
-        ondrop="handleDocDrop(event)"
-        style="background:#0A1828;border:2px dashed rgba(0,196,212,0.25);border-radius:8px;padding:48px 24px;text-align:center;cursor:pointer;transition:all 0.2s">
-        <div style="font-size:40px;margin-bottom:14px">📋</div>
-        <div style="font-family:var(--display);font-size:22px;letter-spacing:2px;color:#EDF6FF;margin-bottom:8px">DROP DOCUMENT HERE</div>
-        <div style="font-size:13px;color:#3A5A72;margin-bottom:20px;line-height:1.7">Permits to Work · Risk Assessments · Method Statements<br>RAMS · Dive Plans · Lift Plans · Work Packs · Inspection Reports</div>
-        <div style="display:inline-block;background:#00C4D4;color:#03060A;padding:10px 28px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px">CHOOSE FILE</div>
-        <input id="file-inp" type="file" accept=".pdf,.doc,.docx,.txt" style="display:none" onchange="handleDocFile(this.files[0])">
-        <div style="margin-top:14px;font-family:var(--mono);font-size:9px;color:#3A5A72">PDF · DOC · DOCX · TXT · Max 25MB</div>
-      </div>
-
-      <!-- PROCESSING -->
-      <div id="doc-processing" style="display:none;background:#0A1828;border:1px solid #1A3350;border-radius:8px;padding:32px;text-align:center">
-        <div style="font-family:var(--mono);font-size:11px;color:#00C4D4;margin-bottom:8px">Reading document with Claude...</div>
-        <div id="doc-processing-status" style="font-family:var(--mono);font-size:9px;color:#3A5A72">Extracting constraints, expiry dates, crew requirements and permit conditions</div>
-      </div>
-
-      <!-- RESULTS -->
-      <div id="doc-results" style="display:none;flex-direction:column;gap:12px">
-
-        <!-- SUCCESS HEADER -->
-        <div style="background:rgba(0,196,212,0.06);border:1px solid rgba(0,196,212,0.2);border-radius:6px;padding:14px 16px;display:flex;align-items:center;gap:12px">
-          <div style="font-size:24px">✓</div>
-          <div style="flex:1">
-            <div style="font-family:var(--display);font-size:16px;letter-spacing:1px;color:#EDF6FF" id="result-doc-name">Document analysed</div>
-            <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:3px" id="result-doc-meta"></div>
-          </div>
-          <button onclick="resetDocUpload()" style="font-family:var(--mono);font-size:9px;padding:6px 14px;border:1px solid #1A3350;color:#3A5A72;background:transparent;cursor:pointer;border-radius:3px">Upload another</button>
-        </div>
-
-        <!-- EXTRACTED CONSTRAINTS -->
-        <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden">
-          <div style="padding:10px 14px;background:#060E18;border-bottom:1px solid #1A3350">
-            <div style="font-family:var(--display);font-size:14px;letter-spacing:2px;color:#00C4D4">EXTRACTED OPERATIONAL CONSTRAINTS</div>
-            <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:2px">Everything that governs when and how this work can proceed</div>
-          </div>
-          <div id="constraints-output" style="padding:14px;display:flex;flex-direction:column;gap:8px"></div>
-        </div>
-
-        <!-- FULL AI ANALYSIS -->
-        <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden">
-          <div style="padding:10px 14px;background:#060E18;border-bottom:1px solid #1A3350">
-            <div style="font-family:var(--display);font-size:14px;letter-spacing:2px;color:#00C4D4">FULL CLAUDE ANALYSIS</div>
-          </div>
-          <div id="full-analysis-output" style="padding:14px;font-size:13px;color:#B8D4EA;line-height:1.8;white-space:pre-wrap"></div>
-        </div>
-
-        <!-- SAVE TO PLATFORM -->
-        <div style="background:#0A1828;border:1px solid rgba(0,196,212,0.2);border-radius:6px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:16px">
-          <div>
-            <div style="font-family:var(--display);font-size:14px;letter-spacing:1px;color:#EDF6FF;margin-bottom:4px">ADD TO OPERATIONAL MODEL</div>
-            <div style="font-size:12px;color:#3A5A72;line-height:1.6">Save this document and its extracted constraints to the platform. Updates alerts and thresholds automatically.</div>
-          </div>
-          <button id="save-to-platform-btn" onclick="saveDocToPlatform()" style="background:#00C4D4;border:none;color:#03060A;font-family:var(--mono);font-size:10px;font-weight:700;padding:10px 20px;cursor:pointer;border-radius:4px;letter-spacing:1px;white-space:nowrap">SAVE TO PLATFORM →</button>
-        </div>
-      </div>
-
-      <!-- DOCUMENTS ON FILE -->
-      <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden">
-        <div style="padding:10px 14px;background:#060E18;border-bottom:1px solid #1A3350;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-family:var(--display);font-size:14px;letter-spacing:2px;color:#00C4D4">DOCUMENTS ON FILE</div>
-          <div id="doc-count" style="font-family:var(--mono);font-size:9px;color:#3A5A72"></div>
-        </div>
-        <div id="doc-library" style="padding:10px 14px;display:flex;flex-direction:column;gap:6px">
-          <div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center">No documents uploaded yet. Drop a document above to begin.</div>
-        </div>
-      </div>
-
-      <!-- SUPABASE SETUP GUIDE -->
-      <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden">
-        <div style="padding:10px 14px;background:#060E18;border-bottom:1px solid #1A3350">
-          <div style="font-family:var(--display);font-size:14px;letter-spacing:2px;color:#FF9500">CONNECT SUPABASE — PERMANENT STORAGE</div>
-          <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:2px">Free. Takes 15 minutes. Documents stored permanently with full text search.</div>
-        </div>
-        <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="font-family:var(--display);font-size:24px;color:#1A3350;flex-shrink:0;width:32px">1</div>
-            <div><div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:3px">Create a free Supabase account</div><div style="font-size:12px;color:#3A5A72">Go to <span style="color:#00C4D4">supabase.com</span> → New project → call it "slackwater"</div></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="font-family:var(--display);font-size:24px;color:#1A3350;flex-shrink:0;width:32px">2</div>
-            <div><div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:3px">Create a storage bucket</div><div style="font-size:12px;color:#3A5A72">Storage → New bucket → name it "documents" → set to public</div></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="font-family:var(--display);font-size:24px;color:#1A3350;flex-shrink:0;width:32px">3</div>
-            <div><div style="font-size:13px;font-weight:600;color:#EDF6FF;margin-bottom:3px">Paste your Supabase credentials here</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-                <div>
-                  <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-bottom:4px">PROJECT URL</div>
-                  <input id="sb-url" placeholder="https://xxx.supabase.co" style="width:100%;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:8px 10px;font-size:12px;font-family:var(--mono);outline:none;border-radius:4px">
-                </div>
-                <div>
-                  <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-bottom:4px">ANON KEY</div>
-                  <input id="sb-key" placeholder="eyJ..." style="width:100%;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:8px 10px;font-size:12px;font-family:var(--mono);outline:none;border-radius:4px">
-                </div>
-              </div>
-              <button onclick="connectSupabase()" style="margin-top:8px;background:#FF9500;border:none;color:#03060A;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 20px;cursor:pointer;border-radius:4px;letter-spacing:1px">CONNECT SUPABASE →</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
