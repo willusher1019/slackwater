@@ -878,7 +878,10 @@ function showDataPortal(){
   var el = document.getElementById('data-portal');
   if(el) el.style.display = 'block';
   document.body.style.overflow = 'auto';
-  setTimeout(function(){ if(window.dlInit) window.dlInit(); }, 150);
+  setTimeout(function(){
+    if(window.dlInit) window.dlInit();
+    if(window.dpShowTab) window.dpShowTab('tasklog');
+  }, 200);
 }
 function showApp(){
   _hideAll();
@@ -4297,15 +4300,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     </div>
     <!-- PORTAL TAB BAR -->
     <div style="display:flex;border-top:1px solid #1A3350">
-      <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer">OPERATIONAL LOG</button>
-      <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">TASK LOG</button>
+      <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">OPERATIONAL LOG</button>
+      <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer">TASK LOG</button>
       <button id="dp-tab-pastelog" onclick="dpShowTab('pastelog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">PASTE LOG</button>
       <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">DOCUMENTS</button>
     </div>
   </div>
 
   <!-- DP: OPERATIONAL LOG TAB -->
-  <div id="dp-oplog" style="height:calc(100vh - 94px);display:flex;flex-direction:column;overflow:hidden">
+  <div id="dp-oplog" style="height:calc(100vh - 94px);display:none;flex-direction:column;overflow:hidden">
     <!-- Operational log injected here by JS -->
   </div>
 
@@ -4363,7 +4366,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   </div>
 
   <!-- DP: TASK LOG + OVERVIEW TAB -->
-  <div id="dp-tasklog" style="display:none">
+  <div id="dp-tasklog" style="display:block">
   <div style="max-width:1200px;margin:0 auto;padding:24px 20px">
 
     <!-- LOGGED DATA SUMMARY -->
