@@ -5437,8 +5437,24 @@ async function plParse(){
       })
     });
     var data = await res.json();
+
+    // Handle API errors (bad key, quota, etc.)
+    if(data.error){ status.textContent = 'API error: ' + (data.error.message || JSON.stringify(data.error)); status.style.color='#FF4444'; return; }
+    if(!res.ok){ status.textContent = 'API error ' + res.status + ' — check your key is valid and has credits.'; status.style.color='#FF4444'; return; }
+
     var text = (data.content && data.content[0] && data.content[0].text) || '';
     text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+
+    // Find the JSON object in the response (Claude sometimes adds preamble)
+    var jsonStart = text.indexOf('{');
+    var jsonEnd = text.lastIndexOf('}');
+    if(jsonStart === -1 || jsonEnd === -1){
+      status.textContent = 'No tasks found — paste a real day\'s log with times and activities.';
+      status.style.color = '#F59E0B';
+      return;
+    }
+    text = text.slice(jsonStart, jsonEnd + 1);
+
     var parsed = JSON.parse(text);
     plParsed = { tasks: parsed.tasks || [], opEvents: parsed.opEvents || [] };
     var tCount = plParsed.tasks.length, oCount = plParsed.opEvents.length;
@@ -5446,7 +5462,7 @@ async function plParse(){
     status.style.color = '#00C4D4';
     plRender();
   } catch(e) {
-    status.textContent = 'Parse error: ' + e.message;
+    status.textContent = 'Parse error: ' + e.message + ' — try again or check your log has times and tasks.';
     status.style.color = '#FF4444';
     console.error(e);
   }
