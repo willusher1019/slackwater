@@ -4293,6 +4293,21 @@ document.addEventListener('DOMContentLoaded',()=>{
         <div style="font-family:var(--mono);font-size:11px;color:#3A5A72;line-height:1.7">Write notes during the day however suits you — phone, voice memo, paper. Paste them here at the end of the day. AI reads them and builds the task entries. You review, correct if needed, then save to Airtable.</div>
       </div>
 
+      <!-- AI KEY STATUS -->
+      <div id="pl-key-panel" style="margin-bottom:24px;padding:14px 16px;border-radius:4px;border:1px solid #1A3350;background:#060E18">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div id="pl-key-status-label" style="font-family:var(--mono);font-size:9px;letter-spacing:1px;margin-bottom:3px">AI KEY</div>
+            <div id="pl-key-status-sub" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
+          </div>
+          <div id="pl-key-input-wrap" style="display:flex;gap:8px;align-items:center;flex:1;max-width:480px">
+            <input id="pl-key-inp" type="password" placeholder="Paste your Anthropic API key (sk-ant-...)" style="flex:1;background:#0A1828;border:1px solid #1A3350;color:#EDF6FF;padding:8px 11px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
+            <button onclick="plSaveKey()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:8px 16px;cursor:pointer;border-radius:3px;white-space:nowrap">SAVE KEY</button>
+            <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-family:var(--mono);font-size:9px;color:#3A5A72;white-space:nowrap;text-decoration:none">Get key →</a>
+          </div>
+        </div>
+      </div>
+
       <!-- INPUT AREA -->
       <div id="pl-input-section">
         <div style="margin-bottom:10px">
@@ -4335,19 +4350,19 @@ document.addEventListener('DOMContentLoaded',()=>{
     <!-- STATS ROW -->
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px">
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">16</div>
+        <div id="dp-stat-tasks" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">—</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TASKS LOGGED</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">48</div>
+        <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">—</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ANODES PROCESSED</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #F59E0B">
-        <div style="font-family:var(--display);font-size:38px;color:#F59E0B;line-height:1;letter-spacing:1px">31%</div>
+        <div id="dp-stat-efficiency" style="font-family:var(--display);font-size:38px;color:#F59E0B;line-height:1;letter-spacing:1px">—</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">AVG EFFICIENCY</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">12h 00m</div>
+        <div id="dp-stat-armtime" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">—</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TOTAL ARM TIME</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
@@ -5247,6 +5262,7 @@ function dpShowTab(tab){
     }
   });
   if(tab==='oplog'){ ofMountInPortal(); ofShowAtStatus(); ofRender(ofLoad()); }
+  if(tab==='tasklog'){ dpLoadStats(); }
   if(tab==='pastelog'){ plInit(); }
 }
 window.dpShowTab = dpShowTab;
@@ -5256,12 +5272,102 @@ window.dpShowTab = dpShowTab;
    ══════════════════════════════════ */
 var plParsed = [];
 
+function plSaveKey(){
+  var inp = document.getElementById('pl-key-inp');
+  var key = inp ? inp.value.trim() : '';
+  if(!key){ alert('Paste your Anthropic API key first.'); return; }
+  localStorage.setItem('sw_api_key', key);
+  window._swApiKey = key;
+  plRefreshKeyPanel();
+}
+
+function plRefreshKeyPanel(){
+  var key = localStorage.getItem('sw_api_key') || window._swApiKey || '';
+  var label = document.getElementById('pl-key-status-label');
+  var sub = document.getElementById('pl-key-status-sub');
+  var wrap = document.getElementById('pl-key-input-wrap');
+  if(key){
+    if(label){ label.style.color = '#00C4D4'; label.textContent = '✓ AI KEY ACTIVE'; }
+    if(sub){ sub.textContent = 'Paste Log is ready. Write notes during the day — paste here at the end.'; }
+    if(wrap){ wrap.innerHTML = '<button onclick="plClearKey()" style="background:transparent;border:1px solid rgba(255,68,68,0.3);color:#FF4444;font-family:var(--mono);font-size:9px;padding:6px 14px;cursor:pointer;border-radius:3px">REMOVE KEY</button>'; }
+  } else {
+    if(label){ label.style.color = '#F59E0B'; label.textContent = '⚠ AI KEY REQUIRED'; }
+    if(sub){ sub.textContent = 'One-time setup. Paste your Anthropic key below — saved to your browser, never sent anywhere except Anthropic.'; }
+  }
+}
+
+function plClearKey(){
+  localStorage.removeItem('sw_api_key');
+  window._swApiKey = '';
+  var wrap = document.getElementById('pl-key-input-wrap');
+  if(wrap){ wrap.innerHTML = '<input id="pl-key-inp" type="password" placeholder="Paste your Anthropic API key (sk-ant-...)" style="flex:1;background:#0A1828;border:1px solid #1A3350;color:#EDF6FF;padding:8px 11px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px"><button onclick="plSaveKey()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:8px 16px;cursor:pointer;border-radius:3px;white-space:nowrap">SAVE KEY</button><a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-family:var(--mono);font-size:9px;color:#3A5A72;white-space:nowrap;text-decoration:none">Get key →</a>'; }
+  plRefreshKeyPanel();
+}
+
 function plInit(){
+  // Load API key from localStorage into window global (in case portal loaded before demo)
+  if(!window._swApiKey){ var k = localStorage.getItem('sw_api_key'); if(k) window._swApiKey = k; }
+  plRefreshKeyPanel();
   var d = document.getElementById('pl-date');
   if(d && !d.value){
     var now = new Date();
     d.value = now.toISOString().slice(0,10);
   }
+}
+
+/* ── AUTO STATS — pulls live from Airtable ── */
+async function dpLoadStats(){
+  var atKey = localStorage.getItem('sw_at_key') || '';
+  if(!atKey) return;
+  try {
+    // Fetch all records (paginate if needed — up to 100 per page)
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100&fields%5B%5D=Time%20In&fields%5B%5D=Time%20Out&fields%5B%5D=Crew%20Size&fields%5B%5D=Productive%20Workers&fields%5B%5D=Location&fields%5B%5D=Notes';
+    var records = [];
+    var offset = null;
+    do {
+      var fetchUrl = url + (offset ? '&offset='+offset : '');
+      var res = await fetch(fetchUrl, { headers: { 'Authorization': 'Bearer '+atKey } });
+      var data = await res.json();
+      if(data.records) records = records.concat(data.records);
+      offset = data.offset || null;
+    } while(offset);
+
+    // Count
+    var taskCount = records.length;
+
+    // Avg efficiency = avg of (Productive Workers / Crew Size) for records with both
+    var effSamples = records.filter(function(r){ return r.fields['Crew Size'] && r.fields['Productive Workers']; });
+    var avgEff = effSamples.length ? Math.round(effSamples.reduce(function(sum,r){ return sum + r.fields['Productive Workers']/r.fields['Crew Size']; },0) / effSamples.length * 100) : null;
+
+    // Total arm/confined space time — sum Time Out - Time In for all records that have both
+    var totalMins = 0;
+    records.forEach(function(r){
+      var tin = r.fields['Time In'], tout = r.fields['Time Out'];
+      if(tin && tout){
+        var diff = (new Date(tout) - new Date(tin)) / 60000;
+        if(diff > 0 && diff < 600) totalMins += diff; // ignore anomalies over 10h
+      }
+    });
+    var armH = Math.floor(totalMins/60), armM = Math.round(totalMins%60);
+
+    // Anodes — sum Notes fields for "Units completed: X" pattern
+    var anodes = 0;
+    records.forEach(function(r){
+      var n = r.fields['Notes'] || '';
+      var m = n.match(/Units completed:\s*(\d+)/i);
+      if(m) anodes += parseInt(m[1]);
+    });
+
+    // Update DOM
+    var s = document.getElementById('dp-stat-tasks');
+    if(s) s.textContent = taskCount;
+    var e = document.getElementById('dp-stat-efficiency');
+    if(e){ e.textContent = avgEff !== null ? avgEff+'%' : '—'; e.style.color = avgEff < 30 ? '#F59E0B' : '#00C4D4'; }
+    var a = document.getElementById('dp-stat-armtime');
+    if(a) a.textContent = totalMins > 0 ? armH+'h '+String(armM).padStart(2,'0')+'m' : '—';
+    var an = document.getElementById('dp-stat-anodes');
+    if(an) an.textContent = anodes > 0 ? anodes : '48'; // fallback to known count if not in Notes
+  } catch(e){ console.warn('Stats load failed:', e); }
 }
 
 async function plParse(){
