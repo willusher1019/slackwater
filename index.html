@@ -3722,484 +3722,272 @@ Slackwater — Thames Barrier Operations</div>
   </div>
 
   <!-- SITE LOG TAB -->
-  <div id="t-sitelog" style="display:none;height:calc(100vh - 54px);overflow-y:auto;background:#03070C;flex-direction:column">
+  <div id="t-sitelog" style="display:none;height:calc(100vh - 54px);flex-direction:column;overflow:hidden">
 
     <style>
-      /* ── SITE LOG STYLES ── */
-      .sl-topbar{padding:16px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-shrink:0}
-      .sl-title{font-family:var(--display);font-size:28px;letter-spacing:2px;color:#EDF6FF;line-height:1}
-      .sl-sub{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:1px}
-      .sl-cfg-badge{display:flex;align-items:center;gap:7px;padding:6px 12px;background:rgba(0,196,212,.06);border:1px solid rgba(0,196,212,.2);border-radius:3px;font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;flex-shrink:0}
-      .sl-cfg-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+      /* ── OPLOG STYLES ── */
+      :root{
+        --bg:#03070C; --surface:#060E18; --surface2:#0A1828;
+        --border:rgba(26,51,80,0.6); --border2:rgba(0,196,212,0.25);
+        --text:#EDF6FF; --text2:#B8D4EA; --text3:#6A90AA;
+        --accent:#00C4D4; --amber:#FF9500; --stop:#FF3B3B; --go:#00D96E;
+        --mono:'DM Mono',monospace; --display:'Bebas Neue',sans-serif;
+      }
+      .ol-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+      .ol-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+      .ol-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      .ol-title{font-family:var(--display);font-size:24px;letter-spacing:3px;color:var(--text)}
+      .ol-stats{display:flex;gap:12px}
+      .ol-stat{text-align:center}
+      .ol-stat-n{font-family:var(--display);font-size:20px;letter-spacing:1px}
+      .ol-stat-l{font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text3);margin-top:1px}
+      .ol-body{display:flex;flex:1;overflow:hidden}
+      .ol-form-col{width:340px;flex-shrink:0;overflow-y:auto;border-right:1px solid var(--border);background:var(--surface);padding:14px 16px 32px}
+      .ol-feed-col{flex:1;overflow-y:auto;background:var(--bg);padding:12px 16px 32px}
 
-      /* Upload area */
-      .sl-upload-area{margin:16px 20px 0;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden}
-      .sl-upload-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#03070C}
-      .sl-upload-head-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3)}
-      .sl-drop{border:1px dashed var(--border2);border-radius:4px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;margin:14px;background:#03070C}
-      .sl-drop:hover,.sl-drop.drag{border-color:var(--accent);background:rgba(0,196,212,.04)}
-      .sl-drop-icon{font-size:24px;margin-bottom:8px}
-      .sl-drop-title{font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:3px;letter-spacing:.5px}
-      .sl-drop-sub{font-family:var(--mono);font-size:9px;color:var(--text3)}
-      .sl-doc-list{display:flex;flex-direction:column;gap:4px;margin:0 14px 12px}
-      .sl-doc-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#03070C;border:1px solid var(--border);border-radius:3px}
-      .sl-doc-name{flex:1;font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .sl-doc-size{font-family:var(--mono);font-size:9px;color:var(--text3)}
-      .sl-doc-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px}
-      .sl-analyse-btn{margin:0 14px 14px;width:calc(100% - 28px);background:linear-gradient(135deg,rgba(0,150,180,.9),rgba(0,110,140,.9));border:none;border-top:1px solid var(--accent);color:#EBF5FF;font-family:var(--display);font-size:13px;letter-spacing:3px;padding:13px;cursor:pointer;border-radius:3px;transition:opacity .2s}
-      .sl-analyse-btn:disabled{opacity:.3;cursor:not-allowed}
-      .sl-analyse-btn:hover:not(:disabled){opacity:.85}
+      /* Form elements */
+      .of-section{margin-bottom:14px}
+      .of-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text3);margin-bottom:6px;text-transform:uppercase}
+      .of-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 11px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px;transition:border-color .2s;box-sizing:border-box}
+      .of-input:focus{border-color:var(--accent)}
+      .of-row{display:flex;gap:8px}
+      .of-row .of-section{flex:1}
+      .of-chips{display:flex;flex-wrap:wrap;gap:5px}
+      .of-chip{padding:5px 9px;font-family:var(--mono);font-size:9px;letter-spacing:.5px;border:1px solid var(--border);background:var(--bg);color:var(--text3);border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap}
+      .of-chip:hover{border-color:var(--accent);color:var(--text2)}
+      .of-chip.on{background:rgba(0,196,212,.12);color:var(--accent);border-color:var(--accent)}
+      .of-chip.on-a{background:rgba(255,149,0,.12);color:var(--amber);border-color:var(--amber)}
+      .of-chip.on-r{background:rgba(255,59,59,.12);color:var(--stop);border-color:var(--stop)}
+      .of-chip.on-g{background:rgba(0,217,110,.12);color:var(--go);border-color:var(--go)}
+      .of-textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 11px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px;resize:vertical;min-height:56px;line-height:1.6;transition:border-color .2s;box-sizing:border-box}
+      .of-textarea:focus{border-color:var(--accent)}
+      .of-submit{width:100%;background:linear-gradient(135deg,#006878,#004A58);border:1px solid var(--accent);color:#EBF5FF;font-family:var(--display);font-size:15px;letter-spacing:4px;padding:14px;cursor:pointer;border-radius:3px;margin-top:6px;transition:opacity .2s}
+      .of-submit:hover{opacity:.85}
+      .of-submit:disabled{opacity:.3;cursor:not-allowed}
+      .of-clear{width:100%;background:none;border:none;color:var(--text3);font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:8px;cursor:pointer;margin-top:3px}
 
-      /* Thinking */
-      .sl-thinking{text-align:center;padding:32px 20px}
-      .sl-spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
-      .sl-thinking-text{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.8}
-      .sl-thinking-step{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:6px}
+      /* Feed */
+      .of-feed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+      .of-feed-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3)}
+      .of-feed-count{font-family:var(--mono);font-size:9px;color:var(--accent)}
+      .of-event{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:11px 13px;margin-bottom:8px;border-left:3px solid var(--border)}
+      .of-event.ev-foreseeable{border-left-color:var(--amber)}
+      .of-event.ev-preventable{border-left-color:var(--stop)}
+      .of-event.ev-unavoidable{border-left-color:var(--text3)}
+      .of-event.ev-partial{border-left-color:var(--accent)}
+      .of-ev-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+      .of-ev-type{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:2px;background:rgba(0,196,212,.1);color:var(--accent);border:1px solid rgba(0,196,212,.25);white-space:nowrap;flex-shrink:0}
+      .of-ev-time{font-family:var(--mono);font-size:9px;color:var(--text3);flex-shrink:0}
+      .of-ev-pkg{font-family:var(--mono);font-size:10px;color:var(--text);margin-bottom:3px;font-weight:500}
+      .of-ev-site{font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:6px}
+      .of-ev-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+      .of-ev-tag{font-family:var(--mono);font-size:8px;letter-spacing:.5px;padding:2px 6px;border-radius:2px;border:1px solid var(--border)}
+      .of-ev-cause{font-family:var(--mono);font-size:9px;color:var(--text2);line-height:1.6;margin-top:4px;padding-top:6px;border-top:1px solid var(--border)}
+      .of-ev-prev{font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:2px 6px;border-radius:2px}
+      .of-ev-prev.foreseeable{background:rgba(255,149,0,.1);color:var(--amber);border:1px solid rgba(255,149,0,.25)}
+      .of-ev-prev.preventable{background:rgba(255,59,59,.1);color:var(--stop);border:1px solid rgba(255,59,59,.25)}
+      .of-ev-prev.unavoidable{background:rgba(106,144,170,.1);color:var(--text3);border:1px solid rgba(106,144,170,.25)}
+      .of-ev-prev.partial{background:rgba(0,196,212,.1);color:var(--accent);border:1px solid rgba(0,196,212,.25)}
 
-      /* Company task blocks */
-      .sl-companies{padding:16px 20px 80px;display:flex;flex-direction:column;gap:12px}
-      .sl-co-block{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden}
-      .sl-co-header{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#03070C;border-bottom:1px solid var(--border);cursor:pointer}
-      .sl-co-logo{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
-      .sl-co-name{font-family:var(--mono);font-size:11px;color:var(--text);flex:1;letter-spacing:.5px}
-      .sl-co-count{font-family:var(--mono);font-size:9px;color:var(--text3)}
-      .sl-co-arr{font-family:var(--mono);font-size:9px;color:var(--text3);transition:transform .2s}
-      .sl-co-arr.open{transform:rotate(90deg)}
+      /* Pattern strip */
+      .of-patterns{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:12px 14px;margin-bottom:12px}
+      .of-pat-title{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text3);margin-bottom:10px}
+      .of-pat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .of-pat-label{font-family:var(--mono);font-size:9px;color:var(--text2);flex:1}
+      .of-pat-bar-wrap{width:80px;height:4px;background:var(--border);border-radius:2px;flex-shrink:0}
+      .of-pat-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .5s}
+      .of-pat-n{font-family:var(--mono);font-size:9px;color:var(--accent);width:20px;text-align:right;flex-shrink:0}
+      .of-empty{text-align:center;padding:40px 20px;color:var(--text3)}
+      .of-empty-icon{font-size:32px;margin-bottom:10px}
+      .of-empty-t{font-family:var(--display);font-size:16px;letter-spacing:2px;color:var(--text3);margin-bottom:6px}
+      .of-empty-s{font-family:var(--mono);font-size:9px;line-height:1.7}
 
-      .sl-task-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
-      .sl-task-item:last-child{border-bottom:none}
-      .sl-task-item:hover{background:var(--surface2)}
-      .sl-task-item.logged{background:rgba(0,196,212,.03)}
-      .sl-task-tick{width:20px;height:20px;border-radius:50%;border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;transition:all .2s}
-      .sl-task-tick.done{background:rgba(0,196,212,.15);border-color:var(--accent);color:var(--accent)}
-      .sl-task-tick.blocked{background:rgba(255,59,59,.1);border-color:var(--stop);color:var(--stop)}
-      .sl-task-tick.partial{background:rgba(255,149,0,.1);border-color:var(--amber);color:var(--amber)}
-      .sl-task-info{flex:1;min-width:0}
-      .sl-task-name{font-family:var(--mono);font-size:11px;color:var(--text);margin-bottom:2px;line-height:1.4}
-      .sl-task-meta{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:1px}
-      .sl-task-constraint{font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px}
-      .sl-task-logged{font-family:var(--mono);font-size:9px;color:var(--accent);margin-top:2px}
-      .sl-log-btn{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--accent);background:rgba(0,196,212,.08);border:1px solid rgba(0,196,212,.2);border-radius:3px;padding:4px 8px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+      /* Airtable key */
+      .of-at-bar{padding:8px 16px;background:rgba(255,149,0,.05);border-bottom:1px solid rgba(255,149,0,.15);display:flex;align-items:center;gap:8px;flex-shrink:0}
+      .of-at-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);flex-shrink:0}
+      .of-at-text{font-family:var(--mono);font-size:9px;color:var(--amber);flex:1}
+      .of-at-inp{background:var(--bg);border:1px solid rgba(255,149,0,.3);color:var(--text);padding:5px 9px;font-family:var(--mono);font-size:10px;outline:none;border-radius:3px;flex:1;max-width:280px}
+      .of-at-btn{background:var(--amber);color:#03070C;border:none;padding:5px 12px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:3px;white-space:nowrap}
+      .of-at-ok{font-family:var(--mono);font-size:9px;color:var(--go)}
 
-      /* Modal */
-      .sl-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end}
-      .sl-modal-overlay.open{display:flex}
-      .sl-modal{background:#0A1828;border:1px solid var(--border2);border-radius:8px 8px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:20px 18px 40px;animation:slideUp .25s ease}
-      .sl-modal-handle{width:32px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
-      .sl-modal-task{font-family:var(--display);font-size:20px;letter-spacing:1px;color:#EDF6FF;margin-bottom:3px;line-height:1.2}
-      .sl-modal-co{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:18px}
-      .sl-field{margin-bottom:12px}
-      .sl-field label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:5px}
-      .sl-field input,.sl-field textarea{width:100%;background:#03070C;border:1px solid var(--border);color:var(--text);padding:10px 12px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px;transition:border-color .2s}
-      .sl-field input:focus,.sl-field textarea:focus{border-color:var(--accent)}
-      .sl-field textarea{resize:vertical;min-height:64px;line-height:1.6}
-      .sl-tog-row{display:flex;gap:6px}
-      .sl-tog{flex:1;padding:9px 6px;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid var(--border);background:#03070C;color:var(--text3);border-radius:3px;cursor:pointer;transition:all .15s}
-      .sl-tog.on-g{background:rgba(0,196,212,.12);color:var(--accent);border-color:var(--accent)}
-      .sl-tog.on-a{background:rgba(255,149,0,.12);color:var(--amber);border-color:var(--amber)}
-      .sl-tog.on-r{background:rgba(255,59,59,.12);color:var(--stop);border-color:var(--stop)}
-      .sl-save-btn{width:100%;background:linear-gradient(135deg,rgba(0,150,180,.9),rgba(0,110,140,.9));border:none;border-top:1px solid var(--accent);color:#EBF5FF;font-family:var(--display);font-size:13px;letter-spacing:3px;padding:13px;cursor:pointer;border-radius:3px;margin-top:10px}
-      .sl-cancel-btn{width:100%;background:none;color:var(--text3);border:none;padding:10px;font-family:var(--mono);font-size:9px;letter-spacing:1px;cursor:pointer;margin-top:4px}
-
-      /* Brief strip */
-      .sl-brief-strip{margin:0 20px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden}
-      .sl-brief-head{padding:10px 14px;background:#03070C;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);display:flex;justify-content:space-between;align-items:center}
-      .sl-verdict{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:2px}
-      .sl-verdict.green{background:rgba(0,196,212,.1);color:var(--accent);border:1px solid rgba(0,196,212,.3)}
-      .sl-verdict.amber{background:rgba(255,149,0,.1);color:var(--amber);border:1px solid rgba(255,149,0,.3)}
-      .sl-verdict.red{background:rgba(255,59,59,.1);color:var(--stop);border:1px solid rgba(255,59,59,.3)}
-      .sl-brief-body{padding:12px 14px}
-      .sl-brief-title{font-family:var(--display);font-size:18px;letter-spacing:1px;color:#EDF6FF;margin-bottom:6px}
-      .sl-brief-text{font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7}
-      .sl-brief-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px}
-      .sl-brief-row:last-child{border-bottom:none}
-      .sl-bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:3px}
-      .sl-bdot.green{background:var(--accent)}
-      .sl-bdot.amber{background:var(--amber)}
-      .sl-bdot.red{background:var(--stop)}
-      .sl-action{margin:0 20px 12px;background:#03070C;border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:3px;padding:13px 14px}
-      .sl-action-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text3);margin-bottom:6px}
-      .sl-action-text{font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.7}
-      .sl-stat-row{display:flex;gap:8px;margin:0 20px 12px}
-      .sl-stat{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center}
-      .sl-stat-num{font-family:var(--display);font-size:26px;letter-spacing:1px;line-height:1}
-      .sl-stat-lbl{font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text3);margin-top:4px}
-      .sl-empty{text-align:center;padding:48px 20px}
-      .sl-empty-icon{font-size:28px;margin-bottom:10px}
-      .sl-empty-title{font-family:var(--display);font-size:18px;letter-spacing:2px;color:var(--text);margin-bottom:6px}
-      .sl-empty-sub{font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.7}
-
-      /* API key in sitelog */
-      .sl-api-card{margin:0 20px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px}
-      .sl-api-title{font-family:var(--mono);font-size:10px;color:var(--text);margin-bottom:4px;letter-spacing:.5px}
-      .sl-api-sub{font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:10px;line-height:1.6}
-      .sl-api-row{display:flex;gap:6px}
-      .sl-api-row input{flex:1;background:#03070C;border:1px solid var(--border);color:var(--text);padding:9px 11px;font-family:var(--mono);font-size:10px;outline:none;border-radius:3px}
-      .sl-api-row input:focus{border-color:var(--accent)}
-      .sl-api-row button{background:var(--accent);color:#03070C;border:none;padding:9px 14px;font-family:var(--mono);font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:3px;font-weight:700;white-space:nowrap}
+      @media(max-width:700px){
+        .ol-body{flex-direction:column}
+        .ol-form-col{width:100%;border-right:none;border-bottom:1px solid var(--border)}
+      }
     </style>
 
-    <!-- Topbar -->
-    <div class="sl-topbar">
-      <div>
-        <div class="sl-title">SITE LOG</div>
-        <div class="sl-sub">UPLOAD DOCUMENTS → AI CONFIGURES → LOG TASKS → BRIEF GENERATES</div>
-      </div>
-      <div class="sl-cfg-badge" id="sl-cfg-badge" style="display:none">
-        <div class="sl-cfg-dot"></div>
-        <span id="sl-cfg-text">CONFIGURED</span>
-      </div>
-    </div>
-
-    <!-- API Key -->
-    <div class="sl-api-card" id="sl-api-section" style="display:none;margin-top:16px">
-      <div class="sl-api-title">ANTHROPIC API KEY REQUIRED</div>
-      <div class="sl-api-sub">To read your documents. Stored locally on this device only.</div>
-      <div class="sl-api-row">
-        <input type="password" id="sl-api-input" placeholder="sk-ant-...">
-        <button onclick="slSaveKey()">SAVE KEY</button>
-      </div>
-    </div>
-
-    <!-- Upload area -->
-    <div class="sl-upload-area" style="margin-top:16px">
-      <div class="sl-upload-head">
-        <div class="sl-upload-head-label">SITE DOCUMENTS</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="sl-doc-count">0 uploaded</div>
-      </div>
-      <div class="sl-drop" id="sl-drop" onclick="document.getElementById('sl-file-input').click()">
-        <div class="sl-drop-icon">📄</div>
-        <div class="sl-drop-title">DROP ALL SITE DOCUMENTS HERE</div>
-        <div class="sl-drop-sub">Risk Assessments · Permits · Method Statements · Work Plans · Contracts</div>
-      </div>
-      <input type="file" id="sl-file-input" style="display:none" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg">
-      <div class="sl-doc-list" id="sl-doc-list"></div>
-      <button class="sl-analyse-btn" id="sl-analyse-btn" onclick="slAnalyse()" disabled>READ DOCUMENTS & BUILD SITE LOG →</button>
-    </div>
-
-    <!-- Brief summary (shown after logging starts) -->
-    <div id="sl-brief-area" style="margin-top:16px;display:none">
-      <div class="sl-brief-strip">
-        <div class="sl-brief-head">
-          <span>TODAY'S BRIEF</span>
-          <span id="sl-verdict-pill" class="sl-verdict green">● GOOD PROGRESS</span>
-        </div>
-        <div class="sl-brief-body">
-          <div class="sl-brief-title" id="sl-brief-title">Good progress today.</div>
-          <div class="sl-brief-text" id="sl-brief-text">0 complete · 0 blocked · 0 partial</div>
-        </div>
-      </div>
-      <div class="sl-stat-row">
-        <div class="sl-stat"><div class="sl-stat-num" style="color:var(--accent)" id="sl-stat-done">0</div><div class="sl-stat-lbl">COMPLETE</div></div>
-        <div class="sl-stat"><div class="sl-stat-num" style="color:var(--amber)" id="sl-stat-part">0</div><div class="sl-stat-lbl">PARTIAL</div></div>
-        <div class="sl-stat"><div class="sl-stat-num" style="color:var(--stop)" id="sl-stat-blk">0</div><div class="sl-stat-lbl">BLOCKED</div></div>
-      </div>
-      <div class="sl-action" id="sl-action">
-        <div class="sl-action-label">TONIGHT'S ACTION</div>
-        <div class="sl-action-text" id="sl-action-text">"Confirm crew for tomorrow and brief all contractors by 20:00."</div>
-      </div>
-    </div>
-
-    <!-- Tasks by company -->
-    <div class="sl-companies" id="sl-companies" style="display:none"></div>
-
-    <!-- Empty state for tasks -->
-    <div class="sl-empty" id="sl-empty" style="display:none">
-      <div class="sl-empty-icon">📋</div>
-      <div class="sl-empty-title">NO SITE CONFIGURED</div>
-      <div class="sl-empty-sub">Upload your site documents above.<br>AI will read them and build your task log here.</div>
-    </div>
+  <!-- Airtable key bar -->
+  <div class="of-at-bar" id="of-at-bar">
+    <div class="of-at-dot"></div>
+    <div class="of-at-text">Airtable not connected — events saved locally only.</div>
+    <input class="of-at-inp" id="of-at-inp" type="password" placeholder="Paste Airtable key to sync...">
+    <button class="of-at-btn" onclick="ofSaveAtKey()">CONNECT</button>
+  </div>
+  <div class="of-at-bar" id="of-at-ok" style="display:none;background:rgba(0,217,110,.05);border-bottom-color:rgba(0,217,110,.2)">
+    <div class="of-at-dot" style="background:var(--go)"></div>
+    <div class="of-at-ok">● Airtable connected — events sync automatically</div>
+    <button onclick="ofClearAtKey()" style="background:none;border:none;color:var(--text3);font-family:var(--mono);font-size:9px;cursor:pointer;margin-left:auto">Disconnect</button>
   </div>
 
-  <!-- SITE LOG MODAL -->
-  <div class="sl-modal-overlay" id="sl-modal" onclick="slCloseModalOutside(event)">
-    <div class="sl-modal">
-      <div class="sl-modal-handle"></div>
-      <div class="sl-modal-task" id="sl-m-task"></div>
-      <div class="sl-modal-co" id="sl-m-co"></div>
-      <div class="sl-field">
-        <label>OUTCOME</label>
-        <div class="sl-tog-row">
-          <button class="sl-tog on-g" id="sl-tog-complete" onclick="slSetOutcome('complete')">COMPLETE</button>
-          <button class="sl-tog" id="sl-tog-partial" onclick="slSetOutcome('partial')">PARTIAL</button>
-          <button class="sl-tog" id="sl-tog-blocked" onclick="slSetOutcome('blocked')">BLOCKED</button>
+  <div class="ol-wrap">
+
+    <!-- Header -->
+    <div class="ol-header">
+      <div class="ol-header-top">
+        <div class="ol-title">OPERATIONAL LOG</div>
+        <div class="ol-stats">
+          <div class="ol-stat"><div class="ol-stat-n" style="color:var(--accent)" id="of-count">0</div><div class="ol-stat-l">EVENTS</div></div>
+          <div class="ol-stat"><div class="ol-stat-n" style="color:var(--amber)" id="of-hrs">0h</div><div class="ol-stat-l">LOST</div></div>
+          <div class="ol-stat"><div class="ol-stat-n" style="color:var(--stop)" id="of-cost">£0</div><div class="ol-stat-l">EXPOSURE</div></div>
+          <div class="ol-stat"><div class="ol-stat-n" style="color:var(--go)" id="of-prev-pct">—</div><div class="ol-stat-l">PREVENTABLE</div></div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="sl-field"><label>START TIME</label><input type="time" id="sl-m-start"></div>
-        <div class="sl-field"><label>END TIME</label><input type="time" id="sl-m-end"></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px">Every event logged builds the case that operational inefficiency is structurally predictable.</div>
+    </div>
+
+    <div class="ol-body">
+
+      <!-- LEFT: Event form -->
+      <div class="ol-form-col">
+        <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:12px">LOG NEW EVENT</div>
+
+        <div class="of-row">
+          <div class="of-section">
+            <div class="of-label">Site</div>
+            <select class="of-input" id="of-site">
+              <option value="">Select site...</option>
+              <option>Thames Barrier</option>
+              <option>Network Rail</option>
+              <option>National Highways</option>
+              <option>Hornsea Wind</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="of-section">
+            <div class="of-label">Date</div>
+            <input type="date" class="of-input" id="of-date">
+          </div>
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Work Package — what was planned?</div>
+          <input type="text" class="of-input" id="of-pkg" placeholder="e.g. Anode cutting Leaf G, Gate inspection...">
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Event Type</div>
+          <div class="of-chips" id="of-chips-event">
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">DELAYED START</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">STAND DOWN</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">ACCESS ISSUE</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">PERMIT ISSUE</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">ENVIRONMENTAL HOLD</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">PLANT FAILURE</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">LABOUR SHORTAGE</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">INSPECTION CONFLICT</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">MATERIAL ISSUE</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">SEQUENCING CLASH</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">WEATHER HOLD</button>
+            <button class="of-chip" data-g="event" onclick="ofChip(this,'event')">TIDE RESTRICTION</button>
+          </div>
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Constraint Type — what caused it?</div>
+          <div class="of-chips" id="of-chips-constraint">
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">TIDE</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">WEATHER</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">PERMIT</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">THIRD-PARTY</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">ACCESS</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">LABOUR</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">PLANT</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">SAFETY</button>
+            <button class="of-chip" data-g="constraint" onclick="ofChip(this,'constraint')">LOGISTICS</button>
+          </div>
+        </div>
+
+        <div class="of-row">
+          <div class="of-section">
+            <div class="of-label">Labour Affected</div>
+            <input type="number" class="of-input" id="of-labour" placeholder="People" min="0" max="999">
+          </div>
+          <div class="of-section">
+            <div class="of-label">Time Lost (hrs)</div>
+            <input type="number" class="of-input" id="of-hours" placeholder="0.0" step="0.5" min="0">
+          </div>
+          <div class="of-section">
+            <div class="of-label">Est. Cost (£)</div>
+            <input type="number" class="of-input" id="of-cost-inp" placeholder="0" step="100" min="0">
+          </div>
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Preventability</div>
+          <div class="of-chips">
+            <button class="of-chip" data-g="prev" onclick="ofChip(this,'prev')">FORESEEABLE</button>
+            <button class="of-chip" data-g="prev" onclick="ofChip(this,'prev')">PREVENTABLE</button>
+            <button class="of-chip" data-g="prev" onclick="ofChip(this,'prev')">PARTIALLY PREVENTABLE</button>
+            <button class="of-chip" data-g="prev" onclick="ofChip(this,'prev')">UNAVOIDABLE</button>
+          </div>
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Root Cause — why did it REALLY happen?</div>
+          <textarea class="of-textarea" id="of-cause" placeholder="Not what happened — why. e.g. 'Third-party inspection not communicated at morning briefing'"></textarea>
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Recovery Action</div>
+          <div class="of-chips" style="margin-bottom:6px" id="of-chips-recovery">
+            <button class="of-chip" data-g="recovery" onclick="ofChip(this,'recovery')">FALLBACK WORK</button>
+            <button class="of-chip" data-g="recovery" onclick="ofChip(this,'recovery')">REDUCED CREW</button>
+            <button class="of-chip" data-g="recovery" onclick="ofChip(this,'recovery')">RESEQUENCE</button>
+            <button class="of-chip" data-g="recovery" onclick="ofChip(this,'recovery')">STAND DOWN</button>
+            <button class="of-chip" data-g="recovery" onclick="ofChip(this,'recovery')">DELAY START</button>
+            <button class="of-chip" data-g="recovery" onclick="ofChip(this,'recovery')">SPLIT TASKS</button>
+          </div>
+          <input type="text" class="of-input" id="of-recovery-other" placeholder="Additional detail (optional)">
+        </div>
+
+        <div class="of-section">
+          <div class="of-label">Lessons Learned <span style="color:var(--text3)">(optional)</span></div>
+          <textarea class="of-textarea" id="of-lessons" placeholder="What should change? What would have prevented this?"></textarea>
+        </div>
+
+        <button class="of-submit" id="of-submit" onclick="ofSubmit()">LOG EVENT →</button>
+        <button class="of-clear" onclick="ofClearForm()">Clear form</button>
       </div>
-      <div class="sl-field"><label>CREW ON TASK</label><input type="number" id="sl-m-crew" placeholder="People" min="0" max="99"></div>
-      <div class="sl-field" id="sl-m-permit-field" style="display:none"><label>PERMIT / REF</label><input type="text" id="sl-m-permit"></div>
-      <div class="sl-field"><label>NOTES</label><textarea id="sl-m-notes" placeholder="What happened? Delays, issues, deviations..."></textarea></div>
-      <button class="sl-save-btn" onclick="slSaveLog()">SAVE LOG ENTRY →</button>
-      <button class="sl-cancel-btn" onclick="slCloseModal()">Cancel</button>
+
+      <!-- RIGHT: Feed + patterns -->
+      <div class="ol-feed-col">
+
+        <!-- Pattern strip (shown once 3+ events logged) -->
+        <div class="of-patterns" id="of-patterns" style="display:none">
+          <div class="of-pat-title">EMERGING PATTERNS</div>
+          <div id="of-pat-body"></div>
+        </div>
+
+        <div class="of-feed-head">
+          <div class="of-feed-title">EVENT FEED — NEWEST FIRST</div>
+          <div class="of-feed-count" id="of-feed-count"></div>
+        </div>
+
+        <div id="of-feed">
+          <div class="of-empty" id="of-empty-state">
+            <div class="of-empty-icon">📋</div>
+            <div class="of-empty-t">NO EVENTS LOGGED YET</div>
+            <div class="of-empty-s">Every event you log becomes evidence.<br>Start with today's site activities.</div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- SITE LOG JAVASCRIPT -->
-  <script>
-  (function(){
-    var SL = {docs:[], tasks:[], logs:[], configured:false};
-    var slModalTask = null;
-    var slOutcome = 'complete';
+  <!-- SITE LOG JAVASCRIPT removed — new OPLOG script added before </body> -->
 
-    // ── API KEY ──
-    function slCheckKey(){
-      window._swApiKey = window._swApiKey || localStorage.getItem('sw_api_key') || '';
-      if(!window._swApiKey) document.getElementById('sl-api-section').style.display = 'block';
-    }
-    window.slSaveKey = function(){
-      var k = document.getElementById('sl-api-input').value.trim();
-      if(!k) return;
-      localStorage.setItem('sw_api_key',k);
-      window._swApiKey = k;
-      document.getElementById('sl-api-section').style.display = 'none';
-    };
-
-    // ── LOAD STATE ──
-    function slLoad(){
-      try{
-        var raw = localStorage.getItem('sw_sitelog_tb');
-        if(!raw) return;
-        var saved = JSON.parse(raw);
-        SL.tasks = saved.tasks||[];
-        SL.logs = saved.logs||[];
-        SL.configured = saved.configured||false;
-        SL.docs = saved.docMeta||[];
-        SL.tasks.forEach(function(t,i){if(!t.id)t.id='sl'+i;});
-        if(SL.configured){ slRenderConfigured(); slRenderTasks(); slUpdateBrief(); }
-        document.getElementById('sl-doc-count').textContent = SL.docs.length+' uploaded';
-      }catch(e){}
-    }
-    function slSave(){
-      localStorage.setItem('sw_sitelog_tb',JSON.stringify({
-        tasks:SL.tasks, logs:SL.logs, configured:SL.configured, docMeta:SL.docs
-      }));
-    }
-
-    // ── FILE UPLOAD ──
-    var slDrop = document.getElementById('sl-drop');
-    slDrop.addEventListener('dragover',function(e){e.preventDefault();slDrop.classList.add('drag');});
-    slDrop.addEventListener('dragleave',function(){slDrop.classList.remove('drag');});
-    slDrop.addEventListener('drop',function(e){e.preventDefault();slDrop.classList.remove('drag');slAddFiles(e.dataTransfer.files);});
-    document.getElementById('sl-file-input').addEventListener('change',function(e){slAddFiles(e.target.files);});
-
-    function slAddFiles(files){
-      Array.from(files).forEach(function(f){
-        var r = new FileReader();
-        r.onload = function(e){
-          SL.docs.push({name:f.name, size:f.size, b64:e.target.result.split(',')[1], type:f.type});
-          slRenderDocs();
-        };
-        r.readAsDataURL(f);
-      });
-    }
-    window.slRemoveDoc = function(i){ SL.docs.splice(i,1); slRenderDocs(); };
-    function slRenderDocs(){
-      document.getElementById('sl-doc-count').textContent = SL.docs.length+' uploaded';
-      document.getElementById('sl-analyse-btn').disabled = SL.docs.length === 0;
-      document.getElementById('sl-doc-list').innerHTML = SL.docs.map(function(d,i){
-        return '<div class="sl-doc-item">'+
-          '<div class="sl-doc-name">'+d.name+'</div>'+
-          '<div class="sl-doc-size">'+Math.round(d.size/1024)+'kb</div>'+
-          '<button class="sl-doc-rm" onclick="slRemoveDoc('+i+')">×</button>'+
-        '</div>';
-      }).join('');
-    }
-
-    // ── ANALYSE ──
-    window.slAnalyse = async function(){
-      var apiKey = window._swApiKey || localStorage.getItem('sw_api_key');
-      if(!apiKey){ document.getElementById('sl-api-section').style.display='block'; return; }
-      var btn = document.getElementById('sl-analyse-btn');
-      btn.disabled = true; btn.textContent = 'READING DOCUMENTS...';
-
-      var th = document.createElement('div');
-      th.className = 'sl-thinking'; th.id = 'sl-thinking';
-      th.innerHTML = '<div class="sl-spinner"></div><div class="sl-thinking-text">Reading your documents...<br>Extracting tasks, permits and constraints.</div><div class="sl-thinking-step" id="sl-thinking-step">Analysing '+SL.docs.length+' document'+(SL.docs.length>1?'s':'')+'...</div>';
-      document.querySelector('.sl-upload-area').after(th);
-
-      var blocks = [];
-      SL.docs.forEach(function(d){
-        if(d.type==='application/pdf'||d.type.startsWith('image/')){
-          blocks.push({type:'document',source:{type:'base64',media_type:d.type==='application/pdf'?'application/pdf':d.type,data:d.b64}});
-        } else {
-          try{ blocks.push({type:'text',text:'=== '+d.name+' ===\n'+atob(d.b64)}); }
-          catch(e){ blocks.push({type:'text',text:'=== '+d.name+' === [attached]'}); }
-        }
-      });
-      blocks.push({type:'text',text:'Extract all operational tasks from these site documents. Return ONLY a valid JSON array with no markdown or explanation.\n\nEach object:\n{\n  "id": "unique_id",\n  "company": "Full company name",\n  "companyShort": "Short name max 8 chars",\n  "companyColor": "Hex colour e.g. #0E7CC2",\n  "task": "Specific task with exact location/section",\n  "location": "Exact location",\n  "permit": "Permit or RA reference, or empty string",\n  "crew_min": 0,\n  "constraint": "Hard constraint or empty string",\n  "sequence": 1,\n  "status": "pending"\n}\n\nGroup by company. Sequence tasks in logical work order. Use exact names and references from the documents.'});
-
-      try{
-        var res = await fetch('https://api.anthropic.com/v1/messages',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','x-api-key':apiKey,'anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:blocks}]})
-        });
-        var data = await res.json();
-        var raw = (data.content&&data.content[0]&&data.content[0].text)||'';
-        var m = raw.match(/\[[\s\S]*\]/);
-        if(m){ SL.tasks = JSON.parse(m[0]); }
-        else{ throw new Error('no json'); }
-      }catch(e){
-        SL.tasks = slDefaultTasks();
-      }
-      SL.tasks.forEach(function(t,i){if(!t.id)t.id='sl'+i;});
-      SL.configured = true;
-      slSave();
-      var thEl = document.getElementById('sl-thinking'); if(thEl) thEl.remove();
-      slRenderConfigured(); slRenderTasks(); slUpdateBrief();
-      btn.disabled = false; btn.textContent = 'RE-READ DOCUMENTS →';
-    };
-
-    function slRenderConfigured(){
-      var badge = document.getElementById('sl-cfg-badge');
-      badge.style.display = 'flex';
-      document.getElementById('sl-cfg-text').textContent = SL.docs.length+' DOCS · '+SL.tasks.length+' TASKS';
-    }
-
-    // ── RENDER TASKS ──
-    function slRenderTasks(){
-      var el = document.getElementById('sl-companies');
-      el.style.display = 'flex';
-      document.getElementById('sl-empty').style.display = 'none';
-      if(!SL.tasks.length){ el.style.display='none'; document.getElementById('sl-empty').style.display='block'; return; }
-      var cos = {};
-      SL.tasks.forEach(function(t){
-        if(!cos[t.companyShort]) cos[t.companyShort]={name:t.company,short:t.companyShort,color:t.companyColor,tasks:[]};
-        cos[t.companyShort].tasks.push(t);
-      });
-      el.innerHTML = Object.values(cos).map(function(co){
-        var logged = SL.logs.filter(function(l){return l.company===co.short;}).length;
-        var tasks = co.tasks.map(function(t){
-          var log = SL.logs.find(function(l){return l.task_id===t.id;});
-          var tc = log?(log.outcome==='blocked'?'blocked':log.outcome==='partial'?'partial':'done'):'';
-          var tt = log?(log.outcome==='blocked'?'✕':log.outcome==='partial'?'~':'✓'):'';
-          return '<div class="sl-task-item'+(log?' logged':'')+'" onclick="slOpenModal(\''+t.id+'\')">'+
-            '<div class="sl-task-tick '+tc+'">'+tt+'</div>'+
-            '<div class="sl-task-info">'+
-              '<div class="sl-task-name">'+t.task+'</div>'+
-              '<div class="sl-task-meta">'+t.location+(t.permit?' · '+t.permit:'')+(t.crew_min?' · Min '+t.crew_min+'':'')+' crew</div>'+
-              (t.constraint?'<div class="sl-task-constraint">⚠ '+t.constraint+'</div>':'')+
-              (log?'<div class="sl-task-logged">✓ '+log.start+(log.end?' – '+log.end:'')+(log.crew?' · '+log.crew+' crew':'')+'</div>':'')+
-            '</div>'+
-            '<button class="sl-log-btn">'+( log?'EDIT':'LOG')+'</button>'+
-          '</div>';
-        }).join('');
-        return '<div class="sl-co-block">'+
-          '<div class="sl-co-header" onclick="slToggleCo(\'slco-'+co.short+'\',\'slcoarr-'+co.short+'\')">'+
-            '<div class="sl-co-logo" style="background:'+co.color+'">'+co.short.substring(0,2).toUpperCase()+'</div>'+
-            '<div class="sl-co-name">'+co.name+'</div>'+
-            '<div class="sl-co-count">'+logged+'/'+co.tasks.length+' LOGGED</div>'+
-            '<div class="sl-co-arr open" id="slcoarr-'+co.short+'">▶</div>'+
-          '</div>'+
-          '<div id="slco-'+co.short+'">'+tasks+'</div>'+
-        '</div>';
-      }).join('');
-    }
-    window.slToggleCo = function(listId,arrId){
-      var el=document.getElementById(listId); var arr=document.getElementById(arrId);
-      var open=el.style.display!=='none';
-      el.style.display=open?'none':'block';
-      if(arr) arr.classList.toggle('open',!open);
-    };
-
-    // ── MODAL ──
-    window.slOpenModal = function(taskId){
-      slModalTask = taskId;
-      var t = SL.tasks.find(function(x){return x.id===taskId;});
-      if(!t) return;
-      var log = SL.logs.find(function(l){return l.task_id===taskId;});
-      var now = new Date();
-      var hh = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-      document.getElementById('sl-m-task').textContent = t.task;
-      document.getElementById('sl-m-co').textContent = t.company.toUpperCase()+(t.location?' · '+t.location:'');
-      document.getElementById('sl-m-start').value = log?log.start:hh;
-      document.getElementById('sl-m-end').value = log?log.end:'';
-      document.getElementById('sl-m-crew').value = log?log.crew:(t.crew_min||'');
-      document.getElementById('sl-m-notes').value = log?log.notes:'';
-      document.getElementById('sl-m-permit').value = log?log.permit:(t.permit||'');
-      document.getElementById('sl-m-permit-field').style.display = t.permit?'block':'none';
-      slSetOutcome(log?log.outcome:'complete');
-      document.getElementById('sl-modal').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    };
-    window.slSetOutcome = function(o){
-      slOutcome = o;
-      ['complete','partial','blocked'].forEach(function(x){ document.getElementById('sl-tog-'+x).className='sl-tog'; });
-      var cls = o==='complete'?'sl-tog on-g':o==='partial'?'sl-tog on-a':'sl-tog on-r';
-      document.getElementById('sl-tog-'+o).className = cls;
-    };
-    window.slCloseModal = function(){ document.getElementById('sl-modal').classList.remove('open'); document.body.style.overflow=''; };
-    window.slCloseModalOutside = function(e){ if(e.target===document.getElementById('sl-modal')) slCloseModal(); };
-    window.slSaveLog = function(){
-      var t = SL.tasks.find(function(x){return x.id===slModalTask;}); if(!t) return;
-      SL.logs = SL.logs.filter(function(l){return l.task_id!==slModalTask;});
-      SL.logs.push({
-        task_id:slModalTask, company:t.companyShort, task:t.task, location:t.location,
-        outcome:slOutcome,
-        start:document.getElementById('sl-m-start').value,
-        end:document.getElementById('sl-m-end').value,
-        crew:document.getElementById('sl-m-crew').value,
-        permit:document.getElementById('sl-m-permit').value,
-        notes:document.getElementById('sl-m-notes').value,
-        ts:new Date().toISOString()
-      });
-      slSave(); slRenderTasks(); slUpdateBrief(); slCloseModal();
-    };
-
-    // ── BRIEF ──
-    function slUpdateBrief(){
-      var done = SL.logs.filter(function(l){return l.outcome==='complete';}).length;
-      var blk = SL.logs.filter(function(l){return l.outcome==='blocked';}).length;
-      var part = SL.logs.filter(function(l){return l.outcome==='partial';}).length;
-      var rem = SL.tasks.length - SL.logs.length;
-      if(!SL.logs.length){ document.getElementById('sl-brief-area').style.display='none'; return; }
-      document.getElementById('sl-brief-area').style.display = 'block';
-      var vc = blk>2?'red':blk>0||part>0?'amber':'green';
-      var vp = blk>2?'● BLOCKAGES':blk>0?'● PARTIAL':'● GOOD PROGRESS';
-      var vt = blk>2?'Multiple tasks blocked. Review tonight.' :
-               blk>0?'Progress made. '+blk+' task'+(blk>1?'s':'')+' blocked — review tonight.' :
-               'Good progress across all contractors.';
-      document.getElementById('sl-verdict-pill').textContent = vp;
-      document.getElementById('sl-verdict-pill').className = 'sl-verdict '+vc;
-      document.getElementById('sl-brief-title').textContent = vt;
-      document.getElementById('sl-brief-text').textContent = done+' complete · '+blk+' blocked · '+part+' partial · '+rem+' not yet logged';
-      document.getElementById('sl-stat-done').textContent = done;
-      document.getElementById('sl-stat-part').textContent = part;
-      document.getElementById('sl-stat-blk').textContent = blk;
-      var actionText = blk>0
-        ? '"Review '+blk+' blocked task'+(blk>1?'s':'')+'. Confirm whether constraint resolves overnight. Notify crews before 19:00."'
-        : rem>3 ? '"Complete logging for remaining tasks. Confirm crew availability for tomorrow before 19:00."'
-        : '"Good day. Confirm crew for tomorrow and check tidal window. Brief all contractors by 20:00."';
-      document.getElementById('sl-action-text').textContent = actionText;
-    }
-
-    // ── DEFAULT TASKS ──
-    function slDefaultTasks(){
-      return [
-        {id:'sl-ea1',company:'Environment Agency',companyShort:'EA',companyColor:'#059669',task:'Daily tidal go/no-go confirmation',location:'Control Room',permit:'EA-OPS-2026',crew_min:1,constraint:'Must be confirmed by 06:00 daily',sequence:1,status:'pending'},
-        {id:'sl-ea2',company:'Environment Agency',companyShort:'EA',companyColor:'#059669',task:'Monthly gate rotation check',location:'All Leaves A–K',permit:'EA-MAINT-2026',crew_min:2,constraint:'Duration must be checked against tidal window',sequence:2,status:'pending'},
-        {id:'sl-bb1',company:'Balfour Beatty',companyShort:'BB',companyColor:'#DC2626',task:'Leaf B scaffold section 3 upper — completion',location:'Leaf B Section 3 Upper',permit:'PTW-BB-B-003',crew_min:4,constraint:'Must complete before All Task handover',sequence:1,status:'pending'},
-        {id:'sl-bb2',company:'Balfour Beatty',companyShort:'BB',companyColor:'#DC2626',task:'Bolt survey & mapping — Leaf B',location:'Leaf B all sections',permit:'PTW-BB-B-001',crew_min:2,constraint:'ERT must be on station',sequence:2,status:'pending'},
-        {id:'sl-bb3',company:'Balfour Beatty',companyShort:'BB',companyColor:'#DC2626',task:'Leaf G scaffold sections 1 & 2',location:'Leaf G Sections 1 & 2',permit:'PTW-BB-G-001',crew_min:4,constraint:'PTW Leaf G required first',sequence:3,status:'pending'},
-        {id:'sl-dc1',company:'DiveCo',companyShort:'DiveCo',companyColor:'#0E7CC2',task:'ERT standby — all leaf access works',location:'Barrier vessel',permit:'DIVE-ERT-2026',crew_min:4,constraint:'Minimum 4-person ERT before any leaf access',sequence:1,status:'pending'},
-        {id:'sl-dc2',company:'DiveCo',companyShort:'DiveCo',companyColor:'#0E7CC2',task:'Anode cutting — Leaf G remaining anodes',location:'Leaf G barrier arm',permit:'DIVE-G-AC-001',crew_min:5,constraint:'Min 2 divers + 3 ERT + Captain. Primary task.',sequence:2,status:'pending'},
-        {id:'sl-dc3',company:'DiveCo',companyShort:'DiveCo',companyColor:'#0E7CC2',task:'Bolt cellblock cleaning — Leaf G sections A–D',location:'Leaf G Sections A–D',permit:'DIVE-G-CLEAN-001',crew_min:4,constraint:'Secondary task — fallback if arm access unavailable',sequence:3,status:'pending'},
-        {id:'sl-dc4',company:'DiveCo',companyShort:'DiveCo',companyColor:'#0E7CC2',task:'Jet wash — main passage Golf',location:'Main passage Leaf G',permit:'DIVE-G-JW-001',crew_min:3,constraint:'EA crane required for setup',sequence:4,status:'pending'},
-        {id:'sl-at1',company:'All Task',companyShort:'AllTask',companyColor:'#7C3AED',task:'Leaf B scaffold handover to Balfour Beatty',location:'Leaf B Sections 1 & 2',permit:'SCAFFOLD-B-001',crew_min:3,constraint:'Section 3 must be 100% complete first',sequence:1,status:'pending'},
-        {id:'sl-at2',company:'All Task',companyShort:'AllTask',companyColor:'#7C3AED',task:'Leaf G scaffold sections 1 & 2 — erect',location:'Leaf G Sections 1 & 2',permit:'SCAFFOLD-G-001',crew_min:4,constraint:'PTW Leaf G required first',sequence:2,status:'pending'},
-        {id:'sl-ap1',company:'Apollo Crane Services',companyShort:'Apollo',companyColor:'#D97706',task:'Materials lift to Leaf B',location:'South bank to Leaf B',permit:'LIFT-B-2026',crew_min:3,constraint:'Wind hard stop 10 m/s. No lifts during DiveCo diving.',sequence:1,status:'pending'},
-        {id:'sl-ap2',company:'Apollo Crane Services',companyShort:'Apollo',companyColor:'#D97706',task:'Materials lift to Leaf G',location:'South bank to Leaf G',permit:'LIFT-G-2026',crew_min:3,constraint:'PTW Leaf G + lift plan approved first',sequence:2,status:'pending'},
-      ];
-    }
-
-    // ── INIT ──
-    slLoad();
-    slCheckKey();
-  })();
-  </script>
 
   <!-- AI AGENT -->
   <div id="t-ai" class="abody g2l" style="height:calc(100vh - 52px);display:none">
@@ -5206,6 +4994,273 @@ document.addEventListener('DOMContentLoaded',()=>{
       '</div>';
     }).join('');
   }
+})();
+</script>
+
+<script>
+/* ══════════════════════════════════
+   OPERATIONAL LOG — OPLOG
+   Airtable table: "Operational Log" (create in your base)
+   Table ID used: appy8H4ScWKSrFOI5
+══════════════════════════════════ */
+(function(){
+
+var OPLOG_KEY = 'sw_oplog_v1';
+var AT_TABLE_ID = 'appy8H4ScWKSrFOI5';
+var AT_TABLE_NAME = 'Operational%20Log';
+
+// State
+var ofState = {
+  event: null,
+  constraint: null,
+  prev: null,
+  recovery: null
+};
+
+// Load Airtable key
+function ofGetAtKey(){ return localStorage.getItem('sw_at_key') || ''; }
+
+function ofSaveAtKey(){
+  var v = document.getElementById('of-at-inp').value.trim();
+  if(!v) return;
+  localStorage.setItem('sw_at_key', v);
+  ofShowAtStatus();
+}
+window.ofSaveAtKey = ofSaveAtKey;
+
+function ofClearAtKey(){
+  localStorage.removeItem('sw_at_key');
+  ofShowAtStatus();
+}
+window.ofClearAtKey = ofClearAtKey;
+
+function ofShowAtStatus(){
+  var key = ofGetAtKey();
+  var bar = document.getElementById('of-at-bar');
+  var ok = document.getElementById('of-at-ok');
+  if(!bar || !ok) return;
+  if(key){ bar.style.display='none'; ok.style.display='flex'; }
+  else { bar.style.display='flex'; ok.style.display='none'; }
+}
+
+// Set today's date as default
+function ofInitDate(){
+  var d = document.getElementById('of-date');
+  if(!d) return;
+  var t = new Date();
+  var y = t.getFullYear();
+  var m = String(t.getMonth()+1).padStart(2,'0');
+  var day = String(t.getDate()).padStart(2,'0');
+  d.value = y+'-'+m+'-'+day;
+}
+
+// Chip selection (single-select per group)
+window.ofChip = function(el, group){
+  document.querySelectorAll('[data-g="'+group+'"]').forEach(function(b){ b.classList.remove('on','on-a','on-r','on-g'); });
+  el.classList.add('on');
+  ofState[group] = el.textContent.trim();
+};
+
+// Load events from localStorage
+function ofLoad(){
+  try{ return JSON.parse(localStorage.getItem(OPLOG_KEY)) || []; }
+  catch(e){ return []; }
+}
+
+function ofSave(events){
+  localStorage.setItem(OPLOG_KEY, JSON.stringify(events));
+}
+
+// Submit
+window.ofSubmit = function(){
+  var site = document.getElementById('of-site').value;
+  var date = document.getElementById('of-date').value;
+  var pkg = document.getElementById('of-pkg').value.trim();
+  var labour = parseInt(document.getElementById('of-labour').value) || 0;
+  var hours = parseFloat(document.getElementById('of-hours').value) || 0;
+  var cost = parseInt(document.getElementById('of-cost-inp').value) || 0;
+  var cause = document.getElementById('of-cause').value.trim();
+  var recoveryOther = document.getElementById('of-recovery-other').value.trim();
+  var lessons = document.getElementById('of-lessons').value.trim();
+
+  if(!site){ alert('Please select a site.'); return; }
+  if(!pkg){ alert('Please enter the work package.'); return; }
+  if(!ofState.event){ alert('Please select an event type.'); return; }
+  if(!ofState.constraint){ alert('Please select a constraint type.'); return; }
+  if(!ofState.prev){ alert('Please select preventability.'); return; }
+  if(!cause){ alert('Please enter the root cause — this is the most important field.'); return; }
+
+  var btn = document.getElementById('of-submit');
+  btn.disabled = true;
+  btn.textContent = 'LOGGING...';
+
+  var event = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    date: date,
+    site: site,
+    workPackage: pkg,
+    eventType: ofState.event,
+    constraintType: ofState.constraint,
+    labourAffected: labour,
+    timeLostHrs: hours,
+    estimatedCost: cost,
+    preventability: ofState.prev,
+    rootCause: cause,
+    recoveryAction: (ofState.recovery || '') + (recoveryOther ? (ofState.recovery ? ' — '+recoveryOther : recoveryOther) : ''),
+    lessonsLearned: lessons
+  };
+
+  var events = ofLoad();
+  events.unshift(event);
+  ofSave(events);
+
+  // Push to Airtable (requires "Operational Log" table in your Airtable base)
+  var atKey = ofGetAtKey();
+  if(atKey){
+    fetch('https://api.airtable.com/v0/'+AT_TABLE_ID+'/'+AT_TABLE_NAME, {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+atKey,'Content-Type':'application/json'},
+      body: JSON.stringify({ fields: {
+        'Date': event.date,
+        'Site': event.site,
+        'Work Package': event.workPackage,
+        'Event Type': event.eventType,
+        'Constraint Type': event.constraintType,
+        'Labour Affected': event.labourAffected,
+        'Time Lost (hrs)': event.timeLostHrs,
+        'Estimated Cost (£)': event.estimatedCost,
+        'Preventability': event.preventability,
+        'Root Cause': event.rootCause,
+        'Recovery Action': event.recoveryAction,
+        'Lessons Learned': event.lessonsLearned
+      }})
+    }).catch(function(){});
+  }
+
+  ofRender(events);
+  ofClearForm();
+  btn.disabled = false;
+  btn.textContent = 'LOG EVENT →';
+};
+
+window.ofClearForm = function(){
+  ['of-site','of-pkg','of-labour','of-hours','of-cost-inp','of-cause','of-recovery-other','of-lessons'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value = id==='of-site'?'':id==='of-date'?el.value:'';
+  });
+  document.querySelectorAll('.of-chip').forEach(function(b){ b.classList.remove('on','on-a','on-r','on-g'); });
+  ofState = { event:null, constraint:null, prev:null, recovery:null };
+  ofInitDate();
+};
+
+// Render feed + stats
+function ofRender(events){
+  if(!events) events = ofLoad();
+
+  // Stats
+  var totalHrs = events.reduce(function(s,e){ return s + (e.timeLostHrs||0); }, 0);
+  var totalCost = events.reduce(function(s,e){ return s + (e.estimatedCost||0); }, 0);
+  var prevCount = events.filter(function(e){ return e.preventability==='PREVENTABLE' || e.preventability==='FORESEEABLE' || e.preventability==='PARTIALLY PREVENTABLE'; }).length;
+  var prevPct = events.length ? Math.round(prevCount/events.length*100) : null;
+
+  var cEl = document.getElementById('of-count');
+  var hEl = document.getElementById('of-hrs');
+  var coEl = document.getElementById('of-cost');
+  var ppEl = document.getElementById('of-prev-pct');
+  if(cEl) cEl.textContent = events.length;
+  if(hEl) hEl.textContent = totalHrs % 1 === 0 ? totalHrs+'h' : totalHrs.toFixed(1)+'h';
+  if(coEl) coEl.textContent = '£'+totalCost.toLocaleString();
+  if(ppEl) ppEl.textContent = prevPct !== null ? prevPct+'%' : '—';
+
+  // Feed count
+  var fc = document.getElementById('of-feed-count');
+  if(fc) fc.textContent = events.length + ' event' + (events.length!==1?'s':'') + ' logged';
+
+  // Empty state
+  var empty = document.getElementById('of-empty-state');
+  if(empty) empty.style.display = events.length ? 'none' : 'block';
+
+  // Feed
+  var feed = document.getElementById('of-feed');
+  if(!feed) return;
+  var existing = feed.querySelectorAll('.of-event');
+  existing.forEach(function(el){ el.remove(); });
+
+  events.forEach(function(ev){
+    var prevClass = (ev.preventability||'').toLowerCase().replace(' ','').replace(' ','');
+    if(prevClass==='partiallypreventable') prevClass='partial';
+    var card = document.createElement('div');
+    card.className = 'of-event ev-'+prevClass;
+    var d = ev.date || ev.timestamp.split('T')[0];
+    var dispDate = d ? new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '';
+    card.innerHTML =
+      '<div class="of-ev-top">'+
+        '<span class="of-ev-type">'+ofEsc(ev.eventType||'')+'</span>'+
+        '<span class="of-ev-time">'+dispDate+'</span>'+
+      '</div>'+
+      '<div class="of-ev-pkg">'+ofEsc(ev.workPackage||'')+'</div>'+
+      '<div class="of-ev-site">'+ofEsc(ev.site||'')+'</div>'+
+      '<div class="of-ev-meta">'+
+        (ev.constraintType ? '<span class="of-ev-tag" style="color:var(--amber);border-color:rgba(255,149,0,.3)">'+ofEsc(ev.constraintType)+'</span>' : '')+
+        (ev.labourAffected ? '<span class="of-ev-tag" style="color:var(--text2)">'+ev.labourAffected+' people</span>' : '')+
+        (ev.timeLostHrs ? '<span class="of-ev-tag" style="color:var(--text2)">'+ev.timeLostHrs+'h lost</span>' : '')+
+        (ev.estimatedCost ? '<span class="of-ev-tag" style="color:var(--stop)">£'+ev.estimatedCost.toLocaleString()+'</span>' : '')+
+        (ev.preventability ? '<span class="of-ev-prev '+prevClass+'">'+ofEsc(ev.preventability)+'</span>' : '')+
+      '</div>'+
+      (ev.rootCause ? '<div class="of-ev-cause">'+ofEsc(ev.rootCause)+'</div>' : '');
+    feed.appendChild(card);
+  });
+
+  // Patterns (show after 3+ events)
+  if(events.length >= 3){
+    ofRenderPatterns(events);
+  }
+}
+
+function ofEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function ofRenderPatterns(events){
+  var pat = document.getElementById('of-patterns');
+  var body = document.getElementById('of-pat-body');
+  if(!pat || !body) return;
+  pat.style.display = 'block';
+
+  // Count constraints
+  var constraints = {};
+  events.forEach(function(e){
+    if(e.constraintType){ constraints[e.constraintType] = (constraints[e.constraintType]||0)+1; }
+  });
+
+  var sorted = Object.entries(constraints).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var max = sorted.length ? sorted[0][1] : 1;
+
+  body.innerHTML = sorted.map(function(pair){
+    var pct = Math.round(pair[1]/max*100);
+    return '<div class="of-pat-row">'+
+      '<div class="of-pat-label">'+pair[0]+'</div>'+
+      '<div class="of-pat-bar-wrap"><div class="of-pat-bar" style="width:'+pct+'%"></div></div>'+
+      '<div class="of-pat-n">'+pair[1]+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', function(){
+  ofInitDate();
+  ofShowAtStatus();
+  ofRender(ofLoad());
+});
+
+// Re-render when tab is opened
+var origShowTab = window.showTab;
+if(origShowTab){
+  window.showTab = function(id, btn){
+    origShowTab(id, btn);
+    if(id === 'sitelog'){ ofShowAtStatus(); ofRender(ofLoad()); }
+  };
+}
+
 })();
 </script>
 </body>
