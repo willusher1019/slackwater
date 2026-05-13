@@ -2540,6 +2540,10 @@ function submitTask(){
   var date = document.getElementById('f-date') ? document.getElementById('f-date').value : '';
   if(!task || !date){ alert('Please fill in at least the task name and date.'); return; }
 
+  // Read key at submit time (not page load) so it's always current
+  var atKey = localStorage.getItem('sw_at_key') || '';
+  if(!atKey){ alert('No Airtable key connected — go to OPERATIONAL LOG tab and connect your key first.'); return; }
+
   var btn = document.querySelector('[onclick="submitTask()"]');
   if(btn){ btn.textContent = 'Saving...'; btn.disabled = true; }
 
@@ -2548,21 +2552,21 @@ function submitTask(){
     'Task Name': task,
     'Date': date,
     'Location': g('f-location'),
-    'Time In': g('f-timein') ? date+'T'+g('f-timein')+':00.000Z' : undefined,
-    'Time Out': g('f-timeout') ? date+'T'+g('f-timeout')+':00.000Z' : undefined,
+    'Time In': g('f-timein') || undefined,
+    'Time Out': g('f-timeout') || undefined,
     'Crew Size': g('f-total') ? parseInt(g('f-total')) : undefined,
     'Productive Workers': g('f-productive') ? parseInt(g('f-productive')) : undefined,
+    'Unit Count': g('f-units') ? parseInt(g('f-units')) : undefined,
+    'Wind Speed (m/s)': g('f-wind') ? parseFloat(g('f-wind')) : undefined,
+    'Tide State': g('f-tide') || undefined,
+    'Contractor': g('f-contractor') || undefined,
+    'Task Complete': g('f-complete') || undefined,
     'Notes': [
-      g('f-vessel') ? 'Vessel on station: '+g('f-vessel') : '',
-      g('f-units') ? 'Units completed: '+g('f-units') : '',
-      g('f-tide') ? 'Tide: '+g('f-tide') : '',
-      g('f-wind') ? 'Wind: '+g('f-wind') : '',
-      g('f-contractor') ? 'Contractor: '+g('f-contractor') : '',
-      g('f-crew') ? 'Crew: '+g('f-crew') : '',
-      g('f-good') ? 'Good: '+g('f-good') : '',
+      g('f-vessel') ? 'Vessel: '+g('f-vessel') : '',
+      g('f-crew') ? 'Crew breakdown: '+g('f-crew') : '',
+      g('f-good') ? 'Went well: '+g('f-good') : '',
       g('f-bad') ? 'Blockers: '+g('f-bad') : '',
-      g('f-docs') ? 'Docs: '+g('f-docs') : '',
-      g('f-complete') ? 'Completed: '+g('f-complete') : '',
+      g('f-docs') ? 'Documents: '+g('f-docs') : '',
       g('f-ot') ? 'Overtime: '+g('f-ot') : '',
       g('f-regs') ? 'Regs: '+g('f-regs') : '',
       g('f-notes')
@@ -2575,7 +2579,7 @@ function submitTask(){
   fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log', {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer ' + SW_AIRTABLE_KEY,
+      'Authorization': 'Bearer ' + atKey,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ fields: fields })
@@ -2586,7 +2590,7 @@ function submitTask(){
       // Auto-create operational log entry if there are blockers or task was not fully completed
       var bad = g('f-bad'), complete = g('f-complete'), contractor = g('f-contractor');
       var isIssue = bad || complete === 'No — aborted' || complete === 'Partial — continued next window';
-      if(isIssue && SW_AIRTABLE_KEY){
+      if(isIssue && atKey){
         var evType = complete === 'No — aborted' ? 'ABORT' : (complete === 'Partial — continued next window' ? 'DELAY' : 'DELAY');
         var crewN = parseInt(g('f-total')) || 0;
         var tin = g('f-timein'), tout = g('f-timeout');
@@ -2603,7 +2607,7 @@ function submitTask(){
         };
         Object.keys(opFields).forEach(function(k){ if(opFields[k]===undefined||opFields[k]==='') delete opFields[k]; });
         fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log', {
-          method:'POST', headers:{'Authorization':'Bearer '+SW_AIRTABLE_KEY,'Content-Type':'application/json'},
+          method:'POST', headers:{'Authorization':'Bearer '+atKey,'Content-Type':'application/json'},
           body: JSON.stringify({fields: opFields})
         }).catch(function(){});
       }
@@ -2618,7 +2622,8 @@ function submitTask(){
       });
       setTimeout(function(){ if(success) success.style.display = 'none'; }, 4000);
     } else {
-      alert('Error saving: ' + JSON.stringify(data));
+      var errMsg = (data.error && data.error.message) ? data.error.message : JSON.stringify(data);
+      alert('Airtable error: ' + errMsg + '\n\nCheck your field names match the Airtable table exactly.');
     }
     if(btn){ btn.textContent = 'LOG TASK →'; btn.disabled = false; }
   })
@@ -4645,26 +4650,53 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* ── LIVE DOCUMENT TRACKER ── */
 var KNOWN_DOCS = [
-  { name:'Principal Contractor RAMS',       contractor:'Balfour Beatty', cat:'SAFETY',      expiry:'2026-05-10', status:'expired' },
-  { name:'Hot Works Permit',                contractor:'Balfour Beatty', cat:'SAFETY',      expiry:'2026-05-13', status:'expiring' },
-  { name:'BB CTC Clearance Register',       contractor:'Balfour Beatty', cat:'SECURITY',    expiry:'2026-05-12', status:'expired' },
-  { name:'Confined Space Entry Permit',     contractor:'Balfour Beatty', cat:'SAFETY',      expiry:null,         status:'missing' },
-  { name:'Permit to Work — Leaf G',         contractor:'Balfour Beatty', cat:'OPERATIONAL', expiry:null,         status:'pending' },
-  { name:'Scaffold Inspection — Leaf B',    contractor:'All Task',       cat:'SAFETY',      expiry:'2026-05-15', status:'expiring' },
-  { name:'All Task CTC Register',           contractor:'All Task',       cat:'SECURITY',    expiry:'2026-05-21', status:'expiring' },
-  { name:'Dive Plant Inspection Record',    contractor:'DiveCo',         cat:'EQUIPMENT',   expiry:'2026-05-26', status:'expiring' },
-  { name:'Construction Phase Plan',         contractor:'Balfour Beatty', cat:'LEGAL',       expiry:'2026-12-01', status:'valid' },
-  { name:'Permit to Work — Leaf B',         contractor:'Balfour Beatty', cat:'OPERATIONAL', expiry:'2026-06-06', status:'valid' },
-  { name:'Tidal Gate Operational Consent',  contractor:'Env. Agency',   cat:'CONSENT',     expiry:'2026-12-08', status:'valid' },
-  { name:'HSE Diving Contractor Notification',contractor:'DiveCo',      cat:'LEGAL',       expiry:'2026-12-08', status:'valid' },
-  { name:'Dive Supervisor Risk Assessment', contractor:'DiveCo',         cat:'SAFETY',      expiry:'2026-09-07', status:'valid' },
-  { name:'Medical Fitness Certs — Divers',  contractor:'DiveCo',         cat:'COMPETENCY',  expiry:'2026-10-07', status:'valid' },
-  { name:'CTC Clearance — All DiveCo',      contractor:'DiveCo',         cat:'SECURITY',    expiry:'2027-05-08', status:'valid' },
-  { name:'MCA Workboat Code Compliance',    contractor:'DiveCo',         cat:'MARITIME',    expiry:'2026-10-07', status:'valid' },
-  { name:'LOLER Lifting Operations Plan',   contractor:'Apollo Crane',   cat:'SAFETY',      expiry:'2026-08-07', status:'valid' },
-  { name:'Crane Inspection Certificate',    contractor:'Apollo Crane',   cat:'EQUIPMENT',   expiry:'2026-07-21', status:'valid' },
-  { name:'BB CTC Clearance (renewed)',      contractor:'Balfour Beatty', cat:'SECURITY',    expiry:'2027-05-12', status:'valid' }
+  { name:'Principal Contractor RAMS',         contractor:'Balfour Beatty', cat:'SAFETY',      expiry:'2026-05-10', status:'expired' },
+  { name:'Hot Works Permit',                  contractor:'Balfour Beatty', cat:'SAFETY',      expiry:'2026-05-14', status:'expiring' },
+  { name:'BB CTC Clearance Register',         contractor:'Balfour Beatty', cat:'SECURITY',    expiry:'2026-05-12', status:'expired' },
+  { name:'Confined Space Entry Permit',       contractor:'Balfour Beatty', cat:'SAFETY',      expiry:null,         status:'missing' },
+  { name:'Permit to Work — Leaf G',           contractor:'Balfour Beatty', cat:'OPERATIONAL', expiry:null,         status:'pending' },
+  { name:'Scaffold Inspection — Leaf B',      contractor:'All Task',       cat:'SAFETY',      expiry:'2026-05-15', status:'expiring' },
+  { name:'All Task CTC Register',             contractor:'All Task',       cat:'SECURITY',    expiry:'2026-05-21', status:'expiring' },
+  { name:'Dive Plant Inspection Record',      contractor:'DiveCo',         cat:'EQUIPMENT',   expiry:'2026-05-26', status:'expiring' },
+  { name:'Construction Phase Plan',           contractor:'Balfour Beatty', cat:'LEGAL',       expiry:'2026-12-01', status:'valid' },
+  { name:'Permit to Work — Leaf B',           contractor:'Balfour Beatty', cat:'OPERATIONAL', expiry:'2026-06-06', status:'valid' },
+  { name:'Tidal Gate Operational Consent',    contractor:'Env. Agency',    cat:'CONSENT',     expiry:'2026-12-08', status:'valid' },
+  { name:'HSE Diving Contractor Notification',contractor:'DiveCo',         cat:'LEGAL',       expiry:'2026-12-08', status:'valid' },
+  { name:'Dive Supervisor Risk Assessment',   contractor:'DiveCo',         cat:'SAFETY',      expiry:'2026-09-07', status:'valid' },
+  { name:'Medical Fitness Certs — Divers',    contractor:'DiveCo',         cat:'COMPETENCY',  expiry:'2026-10-07', status:'valid' },
+  { name:'CTC Clearance — All DiveCo',        contractor:'DiveCo',         cat:'SECURITY',    expiry:'2027-05-08', status:'valid' },
+  { name:'MCA Workboat Code Compliance',      contractor:'DiveCo',         cat:'MARITIME',    expiry:'2026-10-07', status:'valid' },
+  { name:'LOLER Lifting Operations Plan',     contractor:'Apollo Crane',   cat:'SAFETY',      expiry:'2026-08-07', status:'valid' },
+  { name:'Crane Inspection Certificate',      contractor:'Apollo Crane',   cat:'EQUIPMENT',   expiry:'2026-07-21', status:'valid' },
+  { name:'BB CTC Clearance (renewed)',        contractor:'Balfour Beatty', cat:'SECURITY',    expiry:'2027-05-12', status:'valid' }
 ];
+
+// Load saved expiry/status overrides from localStorage
+function docGetOverrides(){ try{ return JSON.parse(localStorage.getItem('sw_doc_overrides')||'{}'); }catch(e){ return {}; } }
+function docSaveOverride(name, expiry, status){
+  var ov = docGetOverrides();
+  ov[name] = { expiry: expiry||null, status: status||null, updated: new Date().toISOString().slice(0,10) };
+  localStorage.setItem('sw_doc_overrides', JSON.stringify(ov));
+}
+window.docEditRow = function(name){
+  var ov = docGetOverrides();
+  var existing = ov[name] || {};
+  var base = KNOWN_DOCS.find(function(d){ return d.name===name; }) || {};
+  var currentExpiry = existing.expiry !== undefined ? existing.expiry : (base.expiry||'');
+  var currentStatus = existing.status || base.status || '';
+  var newExpiry = prompt('Update expiry date for:\n"'+name+'"\n\nEnter date (YYYY-MM-DD) or leave blank for no expiry:', currentExpiry||'');
+  if(newExpiry === null) return; // cancelled
+  newExpiry = newExpiry.trim();
+  // If blank, ask for status
+  var newStatus = currentStatus;
+  if(!newExpiry){
+    var s = prompt('No expiry date — set status:\n(missing / pending / valid)', currentStatus||'missing');
+    if(s===null) return;
+    newStatus = s.trim().toLowerCase() || 'missing';
+  }
+  docSaveOverride(name, newExpiry||null, newStatus||null);
+  loadDocuments();
+};
 
 function calcDocDays(expiryStr){
   if(!expiryStr) return null;
@@ -4678,9 +4710,12 @@ function loadDocuments(){
   if(!container) return;
 
   var today = new Date();
+  var overrides = docGetOverrides();
   var docs = KNOWN_DOCS.map(function(d){
-    var days = calcDocDays(d.expiry);
-    var status = d.status;
+    var ov = overrides[d.name] || {};
+    var expiry = ov.expiry !== undefined ? ov.expiry : d.expiry;
+    var days = calcDocDays(expiry);
+    var status = ov.status || d.status;
     // Override status based on calculated days
     if(days !== null){
       if(days < 0) status = 'expired';
@@ -4736,7 +4771,7 @@ function loadDocuments(){
     html += '<div class="stt" style="color:var(--stop);margin-bottom:10px">Requires Immediate Action — '+urgent.length+' document'+(urgent.length>1?'s':'')+' critical</div>';
     urgent.forEach(function(d){
       var daysLabel = d.days !== null ? (d.days < 0 ? Math.abs(d.days)+'d overdue' : d.days+'d') : '—';
-      html += '<div class="dr"><div class="dn">'+d.name+'</div><div class="dt">'+d.cat+' · '+d.contractor+'</div><div class="'+daysClass(d)+'">'+daysLabel+'</div>'+daysBadge(d)+'</div>';
+      html += '<div class="dr" style="cursor:pointer" onclick="docEditRow(\''+d.name.replace(/'/g,"\\'")+'\')" title="Tap to update expiry date"><div class="dn">'+d.name+'</div><div class="dt">'+d.cat+' · '+d.contractor+'</div><div class="'+daysClass(d)+'">'+daysLabel+'</div>'+daysBadge(d)+'<div style="font-size:10px;color:#3A5A72;margin-left:4px;flex-shrink:0">✎</div></div>';
     });
     html += '</div>';
   }
@@ -4747,7 +4782,7 @@ function loadDocuments(){
     html += '<div style="margin-bottom:16px"><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">'+contractor+'</div><div style="margin-top:8px">';
     cdocs.forEach(function(d){
       var daysLabel = d.days !== null ? d.days+'d' : '—';
-      html += '<div class="dr"><div class="dn">'+d.name+'</div><div class="dt">'+d.cat+'</div><div class="'+daysClass(d)+'">'+daysLabel+'</div>'+daysBadge(d)+'</div>';
+      html += '<div class="dr" style="cursor:pointer" onclick="docEditRow(\''+d.name.replace(/'/g,"\\'")+'\')" title="Tap to update expiry date"><div class="dn">'+d.name+'</div><div class="dt">'+d.cat+'</div><div class="'+daysClass(d)+'">'+daysLabel+'</div>'+daysBadge(d)+'<div style="font-size:10px;color:#3A5A72;margin-left:4px;flex-shrink:0">✎</div></div>';
     });
     html += '</div></div>';
   });
@@ -6316,7 +6351,9 @@ async function genNightlyBrief(){
     var now = new Date();
     var timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
 
-    out.innerHTML = '<div class="bcard"><div class="bhdr"><div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px">AI BRIEF · GENERATED NOW · LIVE</div><div class="bv ' + verdictClass + '">' + verdictText.toUpperCase() + '</div></div><div class="bgen">Generated: ' + today.split(',')[0] + ' · ' + timeStr + '</div></div><div class="bbody"><div style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;font-family:var(--mono);font-size:12px">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div></div>';
+    var briefPlain = text; // keep raw text for clipboard
+    out.innerHTML = '<div class="bcard"><div class="bhdr"><div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px">AI BRIEF · GENERATED NOW · LIVE</div><div class="bv ' + verdictClass + '">' + verdictText.toUpperCase() + '</div></div><div style="display:flex;align-items:center;gap:10px"><div class="bgen">Generated: ' + today.split(',')[0] + ' · ' + timeStr + '</div><button id="brief-copy-btn" onclick="swCopyBrief()" style="font-family:var(--mono);font-size:9px;padding:4px 12px;background:transparent;border:1px solid #1A3350;color:#3A5A72;cursor:pointer;border-radius:3px;white-space:nowrap">Copy brief</button></div></div><div class="bbody"><div id="brief-text-content" style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;font-family:var(--mono);font-size:12px">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div></div>';
+    window._swLastBriefText = briefPlain;
 
   } catch(e){
     out.innerHTML='<div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);border-radius:6px;padding:16px;font-size:13px;color:#FF4444">Brief generation failed: ' + e.message + '</div>';
@@ -6337,6 +6374,25 @@ window.genNightlyBrief = genNightlyBrief;
 var OPLOG_KEY = 'sw_oplog_v1';
 var AT_TABLE_ID = 'appy8H4ScWKSrFOI5';
 var AT_TABLE_NAME = 'Operational%20Log';
+
+// Copy nightly brief to clipboard
+window.swCopyBrief = function(){
+  var txt = window._swLastBriefText || (document.getElementById('brief-text-content')||{}).textContent || '';
+  if(!txt) return;
+  var btn = document.getElementById('brief-copy-btn');
+  navigator.clipboard.writeText(txt).then(function(){
+    if(btn){ btn.textContent='Copied ✓'; btn.style.color='#00C4D4'; btn.style.borderColor='rgba(0,196,212,0.4)'; }
+    setTimeout(function(){ if(btn){ btn.textContent='Copy brief'; btn.style.color='#3A5A72'; btn.style.borderColor='#1A3350'; } }, 2500);
+  }).catch(function(){
+    // Fallback for browsers that block clipboard
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(btn){ btn.textContent='Copied ✓'; setTimeout(function(){ btn.textContent='Copy brief'; },2500); }
+  });
+};
 
 // State
 var ofState = {
@@ -6478,8 +6534,15 @@ function ofQuickVoice(){
   var btn = document.getElementById('of-voice-btn');
   var inp = document.getElementById('of-quick-inp');
   var status = document.getElementById('of-quick-status');
+  // iOS Safari does not support SpeechRecognition — use keyboard mic instead
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if(isIOS){
+    if(inp) inp.focus();
+    if(status){ status.textContent = 'Tap the 🎙️ key on your keyboard to dictate'; status.style.color='#00C4D4'; }
+    return;
+  }
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    if(status){ status.textContent = 'Voice not supported in this browser — use Chrome or Safari'; status.style.color='#F59E0B'; }
+    if(status){ status.textContent = 'Voice not supported — use Chrome on Android or desktop'; status.style.color='#F59E0B'; }
     return;
   }
   if(ofVoiceActive) return;
