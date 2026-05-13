@@ -4150,6 +4150,13 @@ Slackwater — Thames Barrier Operations</div>
 
       <!-- LEFT: Event form -->
       <div class="ol-form-col">
+        <!-- EMERGENCY ONE-TAP BUTTONS -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button onclick="ofEmergencyLog('lightning')" style="flex:1;min-width:140px;background:rgba(180,0,0,0.15);border:1px solid rgba(255,32,32,0.5);color:#FF4444;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:9px 10px;cursor:pointer;border-radius:4px;text-align:left">⚡ LIGHTNING STAND-DOWN<br><span style="font-weight:400;color:#AA3333;font-size:8px">Tap — fills form automatically</span></button>
+          <button onclick="ofEmergencyLog('wind')" style="flex:1;min-width:140px;background:rgba(180,100,0,0.15);border:1px solid rgba(255,149,0,0.4);color:#FF9500;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:9px 10px;cursor:pointer;border-radius:4px;text-align:left">💨 WIND STOP<br><span style="font-weight:400;color:#886600;font-size:8px">Tap — fills form automatically</span></button>
+          <button onclick="ofEmergencyLog('tide')" style="flex:1;min-width:140px;background:rgba(0,80,140,0.15);border:1px solid rgba(0,196,212,0.3);color:#00C4D4;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:9px 10px;cursor:pointer;border-radius:4px;text-align:left">🌊 TIDAL WINDOW CLOSED<br><span style="font-weight:400;color:#006680;font-size:8px">Tap — fills form automatically</span></button>
+        </div>
+
         <!-- QUICK LOG -->
         <div style="background:rgba(0,196,212,0.05);border:1px solid rgba(0,196,212,0.2);border-radius:6px;padding:12px 14px;margin-bottom:14px">
           <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">⚡ QUICK LOG — describe the constraint, AI builds your record</div>
@@ -6612,6 +6619,90 @@ function ofQuickVoice(){
 }
 window.ofQuickLog = ofQuickLog;
 window.ofQuickVoice = ofQuickVoice;
+
+/* ── EMERGENCY ONE-TAP LOG BUTTONS ── */
+window.ofEmergencyLog = function(type){
+  var now = new Date();
+  var timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  var todayStr = now.toISOString().slice(0,10);
+
+  /* Get live weather context if available */
+  var windNote = '';
+  if(window._swLiveWx){
+    windNote = ' Wind ' + window._swLiveWx.wind + ' m/s, gusts ' + window._swLiveWx.gust + ' m/s.';
+  }
+
+  var templates = {
+    lightning: {
+      site: 'Thames Barrier',
+      date: todayStr,
+      workPackage: 'All works — lightning stand-down',
+      eventType: 'STAND DOWN',
+      constraintType: 'WEATHER',
+      impactClass: 'PROGRAMME CRITICAL',
+      preventability: 'UNAVOIDABLE',
+      causeCat: 'ENVIRONMENTAL',
+      recoveryAction: 'STAND DOWN',
+      timeIn: timeStr,
+      labourAffected: 14,
+      timeLostHrs: null,
+      rootCause: timeStr + ' — Lightning and active thunderstorm at Thames Barrier Woolwich. All 14 personnel stood down under lightning rule.' + windNote + ' 30-minute clear required after last observed strike before any resumption.',
+      recovery: 'All personnel sheltered on site. Monitoring conditions. 30-min clear rule applies.'
+    },
+    wind: {
+      site: 'Thames Barrier',
+      date: todayStr,
+      workPackage: 'All works — wind stop',
+      eventType: 'STAND DOWN',
+      constraintType: 'WEATHER',
+      impactClass: 'PROGRAMME CRITICAL',
+      preventability: 'UNAVOIDABLE',
+      causeCat: 'ENVIRONMENTAL',
+      recoveryAction: 'STAND DOWN',
+      timeIn: timeStr,
+      labourAffected: 14,
+      timeLostHrs: null,
+      rootCause: timeStr + ' — Wind exceeded operational threshold at Thames Barrier.' + windNote + ' All surface works and crane operations suspended.',
+      recovery: 'Crew stood down. Monitoring wind forecast for resumption window.'
+    },
+    tide: {
+      site: 'Thames Barrier',
+      date: todayStr,
+      workPackage: 'Leaf / arm access — tidal window closed',
+      eventType: 'STAND DOWN',
+      constraintType: 'TIDE',
+      impactClass: 'PROGRAMME CRITICAL',
+      preventability: 'UNAVOIDABLE',
+      causeCat: 'ENVIRONMENTAL',
+      recoveryAction: 'STAND DOWN',
+      timeIn: timeStr,
+      labourAffected: 14,
+      timeLostHrs: null,
+      rootCause: timeStr + ' — Tidal window closed. Leaf and arm access suspended (90-min exclusion zone around high water).',
+      recovery: 'Crew held on site or redeployed to pier / MOB tasks pending next window.'
+    }
+  };
+
+  var j = templates[type];
+  if(!j) return;
+
+  /* Fill the form */
+  if(typeof ofQuickApply === 'function'){
+    ofQuickApply(j);
+  }
+
+  /* Also put a description in the Quick Log box so it's clear what happened */
+  var inp = document.getElementById('of-quick-inp');
+  var labels = { lightning: 'Lightning stand-down — all 14 personnel', wind: 'Wind stop — all works suspended', tide: 'Tidal window closed — leaf access suspended' };
+  if(inp) inp.value = labels[type] || '';
+
+  var status = document.getElementById('of-quick-status');
+  if(status){ status.textContent = '✓ Form pre-filled — review details and adjust crew count if needed, then submit'; status.style.color = '#00D96E'; }
+
+  /* Scroll to top of form */
+  var dp = document.getElementById('dp-oplog');
+  if(dp) dp.scrollTo({ top: 0, behavior: 'smooth' });
+};
 
 // Load Airtable key
 function ofGetAtKey(){ return localStorage.getItem('sw_at_key') || ''; }
