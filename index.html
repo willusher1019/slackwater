@@ -2569,7 +2569,7 @@ async function swLoadWasteCounter(){
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey) return; // show hardcoded defaults if no key
   try {
-    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100&fields%5B%5D=' + encodeURIComponent('Estimated Cost (£)');
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100';
     var records = [], offset = null;
     do {
       var res = await fetch(url + (offset ? '&offset='+offset : ''), {headers:{'Authorization':'Bearer '+atKey}});
@@ -5853,7 +5853,7 @@ async function dpLoadStats(){
   if(!atKey) return;
   try {
     // Fetch all records (paginate if needed — up to 100 per page)
-    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100&fields%5B%5D=Task%20Name&fields%5B%5D=Time%20In&fields%5B%5D=Time%20Out&fields%5B%5D=Crew%20Size&fields%5B%5D=Productive%20Workers&fields%5B%5D=Location&fields%5B%5D=Notes&fields%5B%5D=Unit%20Count';
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100';
     var records = [];
     var offset = null;
     do {
@@ -5907,7 +5907,7 @@ async function dpLoadStats(){
     var opEventCount = 0;
     var totalCost = 0;
     try {
-      var opRes = await fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100&fields%5B%5D=Estimated%20Cost%20(%C2%A3)', {
+      var opRes = await fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100', {
         headers: { 'Authorization': 'Bearer '+atKey }
       });
       var opData = await opRes.json();
@@ -6687,6 +6687,13 @@ if(origShowTab){
     if(id === 'sitelog'){ ofShowAtStatus(); ofRender(ofLoad()); }
   };
 }
+
+/* Expose functions needed by dpShowTab and other external callers */
+window.ofRender = ofRender;
+window.ofLoad = ofLoad;
+window.ofMountInPortal = ofMountInPortal;
+window.ofShowAtStatus = ofShowAtStatus;
+window.ofInitDate = ofInitDate;
 
 })();
 </script>
