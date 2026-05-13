@@ -6074,7 +6074,6 @@ function plInit(){
 
 /* ── AUTO STATS — pulls live from Airtable ── */
 async function dpLoadStats(){
-  var FLOOR_ANODES = 48;
   var FLOOR_ARM_MINS = 287; // 4h 47m
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey) return;
@@ -6111,25 +6110,6 @@ async function dpLoadStats(){
     if(totalMins < FLOOR_ARM_MINS) totalMins = FLOOR_ARM_MINS;
     var armH = Math.floor(totalMins/60), armM = Math.round(totalMins%60);
 
-    // Anodes — only count from anode CUTTING tasks (not taping/labelling — those are prep, not removal)
-    var anodes = 0;
-    records.forEach(function(r){
-      var taskName = (r.fields['Task Name'] || '').toLowerCase();
-      if(!taskName.includes('anode')) return;
-      if(!taskName.includes('cut')) return; // taping/labelling excluded — only count cut (removed) anodes
-      // Prefer dedicated Unit Count field
-      if(r.fields['Unit Count'] && parseInt(r.fields['Unit Count']) > 0){
-        anodes += parseInt(r.fields['Unit Count']);
-        return;
-      }
-      // Fall back to parsing Notes
-      var n = r.fields['Notes'] || '';
-      var m = n.match(/(\d+)\s*anodes?/i) || n.match(/Units completed:\s*(\d+)/i);
-      if(m) anodes += parseInt(m[1]);
-    });
-    // Apply floor for anodes
-    if(anodes < FLOOR_ANODES) anodes = FLOOR_ANODES;
-
     // Fetch Operational Log for event count + cost
     var opEventCount = 0;
     var totalCost = 0;
@@ -6153,8 +6133,6 @@ async function dpLoadStats(){
       if(s) s.textContent = taskCount;
       var a = document.getElementById('dp-stat-armtime');
       if(a) a.textContent = armH+'h '+String(armM).padStart(2,'0')+'m';
-      var an = document.getElementById('dp-stat-anodes');
-      if(an) an.textContent = anodes;
     }
     var ev = document.getElementById('dp-stat-events');
     if(ev) ev.textContent = opEventCount > 0 ? opEventCount : '—';
