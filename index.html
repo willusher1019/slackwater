@@ -6601,6 +6601,11 @@ window.ofClearForm = function(){
   document.querySelectorAll('.of-chip').forEach(function(b){ b.classList.remove('on','on-a','on-r','on-g'); });
   ofState = { event:null, constraint:null, prev:null, recovery:null, causeCat:null, impact:null, symptom:null, recovEff:null, evidence:null, confidence:null };
   ofInitDate();
+  // Clear Quick Log box and status
+  var qi = document.getElementById('of-quick-inp');
+  var qs = document.getElementById('of-quick-status');
+  if(qi) qi.value = '';
+  if(qs){ qs.textContent = ''; }
 };
 
 // Render feed + stats
