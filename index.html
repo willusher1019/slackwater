@@ -1052,14 +1052,21 @@ document.addEventListener('DOMContentLoaded', function(){
 
 function doLogin(){
   window._swLoginTarget = 'app';
-  if(typeof netlifyIdentity !== 'undefined'){ netlifyIdentity.open(); return; }
-  // Fallback if widget fails to load
+  if(typeof netlifyIdentity !== 'undefined'){
+    var existing = netlifyIdentity.currentUser();
+    if(existing){ swHandleNetlifyLogin(existing); return; } // already in — skip modal
+    netlifyIdentity.open(); return;
+  }
   var e = document.getElementById('lerr');
   if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
 }
 function doDataLogin(){
   window._swLoginTarget = 'portal';
-  if(typeof netlifyIdentity !== 'undefined'){ netlifyIdentity.open(); return; }
+  if(typeof netlifyIdentity !== 'undefined'){
+    var existing = netlifyIdentity.currentUser();
+    if(existing){ swHandleNetlifyLogin(existing); return; } // already in — skip modal
+    netlifyIdentity.open(); return;
+  }
   var e = document.getElementById('dl-err');
   if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
 }
