@@ -4986,7 +4986,7 @@ window.loadDocuments = loadDocuments;
     </div>
 
     <!-- STATS ROW -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
         <div id="dp-stat-tasks" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">7</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TASKS LOGGED</div>
@@ -4995,13 +4995,32 @@ window.loadDocuments = loadDocuments;
         <div id="dp-stat-events" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">EVENTS LOGGED</div>
       </div>
+      <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
+        <div id="dp-stat-foreseeable" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
+        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">% FORESEEABLE</div>
+      </div>
+      <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
+        <div id="dp-stat-cost" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
+        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">£ FORESEEABLE LOSS</div>
+      </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
         <div id="dp-stat-armtime" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">4h 47m</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TOTAL ARM TIME</div>
       </div>
-      <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
-        <div id="dp-stat-cost" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
-        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">£ COST IMPACT</div>
+    </div>
+
+    <!-- PATTERNS OBSERVED — structural predictability evidence -->
+    <div id="dp-patterns-panel" style="margin-bottom:24px">
+      <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+        PATTERNS OBSERVED
+        <span id="dp-patterns-count" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.25);color:#FF4444;padding:2px 8px;border-radius:2px;font-size:8px"></span>
+        <span style="color:#3A5A72;font-size:8px;font-weight:400;letter-spacing:0">Derived from logged operational events — updated each time you open this tab</span>
+      </div>
+      <div id="dp-patterns-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+        <!-- populated by dpRenderPatterns() -->
+        <div id="dp-patterns-empty" style="grid-column:1/-1;background:#0A1828;border:1px solid #1A3350;border-radius:4px;padding:16px 20px;font-family:var(--mono);font-size:10px;color:#3A5A72">
+          Log more operational events to surface structural patterns — each constraint type that appears twice or more becomes a tracked pattern.
+        </div>
       </div>
     </div>
 
@@ -6078,7 +6097,7 @@ async function dpLoadStats(){
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey) return;
   try {
-    // Fetch all records (paginate if needed — up to 100 per page)
+    /* ── Task Log ── */
     var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100';
     var records = [];
     var offset = null;
@@ -6090,44 +6109,41 @@ async function dpLoadStats(){
       offset = data.offset || null;
     } while(offset);
 
-    // Count
     var taskCount = records.length;
 
-    // Avg efficiency = avg of (Productive Workers / Crew Size) for records with both
-    var effSamples = records.filter(function(r){ return r.fields['Crew Size'] && r.fields['Productive Workers']; });
-    var avgEff = effSamples.length ? Math.round(effSamples.reduce(function(sum,r){ return sum + r.fields['Productive Workers']/r.fields['Crew Size']; },0) / effSamples.length * 100) : null;
-
-    // Total arm/confined space time — sum Time Out - Time In for all records that have both
     var totalMins = 0;
     records.forEach(function(r){
       var tin = r.fields['Time In'], tout = r.fields['Time Out'];
       if(tin && tout){
         var diff = (new Date(tout) - new Date(tin)) / 60000;
-        if(diff > 0 && diff < 600) totalMins += diff; // ignore anomalies over 10h
+        if(diff > 0 && diff < 600) totalMins += diff;
       }
     });
-    // Apply floor for arm time
     if(totalMins < FLOOR_ARM_MINS) totalMins = FLOOR_ARM_MINS;
     var armH = Math.floor(totalMins/60), armM = Math.round(totalMins%60);
 
-    // Fetch Operational Log for event count + cost
-    var opEventCount = 0;
-    var totalCost = 0;
+    /* ── Operational Log ── */
+    var opEventCount = 0, foreseeableCost = 0, foreseeableCount = 0, opRecords = [];
     try {
       var opRes = await fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100', {
         headers: { 'Authorization': 'Bearer '+atKey }
       });
       var opData = await opRes.json();
       if(opData.records){
-        opEventCount = opData.records.length;
-        opData.records.forEach(function(r){
-          var cost = r.fields['Estimated Cost (£)'];
-          if(cost && !isNaN(parseFloat(cost))) totalCost += parseFloat(cost);
+        opRecords = opData.records;
+        opEventCount = opRecords.length;
+        opRecords.forEach(function(r){
+          var prev = (r.fields['Preventability'] || '').toUpperCase();
+          var cost = parseFloat(r.fields['Estimated Cost (£)']) || 0;
+          if(prev === 'FORESEEABLE' || prev === 'PREVENTABLE'){
+            foreseeableCount++;
+            foreseeableCost += cost;
+          }
         });
       }
     } catch(opE){ console.warn('Operational Log fetch failed:', opE); }
 
-    // Update DOM — only overwrite fallback defaults if Airtable returned real records
+    /* ── Update stats DOM ── */
     if(taskCount > 0){
       var s = document.getElementById('dp-stat-tasks');
       if(s) s.textContent = taskCount;
@@ -6136,9 +6152,155 @@ async function dpLoadStats(){
     }
     var ev = document.getElementById('dp-stat-events');
     if(ev) ev.textContent = opEventCount > 0 ? opEventCount : '—';
+
+    var fs = document.getElementById('dp-stat-foreseeable');
+    if(fs){
+      if(opEventCount > 0){
+        var pct = Math.round(foreseeableCount / opEventCount * 100);
+        fs.textContent = pct + '%';
+        fs.style.color = pct >= 80 ? '#FF4444' : pct >= 50 ? '#F59E0B' : '#22C55E';
+      } else { fs.textContent = '—'; }
+    }
+
     var co = document.getElementById('dp-stat-cost');
-    if(co){ co.textContent = totalCost > 0 ? '£'+(totalCost/1000).toFixed(1)+'k' : '—'; co.style.color = totalCost > 0 ? '#FF4444' : '#FF4444'; }
+    if(co){
+      co.textContent = foreseeableCost > 0 ? '£'+(foreseeableCost/1000).toFixed(1)+'k' : '—';
+      co.style.color = '#FF4444';
+    }
+
+    /* ── Render patterns panel ── */
+    dpRenderPatterns(opRecords);
+
   } catch(e){ console.warn('Stats load failed:', e); }
+}
+
+/* ── PATTERNS — derive structural patterns from operational log records ── */
+function dpRenderPatterns(opRecords){
+  var container = document.getElementById('dp-patterns-cards');
+  var countBadge = document.getElementById('dp-patterns-count');
+  var emptyMsg = document.getElementById('dp-patterns-empty');
+  if(!container) return;
+
+  /* Prevention rule fallbacks by constraint type */
+  var fallbackRules = {
+    'TIDAL WINDOW':   'Confirm tidal window against EA gate check schedule the night before. Any third-party schedule overlapping the window must trigger a DELAY in the nightly brief.',
+    'MINIMUM CREW':   'Confirm full crew by 19:00 the night before. If minimum not met, issue DELAY and activate pre-planned fallback task. No mobilisation without confirmation.',
+    'THIRD PARTY':    'Third-party schedules must be confirmed at morning briefing. Any unconfirmed visit = immediate flag in nightly brief. Rendel, EA, BB — all must declare.',
+    'WEATHER/WIND':   'Monitor wind forecast from 48h out. DELAY issued before 20:00 if threshold breach forecast. Check gusts, not just sustained wind.',
+    'PERMIT/PTW':     'Permit status confirmed in nightly brief. No GO verdict if permit not confirmed. PTW holder named by 18:00 the night before.',
+    'EQUIPMENT':      'Pre-shift equipment check mandatory. Backup plan for single-point-of-failure equipment before mobilisation.',
+    'REGULATORY':     'Regulatory hold points confirmed in advance. EA, Rendel or BB sign-off must be flagged in nightly brief if required next day.',
+    'ACCESS':         'Access route and clearance confirmed the night before. Any uncertainty = DELAY until confirmed.',
+    'OTHER':          'Log the specific constraint consistently each time to build a trackable pattern.'
+  };
+
+  /* Group events by Constraint Type */
+  var groups = {};
+  opRecords.forEach(function(r){
+    var ct = (r.fields['Constraint Type'] || 'OTHER').toUpperCase().trim();
+    if(!groups[ct]) groups[ct] = [];
+    groups[ct].push(r);
+  });
+
+  /* Only show constraint types that appear 2+ times */
+  var patterns = Object.keys(groups).filter(function(ct){ return groups[ct].length >= 2; });
+  patterns.sort(function(a,b){ return groups[b].length - groups[a].length; }); /* most frequent first */
+
+  if(patterns.length === 0){
+    if(emptyMsg) emptyMsg.style.display = 'block';
+    if(countBadge) countBadge.textContent = '';
+    return;
+  }
+
+  if(emptyMsg) emptyMsg.style.display = 'none';
+  if(countBadge) countBadge.textContent = patterns.length + ' PATTERN' + (patterns.length > 1 ? 'S' : '') + ' IDENTIFIED';
+
+  /* Render cards — keep only dynamically generated ones */
+  var existingCards = container.querySelectorAll('.sw-pattern-card');
+  existingCards.forEach(function(c){ c.remove(); });
+
+  var ctLabels = {
+    'TIDAL WINDOW': 'Tidal Window',
+    'MINIMUM CREW': 'Minimum Crew',
+    'THIRD PARTY':  'Third-Party Conflict',
+    'WEATHER/WIND': 'Weather / Wind',
+    'PERMIT/PTW':   'Permit / PTW',
+    'EQUIPMENT':    'Equipment Failure',
+    'REGULATORY':   'Regulatory',
+    'ACCESS':       'Access',
+    'OTHER':        'Other'
+  };
+
+  patterns.forEach(function(ct, idx){
+    var evs = groups[ct];
+    var count = evs.length;
+    var totalCost = evs.reduce(function(s,r){ return s + (parseFloat(r.fields['Estimated Cost (£)'])||0); }, 0);
+    var totalHrs  = evs.reduce(function(s,r){ return s + (parseFloat(r.fields['Time Lost (hrs)'])||0); }, 0);
+    var totalLabour = evs.reduce(function(s,r){ return s + (parseInt(r.fields['Labour Affected'])||0); }, 0);
+
+    /* Collect dates */
+    var dates = evs.map(function(r){
+      return { date: r.fields['Date']||'', wp: r.fields['Work Package']||'', cost: parseFloat(r.fields['Estimated Cost (£)'])||0 };
+    }).sort(function(a,b){ return a.date.localeCompare(b.date); });
+
+    /* Prevention rule — use Lessons Learned from most recent event if available */
+    var sortedByDate = evs.slice().sort(function(a,b){ return (b.fields['Date']||'').localeCompare(a.fields['Date']||''); });
+    var rule = '';
+    for(var i=0;i<sortedByDate.length;i++){
+      var ll = (sortedByDate[i].fields['Lessons Learned']||'').trim();
+      if(ll && ll.length > 10){ rule = ll; break; }
+    }
+    if(!rule) rule = fallbackRules[ct] || fallbackRules['OTHER'];
+
+    /* Foreseeable % for this constraint type */
+    var fsCount = evs.filter(function(r){ var p=(r.fields['Preventability']||'').toUpperCase(); return p==='FORESEEABLE'||p==='PREVENTABLE'; }).length;
+    var fsPct = Math.round(fsCount/count*100);
+
+    var card = document.createElement('div');
+    card.className = 'sw-pattern-card';
+    card.style.cssText = 'background:#0A1828;border:1px solid rgba(255,68,68,0.25);border-left:3px solid #FF4444;border-radius:4px;padding:16px;';
+
+    var datesHtml = dates.map(function(d){
+      return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid #0D1E30">' +
+        '<span style="color:#A8C4DC;font-size:9px">' + (d.date||'Unknown date') + '</span>' +
+        '<span style="color:#8896A5;font-size:9px">' + (d.wp ? d.wp.slice(0,32) : '—') + '</span>' +
+        (d.cost ? '<span style="color:#FF6B6B;font-size:9px">£'+d.cost.toLocaleString()+'</span>' : '') +
+        '</div>';
+    }).join('');
+
+    card.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
+        '<div>' +
+          '<div style="font-family:var(--mono);font-size:8px;color:#FF4444;letter-spacing:2px;margin-bottom:4px">PATTERN ' + String(idx+1).padStart(2,'0') + ' · OBSERVED × ' + count + '</div>' +
+          '<div style="font-family:var(--mono);font-size:12px;color:#EDF6FF;font-weight:600">' + (ctLabels[ct]||ct) + '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-family:var(--mono);font-size:9px;color:#FF4444;font-weight:700">' + fsPct + '% foreseeable</div>' +
+          '<div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:2px">' + count + ' events</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-bottom:10px">' + datesHtml + '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">' +
+        '<div style="background:#060E18;padding:6px;border-radius:3px;text-align:center">' +
+          '<div style="font-family:var(--display);font-size:18px;color:#FF4444">£' + (totalCost>=1000?(totalCost/1000).toFixed(1)+'k':totalCost.toLocaleString()) + '</div>' +
+          '<div style="font-family:var(--mono);font-size:7px;color:#3A5A72;margin-top:2px">COMBINED COST</div>' +
+        '</div>' +
+        '<div style="background:#060E18;padding:6px;border-radius:3px;text-align:center">' +
+          '<div style="font-family:var(--display);font-size:18px;color:#FF9500">' + totalHrs.toFixed(1) + 'h</div>' +
+          '<div style="font-family:var(--mono);font-size:7px;color:#3A5A72;margin-top:2px">TIME LOST</div>' +
+        '</div>' +
+        '<div style="background:#060E18;padding:6px;border-radius:3px;text-align:center">' +
+          '<div style="font-family:var(--display);font-size:18px;color:#EDF6FF">' + totalLabour + '</div>' +
+          '<div style="font-family:var(--mono);font-size:7px;color:#3A5A72;margin-top:2px">PEOPLE AFFECTED</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:#060E18;border-left:2px solid #00C4D4;padding:8px 12px;border-radius:0 3px 3px 0">' +
+        '<div style="font-family:var(--mono);font-size:7px;color:#00C4D4;letter-spacing:2px;margin-bottom:4px">PREVENTION RULE</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;color:#8896A5;line-height:1.7">' + rule + '</div>' +
+      '</div>';
+
+    container.appendChild(card);
+  });
 }
 
 async function plParse(){
@@ -6507,7 +6669,11 @@ async function genNightlyBrief(ci){
     var timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
 
     var briefPlain = text; // keep raw text for clipboard
-    out.innerHTML = '<div class="bcard"><div class="bhdr"><div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px">AI BRIEF · GENERATED NOW · LIVE</div><div class="bv ' + verdictClass + '">' + verdictText.toUpperCase() + '</div></div><div style="display:flex;align-items:center;gap:10px"><div class="bgen">Generated: ' + today.split(',')[0] + ' · ' + timeStr + '</div><button id="brief-copy-btn" onclick="swCopyBrief()" style="font-family:var(--mono);font-size:9px;padding:4px 12px;background:transparent;border:1px solid #1A3350;color:#3A5A72;cursor:pointer;border-radius:3px;white-space:nowrap">Copy brief</button></div></div><div class="bbody"><div id="brief-text-content" style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;font-family:var(--mono);font-size:12px">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div></div>';
+    /* Count logged events for attribution line */
+    var evCount = 0; try{ var _atk2=localStorage.getItem('sw_at_key'); if(_atk2){ var _er2=JSON.parse((window._swLastOpFetch)||'{}'); evCount=(_er2.records||[]).length; } }catch(e2){}
+    var progRulesAttrib = (function(){ try{ var r=JSON.parse(localStorage.getItem('sw_programme_rules')||'{}'); return r.source ? ' · rules: '+r.source : ''; }catch(e){ return ''; } })();
+    var attrLine = 'CONSTRAINT FORECAST · ' + today.split(',')[0] + ' · ' + timeStr + progRulesAttrib;
+    out.innerHTML = '<div class="bcard"><div class="bhdr"><div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px">' + attrLine + '</div><div class="bv ' + verdictClass + '">' + verdictText.toUpperCase() + '</div></div><div style="display:flex;align-items:center;gap:10px"><div class="bgen">Generated: ' + today.split(',')[0] + ' · ' + timeStr + '</div><button id="brief-copy-btn" onclick="swCopyBrief()" style="font-family:var(--mono);font-size:9px;padding:4px 12px;background:transparent;border:1px solid #1A3350;color:#3A5A72;cursor:pointer;border-radius:3px;white-space:nowrap">Copy brief</button></div></div><div class="bbody"><div id="brief-text-content" style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;font-family:var(--mono);font-size:12px">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div></div>';
     window._swLastBriefText = briefPlain;
 
   } catch(e){
