@@ -4029,6 +4029,18 @@ Slackwater — Thames Barrier Operations</div>
 
       <!-- LEFT: Event form -->
       <div class="ol-form-col">
+        <!-- QUICK LOG -->
+        <div style="background:rgba(0,196,212,0.05);border:1px solid rgba(0,196,212,0.2);border-radius:6px;padding:12px 14px;margin-bottom:14px">
+          <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">⚡ QUICK LOG — describe what happened, AI fills the form</div>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <textarea id="of-quick-inp" rows="2" style="flex:1;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:9px 11px;font-size:13px;font-family:'DM Sans',sans-serif;line-height:1.5;outline:none;border-radius:4px;resize:none" placeholder="e.g. 10:47 rain and wind, Apollo crane Deck 7 stopped, went inside" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button onclick="ofQuickLog()" id="of-quick-btn" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:9px 14px;cursor:pointer;border-radius:4px;white-space:nowrap">FILL →</button>
+              <button onclick="ofQuickVoice()" id="of-voice-btn" title="Speak your log" style="background:transparent;border:1px solid #1A3350;color:#3A5A72;font-size:16px;padding:7px 14px;cursor:pointer;border-radius:4px;line-height:1">🎙️</button>
+            </div>
+          </div>
+          <div id="of-quick-status" style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:6px;min-height:14px"></div>
+        </div>
         <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:12px">LOG NEW EVENT</div>
 
         <div class="of-row">
@@ -6250,6 +6262,145 @@ var ofState = {
   evidence: null,
   confidence: null
 };
+
+/* ── QUICK LOG — AI auto-fill ── */
+async function ofQuickLog(){
+  var inp = document.getElementById('of-quick-inp');
+  var btn = document.getElementById('of-quick-btn');
+  var status = document.getElementById('of-quick-status');
+  var text = (inp ? inp.value.trim() : '');
+  if(!text){ if(status) status.textContent = 'Type what happened first.'; return; }
+
+  var apiKey = window._swApiKey || localStorage.getItem('sw_api_key') || '';
+  if(!apiKey){
+    if(status){ status.textContent = 'No AI key — filling what I can from your text...'; status.style.color='#F59E0B'; }
+    ofQuickFillBasic(text); return;
+  }
+
+  if(btn){ btn.disabled=true; btn.textContent='...'; }
+  if(status){ status.textContent = 'Reading your log...'; status.style.color='#00C4D4'; }
+
+  var now = new Date();
+  var todayStr = now.toISOString().slice(0,10);
+
+  var prompt = 'Parse this site event log entry for the Thames Barrier Monel Bolt Replacement programme and return ONLY a JSON object, no other text.\n\nEntry: "' + text + '"\n\nToday: ' + todayStr + '. If no date mentioned, use today. If no time mentioned, use current time ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + '.\n\nReturn this exact JSON structure:\n{\n  "site": "Thames Barrier",\n  "date": "YYYY-MM-DD",\n  "workPackage": "brief description of what was planned",\n  "eventType": one of exactly: "DELAYED START"|"STAND DOWN"|"ACCESS ISSUE"|"PERMIT ISSUE"|"ENVIRONMENTAL HOLD"|"PLANT FAILURE"|"LABOUR SHORTAGE"|"INSPECTION CONFLICT"|"MATERIAL ISSUE"|"SEQUENCING CLASH"|"WEATHER HOLD"|"TIDE RESTRICTION",\n  "constraintType": one of exactly: "TIDE"|"WEATHER"|"PERMIT"|"THIRD-PARTY"|"ACCESS"|"LABOUR"|"PLANT"|"SAFETY",\n  "impactClass": one of exactly: "PROGRAMME CRITICAL"|"COST IMPACT ONLY"|"REPORTABLE EVENT"|"NEAR MISS"|"LEARNING EVENT",\n  "preventability": one of exactly: "FORESEEABLE AND PREVENTABLE"|"FORESEEABLE BUT UNAVOIDABLE"|"NOT FORESEEABLE"|"UNDER REVIEW",\n  "causeCat": one of exactly: "INFORMATION FAILURE"|"COORDINATION FAILURE"|"PLANNING FAILURE"|"PERMIT / REGULATORY"|"RESOURCE FAILURE"|"ENVIRONMENTAL",\n  "timeIn": "HH:MM or null",\n  "labourAffected": number or null,\n  "timeLostHrs": decimal or null,\n  "rootCause": "one clear sentence explaining what happened and why",\n  "recovery": "what was done instead, or null"\n}';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-opus-4-5', max_tokens:600, messages:[{role:'user',content:prompt}] })
+    });
+    var data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    var raw = (data.content && data.content[0] && data.content[0].text) || '';
+    raw = raw.replace(/```[a-z]*\n?/g,'').replace(/```/g,'').trim();
+    var j = JSON.parse(raw);
+    ofQuickApply(j);
+    if(status){ status.textContent = '✓ Form filled — review and submit'; status.style.color='#00C4D4'; }
+  } catch(e) {
+    if(status){ status.textContent = 'AI error — filling basics from your text'; status.style.color='#F59E0B'; }
+    ofQuickFillBasic(text);
+  }
+  if(btn){ btn.disabled=false; btn.textContent='FILL →'; }
+}
+
+function ofQuickApply(j){
+  // Text fields
+  var setVal = function(id, val){ var el=document.getElementById(id); if(el && val!=null) el.value=val; };
+  setVal('of-site', j.site||'Thames Barrier');
+  setVal('of-date', j.date||new Date().toISOString().slice(0,10));
+  setVal('of-pkg', j.workPackage||'');
+  setVal('of-labour', j.labourAffected||'');
+  setVal('of-hours', j.timeLostHrs||'');
+  setVal('of-cause', j.rootCause||'');
+  setVal('of-recovery-other', j.recovery||'');
+
+  // Time — put in notes area if no dedicated field
+  if(j.timeIn && j.timeIn!=='null'){
+    var cause = document.getElementById('of-cause');
+    if(cause && cause.value && !cause.value.includes(j.timeIn)){
+      cause.value = j.timeIn + ' — ' + cause.value;
+    }
+  }
+
+  // Chip selections — click the matching chip
+  function clickChip(group, value){
+    if(!value || value==='null') return;
+    document.querySelectorAll('.of-chip[data-g="'+group+'"]').forEach(function(chip){
+      if(chip.textContent.trim() === value){
+        chip.click();
+      }
+    });
+  }
+  clickChip('event', j.eventType);
+  clickChip('constraint', j.constraintType);
+  clickChip('prev', j.preventability);
+  clickChip('causeCat', j.causeCat);
+  clickChip('impact', j.impactClass);
+
+  // Scroll to form
+  var form = document.getElementById('of-site');
+  if(form) form.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function ofQuickFillBasic(text){
+  // Minimal fill without AI — detect obvious keywords
+  var t = text.toLowerCase();
+  var now = new Date();
+  var setVal = function(id, val){ var el=document.getElementById(id); if(el && val) el.value=val; };
+  setVal('of-site','Thames Barrier');
+  setVal('of-date', now.toISOString().slice(0,10));
+  setVal('of-cause', text);
+  // Time detection
+  var tm = text.match(/\b(\d{1,2})[:\.](\d{2})\b/);
+  if(tm) setVal('of-cause', tm[0] + ' — ' + text);
+  // Keyword-based chip selection
+  function clickChip(group, value){
+    document.querySelectorAll('.of-chip[data-g="'+group+'"]').forEach(function(chip){
+      if(chip.textContent.trim()===value) chip.click();
+    });
+  }
+  if(t.includes('weather')||t.includes('wind')||t.includes('rain')) clickChip('event','WEATHER HOLD');
+  else if(t.includes('tide')||t.includes('tidal')) clickChip('event','TIDE RESTRICTION');
+  else if(t.includes('permit')||t.includes('ptw')) clickChip('event','PERMIT ISSUE');
+  else if(t.includes('crane')||t.includes('plant')) clickChip('event','PLANT FAILURE');
+  else if(t.includes('absent')||t.includes('crew')||t.includes('staff')) clickChip('event','LABOUR SHORTAGE');
+  if(t.includes('weather')||t.includes('wind')||t.includes('rain')) clickChip('constraint','WEATHER');
+  else if(t.includes('tide')) clickChip('constraint','TIDE');
+}
+
+// Voice input using Web Speech API
+var ofVoiceActive = false;
+function ofQuickVoice(){
+  var btn = document.getElementById('of-voice-btn');
+  var inp = document.getElementById('of-quick-inp');
+  var status = document.getElementById('of-quick-status');
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    if(status){ status.textContent = 'Voice not supported in this browser — use Chrome or Safari'; status.style.color='#F59E0B'; }
+    return;
+  }
+  if(ofVoiceActive) return;
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = new SR();
+  rec.lang = 'en-GB'; rec.interimResults = false; rec.maxAlternatives = 1;
+  ofVoiceActive = true;
+  if(btn){ btn.style.color='#FF4444'; btn.style.borderColor='rgba(255,68,68,0.4)'; }
+  if(status){ status.textContent = '🎙️ Listening... speak now'; status.style.color='#00C4D4'; }
+  rec.onresult = function(e){
+    var said = e.results[0][0].transcript;
+    if(inp) inp.value = said;
+    if(status){ status.textContent = 'Got it — click FILL to process'; status.style.color='#00C4D4'; }
+  };
+  rec.onerror = function(){ if(status){ status.textContent = 'Could not hear — try again'; status.style.color='#F59E0B'; } };
+  rec.onend = function(){
+    ofVoiceActive = false;
+    if(btn){ btn.style.color='#3A5A72'; btn.style.borderColor='#1A3350'; }
+  };
+  rec.start();
+}
+window.ofQuickLog = ofQuickLog;
+window.ofQuickVoice = ofQuickVoice;
 
 // Load Airtable key
 function ofGetAtKey(){ return localStorage.getItem('sw_at_key') || ''; }
