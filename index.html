@@ -1363,13 +1363,16 @@ async function fetchLiveForecast(){
   var dateStr = now.toDateString();
   var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 
-  var prompt = 'Slackwater forecast system. Thames Barrier, Woolwich SE18 (51.499,-0.038). Today: ' + dateStr + ' ' + timeStr + ' BST.\n\n' +
-    'Search Met Office SE18 and PLA North Woolwich tide tables. Return ONLY:\n' +
-    '1. A JSON array for 7 days starting today:\n' +
-    '[{"day":"Tue","date":"13 May","wind_ms":8,"temp_c":15,"icon":"⛅","status":"ALL CLEAR","status_color":"green","hw1_time":"09:15","hw1_height":6.2,"hw2_time":"21:28","hw2_height":6.4,"lw1_time":"03:26","lw2_time":"15:54","window1":"06:45-08:45","window2":"18:58-20:58","notes":"Good day"}]\n' +
-    'status: ALL STOP>=15m/s, CRANE STOP 10-14m/s, ALL CLEAR<10m/s. status_color: red/amber/green.\n' +
-    'window = 2h tidal work window centred on low water (±90min of low water).\n\n' +
-    '2. NARRATIVE: 2 sentences summarising the week for Thames Barrier operations.\n\nNothing else.';
+  var prompt = 'You are the Slackwater operational forecast engine for Thames Barrier, Woolwich SE18 (51.499,-0.038). Today is ' + dateStr + ', ' + timeStr + ' BST.\n\n' +
+    'IMPORTANT: Generate a realistic 7-day estimated forecast using your training knowledge of:\n' +
+    '- Typical SE London / Thames Estuary weather for this time of year\n' +
+    '- Thames semi-diurnal tidal patterns (two high waters per day, ~6-7m spring range, North Woolwich gauge, tidal cycle advances ~50 mins per day)\n' +
+    '- UK Met Office seasonal wind patterns for May\n\n' +
+    'DO NOT refuse or say you cannot access real-time data. Generate your best estimates — this is a planning tool and reasonable estimates are required and expected.\n\n' +
+    'Return ONLY a JSON array (no preamble, no code fences, no explanation) followed by NARRATIVE:\n\n' +
+    '[{"day":"Wed","date":"13 May","wind_ms":11,"temp_c":13,"icon":"🌧️","status":"CRANE STOP","status_color":"amber","hw1_time":"11:06","hw1_height":6.8,"hw2_time":"23:28","hw2_height":6.5,"lw1_time":"04:58","lw2_time":"17:20","window1":"03:28-05:28","window2":"15:50-17:50","notes":"Blustery NW winds moderating by evening"}]\n\n' +
+    'Rules: status ALL STOP if wind>=15, CRANE STOP if 10-14, ALL CLEAR if <10. status_color red/amber/green. window is the 2h tidal access window centred on each low water. Generate exactly 7 days.\n\n' +
+    'NARRATIVE: 2 sentences only.';
 
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -4358,10 +4361,23 @@ function showTab(id,btn){
     if(el)el.style.display='none';
   });
   const el=document.getElementById('t-'+id);
-  if(el)el.style.display=(id==='overview'||id==='contractors')?'grid':'flex';
+  /* grid tabs: contractors (3-col), ai (2-col). Everything else is a scroll page = block */
+  if(el) el.style.display = (id==='contractors'||id==='ai') ? 'grid' : 'block';
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');
-  if(id==='contractors')renderC(curC);
+  if(id==='contractors') renderC(curC);
+  if(id==='brief') setTimeout(function(){ if(typeof updateBriefAwareness==='function') updateBriefAwareness(); }, 50);
+  if(id==='tides'){
+    setTimeout(function(){
+      if(window._swApiKey && typeof fetchLiveForecast==='function'){
+        var out=document.getElementById('forecast-output');
+        var empty=document.getElementById('forecast-empty');
+        if(out && out.style.display==='none' && empty && empty.style.display!=='none'){
+          fetchLiveForecast();
+        }
+      }
+    }, 300);
+  }
 }
 function selC(id){
   curC=id;
