@@ -1050,25 +1050,45 @@ document.addEventListener('DOMContentLoaded', function(){
   netlifyIdentity.on('logout', function(){ showLanding(); });
 });
 
-function doLogin(){
+function doLogin(retries){
   window._swLoginTarget = 'app';
-  if(typeof netlifyIdentity !== 'undefined'){
-    var existing = netlifyIdentity.currentUser();
-    if(existing){ swHandleNetlifyLogin(existing); return; } // already in — skip modal
-    netlifyIdentity.open(); return;
+  retries = retries || 0;
+  if(typeof netlifyIdentity === 'undefined'){
+    if(retries < 10){
+      var el = document.getElementById('lerr');
+      if(el){ el.textContent = 'Connecting…'; el.style.display='block'; }
+      setTimeout(function(){ doLogin(retries+1); }, 300);
+      return;
+    }
+    var e = document.getElementById('lerr');
+    if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
+    return;
   }
-  var e = document.getElementById('lerr');
-  if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
+  var e2 = document.getElementById('lerr');
+  if(e2) e2.style.display = 'none';
+  var existing = netlifyIdentity.currentUser();
+  if(existing){ swHandleNetlifyLogin(existing); return; } // already in — skip modal
+  netlifyIdentity.open();
 }
-function doDataLogin(){
+function doDataLogin(retries){
   window._swLoginTarget = 'portal';
-  if(typeof netlifyIdentity !== 'undefined'){
-    var existing = netlifyIdentity.currentUser();
-    if(existing){ swHandleNetlifyLogin(existing); return; } // already in — skip modal
-    netlifyIdentity.open(); return;
+  retries = retries || 0;
+  if(typeof netlifyIdentity === 'undefined'){
+    if(retries < 10){
+      var el = document.getElementById('dl-err');
+      if(el){ el.textContent = 'Connecting…'; el.style.display='block'; }
+      setTimeout(function(){ doDataLogin(retries+1); }, 300);
+      return;
+    }
+    var e = document.getElementById('dl-err');
+    if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
+    return;
   }
-  var e = document.getElementById('dl-err');
-  if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
+  var e2 = document.getElementById('dl-err');
+  if(e2) e2.style.display = 'none';
+  var existing = netlifyIdentity.currentUser();
+  if(existing){ swHandleNetlifyLogin(existing); return; } // already in — skip modal
+  netlifyIdentity.open();
 }
 
 /* ── TABS ── */
@@ -6150,7 +6170,8 @@ function ofMountInPortal(){
   if(!target || target.dataset.mounted) return;
   var src = document.getElementById('t-sitelog');
   if(!src) return;
-  target.innerHTML = src.innerHTML;
+  // MOVE children (not clone) so element IDs exist only in dp-oplog, never duplicated
+  while(src.firstChild){ target.appendChild(src.firstChild); }
   target.dataset.mounted = '1';
 }
 
@@ -6639,7 +6660,7 @@ function ofRenderPatterns(events){
   });
 
   var sorted = Object.entries(constraints).sort(function(a,b){ return b[1]-a[1]; }).slice(0,4);
-  var causeSorted = Object.entries(prevTypes).sort(function(a,b){ return b[1]-a[1]; }).slice(0,3);
+  // prevTypes removed — using causeCats below instead
   var max = sorted.length ? sorted[0][1] : 1;
 
   var causeHtml = '';
