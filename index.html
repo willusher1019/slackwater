@@ -4966,7 +4966,6 @@ window.loadDocuments = loadDocuments;
     <div style="display:flex;border-top:1px solid #1A3350;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
       <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">OPERATIONAL LOG</button>
       <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer;white-space:nowrap;flex-shrink:0">TASK LOG</button>
-      <button id="dp-tab-pastelog" onclick="dpShowTab('pastelog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">PASTE LOG</button>
       <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">DOCUMENTS</button>
     </div>
   </div>
@@ -4974,72 +4973,6 @@ window.loadDocuments = loadDocuments;
   <!-- DP: OPERATIONAL LOG TAB -->
   <div id="dp-oplog" style="height:calc(100dvh - 94px);display:none;flex-direction:column;overflow:hidden">
     <!-- Operational log injected here by JS -->
-  </div>
-
-  <!-- DP: PASTE LOG TAB -->
-  <div id="dp-pastelog" style="display:none;height:calc(100vh - 94px);overflow-y:auto">
-    <div style="max-width:860px;margin:0 auto;padding:32px 20px">
-
-      <div style="margin-bottom:24px">
-        <div style="font-family:var(--display);font-size:22px;color:#00C4D4;letter-spacing:2px;margin-bottom:6px">PASTE YOUR DAY'S LOG</div>
-        <div style="font-family:var(--mono);font-size:11px;color:#3A5A72;line-height:1.7">Write notes during the day however suits you — phone, voice memo, paper. Paste them here at the end of the day. AI reads them and builds the task entries. You review, correct if needed, then save to Airtable.</div>
-      </div>
-
-      <!-- AI KEY STATUS -->
-      <div id="pl-key-panel" style="margin-bottom:24px;padding:14px 16px;border-radius:4px;border:1px solid #1A3350;background:#060E18">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div id="pl-key-status-label" style="font-family:var(--mono);font-size:9px;letter-spacing:1px;margin-bottom:3px">AI KEY</div>
-            <div id="pl-key-status-sub" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
-          </div>
-          <div id="pl-key-input-wrap" style="display:flex;gap:8px;align-items:center;flex:1;max-width:480px">
-            <input id="pl-key-inp" type="password" placeholder="Paste your Anthropic API key (sk-ant-...)" style="flex:1;background:#0A1828;border:1px solid #1A3350;color:#EDF6FF;padding:8px 11px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
-            <button onclick="plSaveKey()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:8px 16px;cursor:pointer;border-radius:3px;white-space:nowrap">SAVE KEY</button>
-            <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-family:var(--mono);font-size:9px;color:#3A5A72;white-space:nowrap;text-decoration:none">Get key →</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- INPUT AREA -->
-      <div id="pl-input-section">
-        <div style="margin-bottom:10px">
-          <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">DATE THESE NOTES ARE FROM</label>
-          <input id="pl-date" type="date" style="background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:9px 11px;font-size:13px;outline:none;border-radius:4px;font-family:var(--mono)" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
-        </div>
-        <!-- WhatsApp file drop zone -->
-        <div id="pl-drop-zone" ondragover="plDragOver(event)" ondragleave="plDragLeave(event)" ondrop="plDrop(event)" style="border:1.5px dashed #1A3350;border-radius:6px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color 0.15s,background 0.15s" onclick="document.getElementById('pl-file-inp').click()">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="font-size:20px">💬</div>
-            <div>
-              <div style="font-family:var(--mono);font-size:10px;color:#A8C4DC;font-weight:600">DROP WHATSAPP EXPORT HERE</div>
-              <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">iPhone: Group chat → Export Chat → Without Media → share .txt file here</div>
-            </div>
-          </div>
-          <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;border:1px solid #1A3350;padding:5px 10px;border-radius:3px;white-space:nowrap">Browse file</div>
-          <input id="pl-file-inp" type="file" accept=".txt,.zip" style="display:none" onchange="plFileSelect(this)">
-        </div>
-        <div style="margin-bottom:14px">
-          <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">YOUR NOTES — or paste directly, any format</label>
-          <textarea id="pl-raw" rows="12" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:12px;font-size:13px;font-family:var(--mono);line-height:1.7;outline:none;border-radius:4px;resize:vertical" placeholder="e.g.&#10;7:30 morning briefing starts&#10;7:45 briefing done&#10;8:47 Jack Hogie Idris into Golf leaf — jet washing&#10;11:40 Hogie done. Lunch.&#10;..." onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <button onclick="plParse()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:11px 28px;cursor:pointer;border-radius:4px" onmouseover="this.style.background='#00A8B8'" onmouseout="this.style.background='#00C4D4'">PARSE WITH AI →</button>
-          <button onclick="var r=document.getElementById('pl-raw');if(r&&r.value.trim()){if(confirm('Clear the log?')){r.value='';r.focus();}}else if(r){r.value='';r.focus();}" style="background:transparent;border:1px solid #1A3350;color:#3A5A72;font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:11px 18px;cursor:pointer;border-radius:4px" onmouseover="this.style.borderColor='#FF4444';this.style.color='#FF4444'" onmouseout="this.style.borderColor='#1A3350';this.style.color='#3A5A72'">CLEAR</button>
-          <div id="pl-status" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
-        </div>
-      </div>
-
-      <!-- PARSED RESULTS -->
-      <div id="pl-results" style="display:none;margin-top:32px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-family:var(--display);font-size:16px;color:#EBF5FF;letter-spacing:2px">PARSED TASKS — review before saving</div>
-          <button onclick="plSaveAll()" id="pl-save-btn" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:9px 20px;cursor:pointer;border-radius:4px">SAVE ALL TO AIRTABLE →</button>
-        </div>
-        <div id="pl-cards"></div>
-        <div id="pl-save-status" style="display:none;margin-top:16px;padding:14px;background:rgba(0,196,212,0.08);border:1px solid rgba(0,196,212,0.2);border-radius:4px;font-family:var(--mono);font-size:11px;color:#00C4D4"></div>
-      </div>
-
-    </div>
   </div>
 
   <!-- DP: TASK LOG + OVERVIEW TAB -->
@@ -5072,7 +5005,75 @@ window.loadDocuments = loadDocuments;
       </div>
     </div>
 
-    <!-- LOG NEW TASK FORM -->
+    <!-- PASTE YOUR DAY'S LOG — AI parser -->
+    <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden;margin-bottom:24px">
+      <div style="padding:12px 16px;background:#070F18;border-bottom:1px solid #1A3350;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer" onclick="var b=document.getElementById('pl-body');var a=document.getElementById('pl-chevron');if(b.style.display==='none'){b.style.display='block';a.textContent='▲';plInit();}else{b.style.display='none';a.textContent='▼';}">
+        <div>
+          <div style="font-family:var(--display);font-size:20px;color:#00C4D4;letter-spacing:2px">PASTE YOUR DAY'S LOG</div>
+          <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">Paste notes or drop a WhatsApp export — AI builds the task entries, you save in one tap</div>
+        </div>
+        <span id="pl-chevron" style="font-family:var(--mono);font-size:12px;color:#3A5A72">▼</span>
+      </div>
+      <div id="pl-body" style="display:none;padding:20px">
+
+        <!-- AI KEY STATUS -->
+        <div id="pl-key-panel" style="margin-bottom:20px;padding:14px 16px;border-radius:4px;border:1px solid #1A3350;background:#060E18">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <div id="pl-key-status-label" style="font-family:var(--mono);font-size:9px;letter-spacing:1px;margin-bottom:3px">AI KEY</div>
+              <div id="pl-key-status-sub" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
+            </div>
+            <div id="pl-key-input-wrap" style="display:flex;gap:8px;align-items:center;flex:1;max-width:480px">
+              <input id="pl-key-inp" type="password" placeholder="Paste your Anthropic API key (sk-ant-...)" style="flex:1;background:#0A1828;border:1px solid #1A3350;color:#EDF6FF;padding:8px 11px;font-family:var(--mono);font-size:11px;outline:none;border-radius:3px" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
+              <button onclick="plSaveKey()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:8px 16px;cursor:pointer;border-radius:3px;white-space:nowrap">SAVE KEY</button>
+              <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-family:var(--mono);font-size:9px;color:#3A5A72;white-space:nowrap;text-decoration:none">Get key →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- INPUT AREA -->
+        <div id="pl-input-section">
+          <div style="margin-bottom:10px">
+            <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">DATE THESE NOTES ARE FROM</label>
+            <input id="pl-date" type="date" style="background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:9px 11px;font-size:13px;outline:none;border-radius:4px;font-family:var(--mono)" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
+          </div>
+          <!-- WhatsApp file drop zone -->
+          <div id="pl-drop-zone" ondragover="plDragOver(event)" ondragleave="plDragLeave(event)" ondrop="plDrop(event)" style="border:1.5px dashed #1A3350;border-radius:6px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color 0.15s,background 0.15s" onclick="document.getElementById('pl-file-inp').click()">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:20px">💬</div>
+              <div>
+                <div style="font-family:var(--mono);font-size:10px;color:#A8C4DC;font-weight:600">DROP WHATSAPP EXPORT HERE</div>
+                <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">iPhone: Group chat → Export Chat → Without Media → share .txt file here</div>
+              </div>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;border:1px solid #1A3350;padding:5px 10px;border-radius:3px;white-space:nowrap">Browse file</div>
+            <input id="pl-file-inp" type="file" accept=".txt,.zip" style="display:none" onchange="plFileSelect(this)">
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">YOUR NOTES — paste directly, any format</label>
+            <textarea id="pl-raw" rows="10" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:12px;font-size:13px;font-family:var(--mono);line-height:1.7;outline:none;border-radius:4px;resize:vertical" placeholder="e.g.&#10;7:30 morning briefing starts&#10;7:45 briefing done&#10;8:47 Jack Hogie Idris into Golf leaf — jet washing&#10;11:40 Hogie done. Lunch.&#10;..." onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button onclick="plParse()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:11px 28px;cursor:pointer;border-radius:4px" onmouseover="this.style.background='#00A8B8'" onmouseout="this.style.background='#00C4D4'">PARSE WITH AI →</button>
+            <button onclick="var r=document.getElementById('pl-raw');if(r&&r.value.trim()){if(confirm('Clear the log?')){r.value='';r.focus();}}else if(r){r.value='';r.focus();}" style="background:transparent;border:1px solid #1A3350;color:#3A5A72;font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:11px 18px;cursor:pointer;border-radius:4px" onmouseover="this.style.borderColor='#FF4444';this.style.color='#FF4444'" onmouseout="this.style.borderColor='#1A3350';this.style.color='#3A5A72'">CLEAR</button>
+            <div id="pl-status" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
+          </div>
+        </div>
+
+        <!-- PARSED RESULTS -->
+        <div id="pl-results" style="display:none;margin-top:28px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-family:var(--display);font-size:16px;color:#EBF5FF;letter-spacing:2px">PARSED TASKS — review before saving</div>
+            <button onclick="plSaveAll()" id="pl-save-btn" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:9px 20px;cursor:pointer;border-radius:4px">SAVE ALL TO AIRTABLE →</button>
+          </div>
+          <div id="pl-cards"></div>
+          <div id="pl-save-status" style="display:none;margin-top:16px;padding:14px;background:rgba(0,196,212,0.08);border:1px solid rgba(0,196,212,0.2);border-radius:4px;font-family:var(--mono);font-size:11px;color:#00C4D4"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LOG NEW TASK FORM — manual entry -->
     <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden;margin-bottom:24px">
       <div style="padding:12px 16px;background:#070F18;border-bottom:1px solid #1A3350">
         <div style="font-family:var(--display);font-size:20px;color:#00C4D4;letter-spacing:2px">LOG A NEW TASK</div>
@@ -5952,7 +5953,7 @@ window.loadDocuments = loadDocuments;
 <script>
 /* ── DATA PORTAL TABS ── */
 function dpShowTab(tab){
-  ['oplog','tasklog','pastelog','documents'].forEach(function(t){
+  ['oplog','tasklog','documents'].forEach(function(t){
     var el = document.getElementById('dp-'+t);
     var btn = document.getElementById('dp-tab-'+t);
     if(el) el.style.display = t===tab ? (t==='oplog'?'flex':'block') : 'none';
@@ -5963,8 +5964,7 @@ function dpShowTab(tab){
     }
   });
   if(tab==='oplog'){ if(typeof ofMountInPortal==='function') ofMountInPortal(); if(typeof ofShowAtStatus==='function') ofShowAtStatus(); if(typeof ofRender==='function') ofRender(typeof ofLoad==='function' ? ofLoad() : []); }
-  if(tab==='tasklog'){ dpLoadStats(); }
-  if(tab==='pastelog'){ plInit(); }
+  if(tab==='tasklog'){ dpLoadStats(); plInit(); }
 }
 window.dpShowTab = dpShowTab;
 
