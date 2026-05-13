@@ -6246,6 +6246,11 @@ async function plSaveAll(){
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey){ alert('No Airtable key set.'); return; }
   if(!plParsed.tasks.length && !plParsed.opEvents.length){ alert('Nothing to save.'); return; }
+  if(plParsed._saved){
+    var total = (plParsed.tasks.length||0) + (plParsed.opEvents.length||0);
+    var ok = confirm('These ' + total + ' record' + (total!==1?'s':'') + ' were already saved to Airtable.\n\nSave again? This will create duplicates.');
+    if(!ok) return;
+  }
 
   btn.textContent = 'Saving...'; btn.disabled = true;
   saveStatus.style.display = 'block';
@@ -6299,6 +6304,7 @@ async function plSaveAll(){
   else msg += ' — saved. Clearing in 3s...';
   saveStatus.textContent = msg;
   saveStatus.style.color = totalFail ? '#F59E0B' : '#00C4D4';
+  if(!totalFail) plParsed._saved = true;
 
   /* Always clear after save — success clears immediately after 3s, partial fail shows error then clears */
   setTimeout(function(){
