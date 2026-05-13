@@ -4116,7 +4116,7 @@ Slackwater — Thames Barrier Operations</div>
           <div class="ol-stat"><div class="ol-stat-n" style="color:var(--go)" id="of-prev-pct">—</div><div class="ol-stat-l">PREVENTABLE</div></div>
         </div>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px">Every event logged builds the case that operational inefficiency is structurally predictable.</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px">If a constraint stopped work, it goes in the record. Timestamped. Structured. Yours.</div>
     </div>
 
     <div class="ol-body">
@@ -4125,7 +4125,7 @@ Slackwater — Thames Barrier Operations</div>
       <div class="ol-form-col">
         <!-- QUICK LOG -->
         <div style="background:rgba(0,196,212,0.05);border:1px solid rgba(0,196,212,0.2);border-radius:6px;padding:12px 14px;margin-bottom:14px">
-          <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">⚡ QUICK LOG — describe what happened, AI fills the form</div>
+          <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">⚡ QUICK LOG — describe the constraint, AI builds your record</div>
           <div style="display:flex;gap:8px;align-items:flex-start">
             <textarea id="of-quick-inp" rows="2" style="flex:1;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:9px 11px;font-size:13px;font-family:'DM Sans',sans-serif;line-height:1.5;outline:none;border-radius:4px;resize:none" placeholder="e.g. 10:47 rain and wind, Apollo crane Deck 7 stopped, went inside" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
             <div style="display:flex;flex-direction:column;gap:6px">
@@ -4135,7 +4135,7 @@ Slackwater — Thames Barrier Operations</div>
           </div>
           <div id="of-quick-status" style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:6px;min-height:14px"></div>
         </div>
-        <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:12px">LOG NEW EVENT</div>
+        <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--accent);margin-bottom:12px">LOG THIS CONSTRAINT</div>
 
         <div class="of-row">
           <div class="of-section">
@@ -4278,7 +4278,7 @@ Slackwater — Thames Barrier Operations</div>
         </div>
 
         <div class="of-section">
-          <div class="of-label">Root Cause — what specifically happened?</div>
+          <div class="of-label">What stopped work — this is your evidence, be specific</div>
           <textarea class="of-textarea" id="of-cause" placeholder="e.g. 'Third-party inspection not flagged at morning briefing — DiveCo had no warning until Rendel arrived at 14:45'"></textarea>
         </div>
 
@@ -4358,8 +4358,8 @@ Slackwater — Thames Barrier Operations</div>
         <div id="of-feed">
           <div class="of-empty" id="of-empty-state">
             <div class="of-empty-icon">📋</div>
-            <div class="of-empty-t">NO EVENTS LOGGED YET</div>
-            <div class="of-empty-s">Every event you log becomes evidence.<br>Start with today's site activities.</div>
+            <div class="of-empty-t">NO CONSTRAINTS LOGGED YET</div>
+            <div class="of-empty-s">When anything stops work — weather, tide, permit, crew — log it here.<br>If it's not in the record, it didn't happen.</div>
           </div>
         </div>
 
@@ -4829,7 +4829,7 @@ window.loadDocuments = loadDocuments;
       <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:3px">DATA LOGGING PORTAL</div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:11px">
-      <div style="font-family:var(--mono);font-size:10px;color:#3A5A72;letter-spacing:1px;text-align:center;line-height:1.8">Sign in with your Slackwater account.<br>Access is invite-only — contact Will Usher to request access.</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#3A5A72;letter-spacing:1px;text-align:center;line-height:1.8">Your site record. Log constraints, protect the crew.<br>Invite-only — contact Will Usher for access.</div>
       <div id="dl-err" style="display:none;font-family:var(--mono);font-size:10px;color:#FF3A3A;text-align:center"></div>
       <button onclick="doDataLogin()" style="width:100%;padding:13px;background:linear-gradient(135deg,rgba(0,150,180,0.9),rgba(0,110,140,0.9));border:none;border-top:2px solid #00C4D4;color:#EBF5FF;font-family:var(--display);font-size:15px;letter-spacing:3px;cursor:pointer;margin-top:4px">SIGN IN →</button>
     </div>
