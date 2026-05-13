@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Slackwater — AI Operational Intelligence for Critical Infrastructure</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%2303070C'/><text x='3' y='23' font-family='monospace' font-size='17' font-weight='700' fill='%2300C4D4'>SW</text></svg>">
 <meta name="description" content="The platform that tells you the night before whether to mobilise. AI-powered operational coordination for infrastructure and construction.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -4011,8 +4012,18 @@ Slackwater — Thames Barrier Operations</div>
       .of-at-ok{font-family:var(--mono);font-size:9px;color:var(--go)}
 
       @media(max-width:700px){
-        .ol-body{flex-direction:column}
-        .ol-form-col{width:100%;border-right:none;border-bottom:1px solid var(--border)}
+        /* Operational log stacks form above feed */
+        .ol-body{flex-direction:column;overflow-y:auto}
+        .ol-form-col{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--border);overflow-y:visible;flex-shrink:0}
+        /* Chips: bigger touch targets */
+        .of-chip{padding:9px 12px;font-size:10px;min-height:38px}
+        /* Row fields stack */
+        .of-row{flex-direction:column;gap:0}
+        /* Quick log textarea taller on mobile */
+        #of-quick-inp{min-height:64px}
+        /* Oplog stats bar: wrap and compact */
+        .ol-stats{flex-wrap:wrap;gap:8px 16px;padding:8px 12px}
+        .ol-stat-n{font-size:22px}
       }
     </style>
 
@@ -4753,16 +4764,16 @@ window.loadDocuments = loadDocuments;
       </div>
     </div>
     <!-- PORTAL TAB BAR -->
-    <div style="display:flex;border-top:1px solid #1A3350">
-      <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">OPERATIONAL LOG</button>
-      <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer">TASK LOG</button>
-      <button id="dp-tab-pastelog" onclick="dpShowTab('pastelog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">PASTE LOG</button>
-      <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer">DOCUMENTS</button>
+    <div style="display:flex;border-top:1px solid #1A3350;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+      <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">OPERATIONAL LOG</button>
+      <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer;white-space:nowrap;flex-shrink:0">TASK LOG</button>
+      <button id="dp-tab-pastelog" onclick="dpShowTab('pastelog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">PASTE LOG</button>
+      <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">DOCUMENTS</button>
     </div>
   </div>
 
   <!-- DP: OPERATIONAL LOG TAB -->
-  <div id="dp-oplog" style="height:calc(100vh - 94px);display:none;flex-direction:column;overflow:hidden">
+  <div id="dp-oplog" style="height:calc(100dvh - 94px);display:none;flex-direction:column;overflow:hidden">
     <!-- Operational log injected here by JS -->
   </div>
 
