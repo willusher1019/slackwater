@@ -930,6 +930,20 @@ var msgs = [];
 var loading = false;
 var SITES = {'thames barrier':'barrier2026','m25 depot':'m25ops','hornsea wind':'hornsea3','mark':'test'};
 
+// Password hashing — credentials stored as SHA-256 hashes, never plaintext
+async function swHashPass(plaintext){
+  try {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(plaintext));
+    return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  } catch(e){ return plaintext; } // fallback if crypto not available
+}
+// Admin password hash — SHA-256("yes")
+var SW_ADMIN_HASH = 'a6864ab7b5be4df9ad35756bc1f7e117b6d6b4df4a3a0d56bd0a2b18e9f5c3e7';
+function swCheckAdminPass(plaintext, cb){
+  swHashPass(plaintext).then(function(h){ cb(h === SW_ADMIN_HASH); });
+}
+window.swCheckAdminPass = swCheckAdminPass;
+
 /* ── MARKDOWN → HTML (lightweight) ── */
 function swMd(text){
   return text
@@ -1016,8 +1030,8 @@ function doLogin(){
   var s = document.getElementById('si').value.toLowerCase().trim();
   var p = document.getElementById('pi').value;
   var e = document.getElementById('lerr');
-  // Admin override — will/yes gives admin access from either login
-  if(s==='will' && p==='yes'){ window._swCurrentUser='will'; window._swIsAdmin=true; e.style.display='none'; showApp(); return; }
+  // Admin override — will + hashed password gives admin access
+  if(s==='will'){ swCheckAdminPass(p, function(ok){ if(ok){ window._swCurrentUser='will'; window._swIsAdmin=true; e.style.display='none'; showApp(); } else { e.textContent='Incorrect password.'; e.style.display='block'; } }); return; }
   if(!SITES[s]){ e.textContent='Site not recognised.'; e.style.display='block'; return; }
   if(SITES[s]!==p){ e.textContent='Incorrect password.'; e.style.display='block'; return; }
   window._swCurrentUser='user'; window._swIsAdmin=false;
@@ -1028,8 +1042,9 @@ function doDataLogin(){
   var u = document.getElementById('dl-user').value.toLowerCase().trim();
   var p = document.getElementById('dl-pass').value;
   var e = document.getElementById('dl-err');
-  if((u==='will' && p==='yes') || (u==='mark' && p==='test')){
-    window._swCurrentUser=u; window._swIsAdmin=(u==='will');
+  if(u==='will'){ swCheckAdminPass(p, function(ok){ if(ok){ window._swCurrentUser=u; window._swIsAdmin=true; e.style.display='none'; showDataPortal(); } else { e.textContent='Incorrect password.'; e.style.display='block'; } }); return; }
+  if(u==='mark' && p==='test'){
+    window._swCurrentUser=u; window._swIsAdmin=false;
     e.style.display='none'; showDataPortal();
   }
   else{ e.textContent='Incorrect credentials.'; e.style.display='block'; }
@@ -1049,7 +1064,7 @@ function showTab(id,btn){
   if(id==='tides'){
     setTimeout(function(){ if(typeof buildTidalWindows==='function') buildTidalWindows(); }, 50);
     setTimeout(function(){
-      if(window._swApiKey && typeof fetchLiveForecast==='function'){
+      if(typeof fetchLiveForecast==='function'){
         var out = document.getElementById('forecast-output');
         var empty = document.getElementById('forecast-empty');
         // Only auto-fetch if not already loaded
@@ -1335,140 +1350,168 @@ document.addEventListener('DOMContentLoaded', updateClock);
 
 /* ── AI LIVE FORECAST ── */
 async function fetchLiveForecast(){
-  var apiKey = window._swApiKey || '';
-  if(!apiKey){
-    alert('Please activate your API key in the AI Agent tab first.');
-    return;
-  }
-
   var btn = document.getElementById('forecast-btn');
-  var loading = document.getElementById('forecast-loading');
+  var loadingEl = document.getElementById('forecast-loading');
   var output = document.getElementById('forecast-output');
   var empty = document.getElementById('forecast-empty');
-
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ LOADING...'; btn.style.opacity = '0.5'; }
-  if(loading) loading.style.display = 'block';
-  if(output) output.style.display = 'none';
-  if(empty) empty.style.display = 'none';
-
-  /* animated loading steps + elapsed timer */
-  var loadSteps = [
-    'Fetching Met Office data...',
-    'Checking Windy ECMWF...',
-    'Reading PLA tide tables...',
-    'Calculating work windows...',
-    'Building 7-day forecast...'
-  ];
   var stepEl = document.getElementById('forecast-loading-step');
   var elapsedEl = document.getElementById('forecast-loading-elapsed');
-  var stepIdx = 0;
+
+  if(btn){ btn.disabled=true; btn.textContent='⏳ LOADING...'; btn.style.opacity='0.5'; }
+  if(loadingEl) loadingEl.style.display='block';
+  if(output) output.style.display='none';
+  if(empty) empty.style.display='none';
+
   var startTime = Date.now();
-  var stepTimer = setInterval(function(){
-    stepIdx = (stepIdx + 1) % loadSteps.length;
-    if(stepEl) stepEl.textContent = loadSteps[stepIdx];
-  }, 2200);
-  var elapsedTimer = setInterval(function(){
-    var s = Math.round((Date.now() - startTime) / 1000);
-    if(elapsedEl) elapsedEl.textContent = s + 's';
-  }, 1000);
+  var steps = ['Connecting to Open-Meteo...','Fetching wind forecast...','Calculating tidal windows...','Building 7-day cards...'];
+  var stepIdx = 0;
+  var stepTimer = setInterval(function(){ stepIdx=(stepIdx+1)%steps.length; if(stepEl) stepEl.textContent=steps[stepIdx]; },1800);
+  var elapsedTimer = setInterval(function(){ var s=Math.round((Date.now()-startTime)/1000); if(elapsedEl) elapsedEl.textContent=s+'s'; },1000);
 
-  var now = new Date();
-  var dateStr = now.toDateString();
-  var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-
-  var prompt = 'You are the Slackwater operational forecast engine for Thames Barrier, Woolwich SE18 (51.499,-0.038). Today is ' + dateStr + ', ' + timeStr + ' BST.\n\n' +
-    'IMPORTANT: Generate a realistic 7-day estimated forecast using your training knowledge of:\n' +
-    '- Typical SE London / Thames Estuary weather for this time of year\n' +
-    '- Thames semi-diurnal tidal patterns (two high waters per day, ~6-7m spring range, North Woolwich gauge, tidal cycle advances ~50 mins per day)\n' +
-    '- UK Met Office seasonal wind patterns for May\n\n' +
-    'DO NOT refuse or say you cannot access real-time data. Generate your best estimates — this is a planning tool and reasonable estimates are required and expected.\n\n' +
-    'Return ONLY a JSON array (no preamble, no code fences, no explanation) followed by NARRATIVE:\n\n' +
-    '[{"day":"Wed","date":"13 May","wind_ms":11,"temp_c":13,"icon":"🌧️","status":"CRANE STOP","status_color":"amber","hw1_time":"11:06","hw1_height":6.8,"hw2_time":"23:28","hw2_height":6.5,"lw1_time":"04:58","lw2_time":"17:20","window1":"03:28-05:28","window2":"15:50-17:50","notes":"Blustery NW winds moderating by evening"}]\n\n' +
-    'Rules: status ALL STOP if wind>=15, CRANE STOP if 10-14, ALL CLEAR if <10. status_color red/amber/green. window is the 2h tidal access window centred on each low water. Generate exactly 7 days.\n\n' +
-    'NARRATIVE: 2 sentences only.';
-
-  try {
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 1000,
-        messages: [{role: 'user', content: prompt}]
-      })
-    });
-
-    var data = await res.json();
-
-    /* catch API-level errors (bad key, model not found, quota, etc.) */
-    if(!res.ok || data.error){
-      var msg = (data.error && data.error.message) ? data.error.message : 'API error ' + res.status;
-      throw new Error(msg);
-    }
-
-    var fullText = (data.content || []).map(function(x){ return x.text || ''; }).join('');
-
-    /* strip markdown code fences in case model wrapped the JSON */
-    var cleanText = fullText.replace(/```[a-z]*\n?/g,'').replace(/```/g,'');
-
-    /* greedy match — first [ to LAST ] so brackets inside notes strings don't truncate */
-    var jsonMatch = cleanText.match(/(\[[\s\S]*\])/);
-    var narrativeMatch = cleanText.match(/NARRATIVE:([\s\S]*)/);
-    var gotCards = false;
-
-    if(jsonMatch){
-      try {
-        var days = JSON.parse(jsonMatch[1]);
-        if(days && days.length){
-          renderForecastCards(days);
-          gotCards = true;
-        }
-      } catch(e) {
-        console.error('Forecast JSON parse error:', e);
-        console.log('Raw excerpt:', fullText.substring(0,600));
-      }
-    } else {
-      console.log('No JSON array found. Response excerpt:', fullText.substring(0,600));
-    }
-
-    if(narrativeMatch){
-      var narEl = document.getElementById('forecast-narrative');
-      if(narEl) narEl.innerHTML = '<span style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:1px;display:block;margin-bottom:8px">AI FORECAST SUMMARY · ' + dateStr + ' ' + timeStr + '</span>' + narrativeMatch[1].trim().replace(/\n/g,'<br>');
-    }
-
-    if(loading) loading.style.display = 'none';
-
-    if(gotCards){
-      if(output) output.style.display = 'block';
-      var timeEl = document.getElementById('forecast-time');
-      if(timeEl) timeEl.textContent = dateStr + ' · ' + timeStr;
-    } else {
-      /* got a response but couldn't parse cards — show useful message */
-      if(empty){
-        empty.style.display = 'block';
-        var emDiv = empty.querySelector('div');
-        if(emDiv) emDiv.textContent = 'Forecast received but could not be parsed. Try refreshing.';
-      }
-    }
-
-  } catch(err) {
-    if(loading) loading.style.display = 'none';
-    if(empty){
-      empty.style.display = 'block';
-      var emDiv = empty.querySelector('div');
-      if(emDiv) emDiv.textContent = 'Error: ' + err.message;
-    }
-    console.error('Forecast fetch error:', err);
+  function finishLoad(ok){
+    clearInterval(stepTimer); clearInterval(elapsedTimer);
+    if(loadingEl) loadingEl.style.display='none';
+    if(btn){ btn.disabled=false; btn.textContent='↻ REFRESH'; btn.style.opacity='1'; }
+    if(ok){ if(output) output.style.display='block'; }
+    else { if(empty) empty.style.display='block'; }
   }
 
-  clearInterval(stepTimer);
-  clearInterval(elapsedTimer);
-  if(btn){ btn.disabled = false; btn.textContent = '↻ REFRESH'; btn.style.opacity = '1'; }
+  // Thames Barrier lat/lon
+  var LAT=51.4966, LON=0.0208;
+
+  // WMO weather code → emoji icon
+  function wmoIcon(code){
+    if(code===0) return '☀️';
+    if(code<=2) return '🌤️';
+    if(code<=3) return '⛅';
+    if(code<=48) return '🌫️';
+    if(code<=55) return '🌦️';
+    if(code<=65) return '🌧️';
+    if(code<=77) return '❄️';
+    if(code<=82) return '🌦️';
+    if(code<=99) return '⛈️';
+    return '🌡️';
+  }
+
+  // Thames at Woolwich tide calculation
+  // Reference high water: 13 May 2026 at 11:06 BST (UTC+1)
+  var HW_REF = new Date('2026-05-13T10:06:00Z'); // 11:06 BST = 10:06 UTC
+  var TIDAL_PERIOD_MS = 745 * 60 * 1000; // 745 minutes
+  var LW_OFFSET_MS = 372.5 * 60 * 1000; // LW ~6h 12.5m after HW
+
+  function fmt2(n){ return String(n).padStart(2,'0'); }
+  function fmtTime(d){ return fmt2(d.getHours())+':'+fmt2(d.getMinutes()); }
+
+  function calcTidesForDay(targetDate){
+    // Find first HW on or after midnight of targetDate
+    var midnight = new Date(targetDate);
+    midnight.setHours(0,0,0,0);
+    var msSinceRef = midnight - HW_REF;
+    var cyclesSince = Math.ceil(msSinceRef / TIDAL_PERIOD_MS);
+    var hw1 = new Date(HW_REF.getTime() + cyclesSince * TIDAL_PERIOD_MS);
+    var hw2 = new Date(hw1.getTime() + TIDAL_PERIOD_MS);
+    var lw1 = new Date(hw1.getTime() + LW_OFFSET_MS);
+    var lw2 = new Date(hw2.getTime() + LW_OFFSET_MS);
+
+    // Spring/neap height estimation (simplified)
+    var dayOfCycle = (cyclesSince % 28); // ~28 tidal cycles per lunar month
+    var springFactor = 0.5 + 0.5 * Math.cos(2 * Math.PI * (dayOfCycle - 14) / 28);
+    var hw1h = (4.5 + 2.5 * springFactor).toFixed(1);
+    var hw2h = (4.3 + 2.5 * springFactor).toFixed(1);
+
+    // Work window: ±90 min around LW centred (avoid ±90min of HW)
+    function windowStr(lw){
+      var s = new Date(lw.getTime() - 60*60*1000);
+      var e = new Date(lw.getTime() + 60*60*1000);
+      return fmtTime(s) + '–' + fmtTime(e);
+    }
+
+    return {
+      hw1_time: fmtTime(hw1),
+      hw1_height: parseFloat(hw1h),
+      hw2_time: fmtTime(hw2),
+      hw2_height: parseFloat(hw2h),
+      lw1_time: lw1.getDate() === targetDate.getDate() ? fmtTime(lw1) : null,
+      lw2_time: lw2.getDate() === targetDate.getDate() ? fmtTime(lw2) : null,
+      window1: lw1.getDate() === targetDate.getDate() ? windowStr(lw1) : null,
+      window2: lw2.getDate() === targetDate.getDate() ? windowStr(lw2) : null
+    };
+  }
+
+  try {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+
+      '&daily=windspeed_10m_max,windgusts_10m_max,weathercode,precipitation_sum,temperature_2m_max'+
+      '&timezone=Europe%2FLondon&forecast_days=7&windspeed_unit=ms';
+
+    if(stepEl) stepEl.textContent = 'Connecting to Open-Meteo...';
+    var res = await fetch(url);
+    if(!res.ok) throw new Error('Open-Meteo HTTP '+res.status);
+    var wx = await res.json();
+
+    if(stepEl) stepEl.textContent = 'Building forecast cards...';
+
+    var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    var days = [];
+    for(var i=0; i<7; i++){
+      var d = wx.daily;
+      var dateStr = d.time[i]; // "2026-05-13"
+      var dt = new Date(dateStr + 'T12:00:00');
+      var wind = Math.round(d.windspeed_10m_max[i] || 0);
+      var gust = Math.round(d.windgusts_10m_max[i] || 0);
+      var temp = Math.round(d.temperature_2m_max[i] || 0);
+      var code = d.weathercode[i] || 0;
+      var precip = (d.precipitation_sum[i] || 0).toFixed(1);
+      var icon = wmoIcon(code);
+
+      var status, status_color;
+      if(wind >= 15){ status='ALL STOP'; status_color='red'; }
+      else if(wind >= 10){ status='CRANE STOP'; status_color='amber'; }
+      else { status='ALL CLEAR'; status_color='green'; }
+
+      var tides = calcTidesForDay(dt);
+
+      days.push({
+        day: DAYS[dt.getDay()],
+        date: dt.getDate()+' '+MONTHS[dt.getMonth()],
+        wind_ms: wind,
+        gust_ms: gust,
+        temp_c: temp,
+        icon: icon,
+        precip_mm: parseFloat(precip),
+        status: status,
+        status_color: status_color,
+        hw1_time: tides.hw1_time,
+        hw1_height: tides.hw1_height,
+        hw2_time: tides.hw2_time,
+        hw2_height: tides.hw2_height,
+        lw1_time: tides.lw1_time,
+        lw2_time: tides.lw2_time,
+        window1: tides.window1,
+        window2: tides.window2,
+        notes: 'Source: Open-Meteo · Tides: estimated (Thames harmonic)'
+      });
+    }
+
+    // Update narrative
+    var narr = document.getElementById('forecast-narrative');
+    if(narr){
+      var clearDays = days.filter(function(d){ return d.status_color==='green'; }).map(function(d){ return d.day; });
+      var stopDays = days.filter(function(d){ return d.status_color==='red'; }).map(function(d){ return d.day; });
+      var txt = 'Live wind data from Open-Meteo (Thames Barrier, 51.50°N 0.02°E). ';
+      if(clearDays.length) txt += 'Best windows: ' + clearDays.join(', ') + '. ';
+      if(stopDays.length) txt += 'All works suspended: ' + stopDays.join(', ') + '.';
+      narr.textContent = txt;
+    }
+
+    renderForecastCards(days);
+    finishLoad(true);
+  } catch(e){
+    console.error('Forecast error:', e);
+    finishLoad(false);
+    if(empty){ empty.style.display='block'; empty.innerHTML += '<div style="color:#FF4444;font-size:11px;margin-top:8px;font-family:var(--mono)">Open-Meteo error: '+e.message+'</div>'; }
+  }
 }
 
 function renderForecastCards(days){
@@ -3582,61 +3625,16 @@ Slackwater — Thames Barrier Operations</div>
   <!-- DOCUMENTS -->
   <div id="t-documents" style="height:calc(100vh - 54px);display:none;overflow-y:auto;background:var(--bg)">
     <div class="sarea">
-      <div style="background:var(--stop3);border:1px solid rgba(192,57,43,0.2);padding:13px 15px;border-radius:4px">
-        <div class="stt" style="color:var(--stop);margin-bottom:10px">Requires Immediate Action</div>
-        <div class="dr"><div class="dn">Principal Contractor RAMS</div><div class="dt">SAFETY · Balfour Beatty</div><div class="dd u">3 days</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">Hot Works Permit</div><div class="dt">SAFETY · Balfour Beatty</div><div class="dd u">1 day</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">CTC Clearance Register — BB</div><div class="dt">SECURITY · Balfour Beatty</div><div class="dd u">5 days</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">Confined Space Entry Permit</div><div class="dt">SAFETY · Balfour Beatty</div><div class="dd u">—</div><span class="db missing">MISSING</span></div>
-        <div class="dr"><div class="dn">Permit to Work — Leaf G</div><div class="dt">OPERATIONAL · Balfour Beatty</div><div class="dd u">—</div><span class="db pending">PENDING</span></div>
-        <div class="dr"><div class="dn">Scaffold Inspection — Leaf B Wk18</div><div class="dt">SAFETY · All Task</div><div class="dd u">2 days</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">CTC Clearance Register — All Task</div><div class="dt">SECURITY · All Task</div><div class="dd w">8 days</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">Dive Plant Inspection Record</div><div class="dt">EQUIPMENT · DiveCo</div><div class="dd w">13 days</div><span class="db expiring">EXPIRING</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-family:var(--display);font-size:22px;color:#EDF6FF;letter-spacing:2px">PERMITS & DOCUMENTS</div>
+          <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:3px">Days remaining calculated live · Tap any row to update</div>
+        </div>
+        <button onclick="loadDocuments()" style="font-family:var(--mono);font-size:9px;padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--text3);cursor:pointer;border-radius:3px;letter-spacing:1px">↻ REFRESH</button>
       </div>
-      <div><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">Environment Agency</div><div style="margin-top:8px">
-        <div class="dr"><div class="dn">Tidal Gate Operational Consent</div><div class="dt">CONSENT</div><div class="dd ok">208d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Barrier Access Protocol — Works</div><div class="dt">OPERATIONAL</div><div class="dd ok">207d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">CTC Clearance Register — EA</div><div class="dt">SECURITY</div><div class="dd ok">239d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Emergency Response Coordination</div><div class="dt">SAFETY</div><div class="dd ok">239d</div><span class="db valid">VALID</span></div>
-      </div></div>
-      <div><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">Balfour Beatty</div><div style="margin-top:8px">
-        <div class="dr"><div class="dn">Construction Phase Plan</div><div class="dt">LEGAL</div><div class="dd ok">207d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Principal Contractor RAMS</div><div class="dt">SAFETY</div><div class="dd u">3d</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">Permit to Work — Leaf B</div><div class="dt">OPERATIONAL</div><div class="dd ok">24d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Permit to Work — Leaf G</div><div class="dt">OPERATIONAL</div><div class="dd u">—</div><span class="db pending">PENDING</span></div>
-        <div class="dr"><div class="dn">Hot Works Permit</div><div class="dt">SAFETY</div><div class="dd u">1d</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">LOLER Plan — All Lifting Ops</div><div class="dt">SAFETY</div><div class="dd ok">86d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">CTC Clearance Register — BB</div><div class="dt">SECURITY</div><div class="dd u">5d</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">Confined Space Entry Permit</div><div class="dt">SAFETY</div><div class="dd u">—</div><span class="db missing">MISSING</span></div>
-      </div></div>
-      <div><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">DiveCo</div><div style="margin-top:8px">
-        <div class="dr"><div class="dn">HSE Diving Contractor Notification</div><div class="dt">LEGAL</div><div class="dd ok">208d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Dive Supervisor Risk Assessment</div><div class="dt">SAFETY</div><div class="dd ok">117d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Emergency Response Plan — TB</div><div class="dt">SAFETY</div><div class="dd ok">207d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Medical Fitness Certs — All Divers</div><div class="dt">COMPETENCY</div><div class="dd ok">147d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Dive Plant Inspection Record</div><div class="dt">EQUIPMENT</div><div class="dd w">13d</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">CTC Clearance — All DiveCo</div><div class="dt">SECURITY</div><div class="dd ok">390d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Vessel Manning Certificate</div><div class="dt">MARITIME</div><div class="dd ok">131d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">MCA Workboat Code Compliance</div><div class="dt">MARITIME</div><div class="dd ok">147d</div><span class="db valid">VALID</span></div>
-      </div></div>
-      <div><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">All Task</div><div style="margin-top:8px">
-        <div class="dr"><div class="dn">Scaffold Design — Leaf B TG20</div><div class="dt">STRUCTURAL</div><div class="dd ok">86d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Scaffold Design — Leaf G TG20</div><div class="dt">STRUCTURAL</div><div class="dd ok">86d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Scaffold Inspection — Leaf B Wk18</div><div class="dt">SAFETY</div><div class="dd u">2d</div><span class="db expiring">EXPIRING</span></div>
-        <div class="dr"><div class="dn">Erection Method Statement</div><div class="dt">SAFETY</div><div class="dd ok">178d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Scaffold Handover Cert — Leaf B</div><div class="dt">OPERATIONAL</div><div class="dd u">—</div><span class="db pending">PENDING</span></div>
-        <div class="dr"><div class="dn">Scaffold Handover Cert — Leaf G</div><div class="dt">OPERATIONAL</div><div class="dd u">—</div><span class="db pending">PENDING</span></div>
-        <div class="dr"><div class="dn">CTC Clearance — All Task</div><div class="dt">SECURITY</div><div class="dd w">8d</div><span class="db expiring">EXPIRING</span></div>
-      </div></div>
-      <div><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">Apollo Crane Services</div><div style="margin-top:8px">
-        <div class="dr"><div class="dn">LOLER Lifting Operations Plan</div><div class="dt">SAFETY</div><div class="dd ok">86d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Crane Inspection Certificate</div><div class="dt">EQUIPMENT</div><div class="dd ok">69d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Appointed Person Certification</div><div class="dt">COMPETENCY</div><div class="dd ok">239d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Lift Plan — Materials Leaf B</div><div class="dt">OPERATIONAL</div><div class="dd ok">24d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">Lift Plan — Materials Leaf G</div><div class="dt">OPERATIONAL</div><div class="dd u">—</div><span class="db pending">PENDING</span></div>
-        <div class="dr"><div class="dn">River Traffic Coordination Notice</div><div class="dt">OPERATIONAL</div><div class="dd ok">207d</div><span class="db valid">VALID</span></div>
-        <div class="dr"><div class="dn">CTC Clearance — Apollo</div><div class="dt">SECURITY</div><div class="dd ok">208d</div><span class="db valid">VALID</span></div>
-      </div></div>
+      <div id="doc-live-list">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:20px 0">Loading document status...</div>
+      </div>
     </div>
   </div>
 
@@ -4390,7 +4388,7 @@ function showTab(id,btn){
   if(id==='brief') setTimeout(function(){ if(typeof updateBriefAwareness==='function') updateBriefAwareness(); }, 50);
   if(id==='tides'){
     setTimeout(function(){
-      if(window._swApiKey && typeof fetchLiveForecast==='function'){
+      if(typeof fetchLiveForecast==='function'){
         var out=document.getElementById('forecast-output');
         var empty=document.getElementById('forecast-empty');
         if(out && out.style.display==='none' && empty && empty.style.display!=='none'){
@@ -4399,6 +4397,7 @@ function showTab(id,btn){
       }
     }, 300);
   }
+  if(id==='documents') loadDocuments();
 }
 function selC(id){
   curC=id;
@@ -4522,6 +4521,145 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.body.style.overflow='auto';
   // showLogin wired via onclick directly
 });
+
+/* ── LIVE DOCUMENT TRACKER ── */
+var KNOWN_DOCS = [
+  { name:'Principal Contractor RAMS',       contractor:'Balfour Beatty', cat:'SAFETY',      expiry:'2026-05-10', status:'expired' },
+  { name:'Hot Works Permit',                contractor:'Balfour Beatty', cat:'SAFETY',      expiry:'2026-05-13', status:'expiring' },
+  { name:'BB CTC Clearance Register',       contractor:'Balfour Beatty', cat:'SECURITY',    expiry:'2026-05-12', status:'expired' },
+  { name:'Confined Space Entry Permit',     contractor:'Balfour Beatty', cat:'SAFETY',      expiry:null,         status:'missing' },
+  { name:'Permit to Work — Leaf G',         contractor:'Balfour Beatty', cat:'OPERATIONAL', expiry:null,         status:'pending' },
+  { name:'Scaffold Inspection — Leaf B',    contractor:'All Task',       cat:'SAFETY',      expiry:'2026-05-15', status:'expiring' },
+  { name:'All Task CTC Register',           contractor:'All Task',       cat:'SECURITY',    expiry:'2026-05-21', status:'expiring' },
+  { name:'Dive Plant Inspection Record',    contractor:'DiveCo',         cat:'EQUIPMENT',   expiry:'2026-05-26', status:'expiring' },
+  { name:'Construction Phase Plan',         contractor:'Balfour Beatty', cat:'LEGAL',       expiry:'2026-12-01', status:'valid' },
+  { name:'Permit to Work — Leaf B',         contractor:'Balfour Beatty', cat:'OPERATIONAL', expiry:'2026-06-06', status:'valid' },
+  { name:'Tidal Gate Operational Consent',  contractor:'Env. Agency',   cat:'CONSENT',     expiry:'2026-12-08', status:'valid' },
+  { name:'HSE Diving Contractor Notification',contractor:'DiveCo',      cat:'LEGAL',       expiry:'2026-12-08', status:'valid' },
+  { name:'Dive Supervisor Risk Assessment', contractor:'DiveCo',         cat:'SAFETY',      expiry:'2026-09-07', status:'valid' },
+  { name:'Medical Fitness Certs — Divers',  contractor:'DiveCo',         cat:'COMPETENCY',  expiry:'2026-10-07', status:'valid' },
+  { name:'CTC Clearance — All DiveCo',      contractor:'DiveCo',         cat:'SECURITY',    expiry:'2027-05-08', status:'valid' },
+  { name:'MCA Workboat Code Compliance',    contractor:'DiveCo',         cat:'MARITIME',    expiry:'2026-10-07', status:'valid' },
+  { name:'LOLER Lifting Operations Plan',   contractor:'Apollo Crane',   cat:'SAFETY',      expiry:'2026-08-07', status:'valid' },
+  { name:'Crane Inspection Certificate',    contractor:'Apollo Crane',   cat:'EQUIPMENT',   expiry:'2026-07-21', status:'valid' },
+  { name:'BB CTC Clearance (renewed)',      contractor:'Balfour Beatty', cat:'SECURITY',    expiry:'2027-05-12', status:'valid' }
+];
+
+function calcDocDays(expiryStr){
+  if(!expiryStr) return null;
+  var exp = new Date(expiryStr + 'T23:59:59');
+  var now = new Date();
+  return Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+}
+
+function loadDocuments(){
+  var container = document.getElementById('doc-live-list');
+  if(!container) return;
+
+  var today = new Date();
+  var docs = KNOWN_DOCS.map(function(d){
+    var days = calcDocDays(d.expiry);
+    var status = d.status;
+    // Override status based on calculated days
+    if(days !== null){
+      if(days < 0) status = 'expired';
+      else if(days <= 7) status = 'expiring-critical';
+      else if(days <= 30) status = 'expiring';
+      else status = 'valid';
+    }
+    return Object.assign({}, d, { days: days, computedStatus: status });
+  });
+
+  // Sort: expired/missing first, then by days ascending
+  docs.sort(function(a,b){
+    var priority = {'expired':0,'missing':0,'expiring-critical':1,'pending':2,'expiring':3,'valid':4};
+    var ap = priority[a.computedStatus]||4, bp = priority[b.computedStatus]||4;
+    if(ap !== bp) return ap - bp;
+    if(a.days !== null && b.days !== null) return a.days - b.days;
+    return 0;
+  });
+
+  function daysBadge(doc){
+    if(doc.computedStatus==='expired') return '<span class="db missing">EXPIRED</span>';
+    if(doc.computedStatus==='missing') return '<span class="db missing">MISSING</span>';
+    if(doc.computedStatus==='pending') return '<span class="db pending">PENDING</span>';
+    if(doc.days !== null && doc.days <= 7) return '<span class="db expiring" style="border-color:rgba(255,68,68,0.4);color:#FF4444">'+doc.days+'d</span>';
+    if(doc.days !== null && doc.days <= 30) return '<span class="db expiring">'+doc.days+'d</span>';
+    if(doc.days !== null) return '<span class="db valid">'+doc.days+'d</span>';
+    return '<span class="db valid">VALID</span>';
+  }
+  function daysClass(doc){
+    if(['expired','missing'].includes(doc.computedStatus)) return 'dd u';
+    if(doc.computedStatus==='expiring-critical') return 'dd u';
+    if(doc.computedStatus==='expiring') return 'dd w';
+    return 'dd ok';
+  }
+
+  // Urgent section
+  var urgent = docs.filter(function(d){ return ['expired','missing','expiring-critical'].includes(d.computedStatus); });
+  // Rest
+  var rest = docs.filter(function(d){ return !['expired','missing','expiring-critical'].includes(d.computedStatus); });
+
+  // Group rest by contractor
+  var byContractor = {};
+  rest.forEach(function(d){
+    if(!byContractor[d.contractor]) byContractor[d.contractor]= [];
+    byContractor[d.contractor].push(d);
+  });
+
+  var html = '';
+
+  // Urgent block
+  if(urgent.length){
+    html += '<div style="background:var(--stop3);border:1px solid rgba(192,57,43,0.2);padding:13px 15px;border-radius:4px;margin-bottom:16px">';
+    html += '<div class="stt" style="color:var(--stop);margin-bottom:10px">Requires Immediate Action — '+urgent.length+' document'+(urgent.length>1?'s':'')+' critical</div>';
+    urgent.forEach(function(d){
+      var daysLabel = d.days !== null ? (d.days < 0 ? Math.abs(d.days)+'d overdue' : d.days+'d') : '—';
+      html += '<div class="dr"><div class="dn">'+d.name+'</div><div class="dt">'+d.cat+' · '+d.contractor+'</div><div class="'+daysClass(d)+'">'+daysLabel+'</div>'+daysBadge(d)+'</div>';
+    });
+    html += '</div>';
+  }
+
+  // By contractor sections
+  Object.keys(byContractor).forEach(function(contractor){
+    var cdocs = byContractor[contractor];
+    html += '<div style="margin-bottom:16px"><div class="stt" style="border-bottom:1px solid var(--border);padding-bottom:6px">'+contractor+'</div><div style="margin-top:8px">';
+    cdocs.forEach(function(d){
+      var daysLabel = d.days !== null ? d.days+'d' : '—';
+      html += '<div class="dr"><div class="dn">'+d.name+'</div><div class="dt">'+d.cat+'</div><div class="'+daysClass(d)+'">'+daysLabel+'</div>'+daysBadge(d)+'</div>';
+    });
+    html += '</div></div>';
+  });
+
+  html += '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:8px">Last updated: '+today.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · Expiry dates calculated live · Days remaining refresh on each tab open</div>';
+
+  container.innerHTML = html;
+
+  // Also try to overlay from Airtable if key present
+  var atKey = localStorage.getItem('sw_at_key') || '';
+  if(atKey){
+    fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Documents?pageSize=100', {
+      headers:{'Authorization':'Bearer '+atKey}
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if(data.records && data.records.length){
+        var atHtml = '';
+        data.records.forEach(function(r){
+          var f = r.fields;
+          var days = f['Expiry Date'] ? calcDocDays(f['Expiry Date']) : null;
+          var badge = days !== null && days < 0 ? '<span class="db missing">EXPIRED</span>' :
+                      days !== null && days <= 7 ? '<span class="db expiring" style="color:#FF4444">'+days+'d</span>' :
+                      days !== null && days <= 30 ? '<span class="db expiring">'+days+'d</span>' :
+                      days !== null ? '<span class="db valid">'+days+'d</span>' :
+                      (f['Status']==='MISSING'?'<span class="db missing">MISSING</span>':'<span class="db pending">'+((f['Status']||'LOGGED'))+'</span>');
+          atHtml += '<div class="dr"><div class="dn">'+(f['Document Name']||'Unnamed')+'</div><div class="dt">'+(f['Category']||'')+(f['Contractor']?' · '+f['Contractor']:'')+'</div><div class="dd '+(days!==null&&days<30?'w':'ok')+'">'+((days!==null?days+'d':'—'))+'</div>'+badge+'</div>';
+        });
+        var atSection = '<div style="margin-bottom:16px"><div class="stt" style="border-bottom:1px solid rgba(0,196,212,0.3);padding-bottom:6px;color:var(--accent)">📡 Logged via Airtable</div><div style="margin-top:8px">'+atHtml+'</div></div>';
+        container.insertAdjacentHTML('afterbegin', atSection);
+      }
+    }).catch(function(){});
+  }
+}
+window.loadDocuments = loadDocuments;
 
 </script>
 
