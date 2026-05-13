@@ -3578,8 +3578,76 @@ lines.forEach((line, i) => {
           <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px">AI-GENERATED BRIEF</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Reads today's logged events + tidal windows → GO / DELAY / CANCEL</div>
         </div>
-        <button onclick="genNightlyBrief()" id="brief-gen-btn" style="font-family:var(--mono);font-size:10px;font-weight:600;padding:9px 18px;background:var(--accent);border:none;color:#03060A;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap">GENERATE BRIEF →</button>
+        <button onclick="swShowBriefChecklist()" id="brief-gen-btn" style="font-family:var(--mono);font-size:10px;font-weight:600;padding:9px 18px;background:var(--accent);border:none;color:#03060A;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap">GENERATE BRIEF →</button>
       </div>
+
+      <!-- PRE-BRIEF CHECKLIST -->
+      <div id="brief-checklist-panel" style="display:none;background:#0A1828;border:1px solid #1A3350;border-radius:6px;padding:20px;margin-bottom:16px">
+        <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;letter-spacing:2px;margin-bottom:16px">PRE-BRIEF CHECKLIST — 30 seconds before generating</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+          <!-- Wind -->
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;margin-bottom:6px">TOMORROW'S WIND FORECAST (m/s)</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input id="bc-wind" type="number" step="0.5" min="0" oninput="swUpdateBcWindStatus()" style="width:80px;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:8px 10px;font-size:15px;font-family:var(--mono);border-radius:4px;outline:none" placeholder="m/s">
+              <div>
+                <div id="bc-wind-status" style="font-family:var(--mono);font-size:9px;font-weight:700"></div>
+                <button onclick="swPrefillChecklist()" style="font-family:var(--mono);font-size:8px;background:transparent;border:none;color:#3A5A72;cursor:pointer;padding:0;margin-top:2px">↻ use live</button>
+              </div>
+            </div>
+          </div>
+          <!-- Tidal window -->
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;margin-bottom:6px">TOMORROW'S TIDAL WINDOW</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input id="bc-tide-from" type="text" placeholder="08:25" style="width:72px;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:8px 10px;font-size:13px;font-family:var(--mono);border-radius:4px;outline:none">
+              <span style="color:#3A5A72;font-family:var(--mono)">→</span>
+              <input id="bc-tide-to" type="text" placeholder="12:15" style="width:72px;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:8px 10px;font-size:13px;font-family:var(--mono);border-radius:4px;outline:none">
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+          <!-- Crew -->
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;margin-bottom:8px">MINIMUM CREW CONFIRMED?</div>
+            <div style="display:flex;gap:6px">
+              <button id="bc-crew-yes" onclick="swBcToggle('crew','yes')" style="flex:1;padding:9px 6px;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid #1A3350;background:transparent;color:#3A5A72;cursor:pointer;border-radius:4px">YES</button>
+              <button id="bc-crew-no" onclick="swBcToggle('crew','no')" style="flex:1;padding:9px 6px;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid #1A3350;background:transparent;color:#3A5A72;cursor:pointer;border-radius:4px">NOT YET</button>
+            </div>
+          </div>
+          <!-- Permits -->
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;margin-bottom:8px">PERMIT / DOCUMENT STATUS</div>
+            <div style="display:flex;gap:6px">
+              <button id="bc-permit-ok" onclick="swBcToggle('permit','ok')" style="flex:1;padding:9px 6px;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid #1A3350;background:transparent;color:#3A5A72;cursor:pointer;border-radius:4px">ALL CLEAR</button>
+              <button id="bc-permit-flag" onclick="swBcToggle('permit','flag')" style="flex:1;padding:9px 6px;font-family:var(--mono);font-size:9px;letter-spacing:1px;border:1px solid #1A3350;background:transparent;color:#3A5A72;cursor:pointer;border-radius:4px">ISSUE</button>
+            </div>
+          </div>
+        </div>
+        <input id="bc-permit-note" style="display:none;width:100%;margin-bottom:12px;background:#060E18;border:1px solid rgba(255,149,0,0.4);color:#EDF6FF;padding:8px 10px;font-size:12px;font-family:var(--mono);border-radius:4px;outline:none;box-sizing:border-box" placeholder="Describe the permit/document issue...">
+
+        <!-- Programme rules status -->
+        <div style="background:#060E18;border:1px solid #1A3350;border-radius:4px;padding:10px 14px;margin-bottom:14px">
+          <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:2px;margin-bottom:6px">PROGRAMME RULES IN USE</div>
+          <div id="bc-rules-text" style="font-family:var(--mono);font-size:9px;color:#8896A5;line-height:1.8"></div>
+          <label style="display:inline-block;margin-top:8px;font-family:var(--mono);font-size:9px;color:#00C4D4;cursor:pointer;border:1px solid rgba(0,196,212,0.3);padding:4px 10px;border-radius:3px">
+            <input type="file" id="bc-ms-upload" accept=".pdf,.txt,.doc,.docx" style="display:none" onchange="swExtractThresholds(this)">
+            + Upload method statement / RA to set hard rules
+          </label>
+          <span id="bc-extract-status" style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-left:10px"></span>
+        </div>
+
+        <!-- Rule engine alert -->
+        <div id="bc-rule-alert" style="display:none;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.3);border-radius:4px;padding:10px 14px;margin-bottom:12px;font-family:var(--mono);font-size:9px;color:#FF6B6B;line-height:1.8"></div>
+
+        <div style="display:flex;gap:10px">
+          <button onclick="swRunBriefFromChecklist()" id="bc-run-btn" style="flex:1;background:var(--accent);border:none;color:#03060A;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:13px;cursor:pointer;border-radius:4px">RUN BRIEF →</button>
+          <button onclick="swHideBriefChecklist()" style="background:transparent;border:1px solid #1A3350;color:#3A5A72;font-family:var(--mono);font-size:10px;padding:13px 16px;cursor:pointer;border-radius:4px">Cancel</button>
+        </div>
+      </div>
+
       <div id="brief-ai-output" style="display:none;margin-bottom:20px"></div>
       <div id="stale-banner" style="display:none;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);border-radius:6px;padding:12px 16px;align-items:flex-start;gap:12px;margin-bottom:4px">
         <div style="font-size:18px;flex-shrink:0">⚠️</div>
@@ -6336,7 +6404,7 @@ function ofMountInPortal(){
   target.dataset.mounted = '1';
 }
 
-async function genNightlyBrief(){
+async function genNightlyBrief(ci){
   var btn = document.getElementById('brief-gen-btn');
   var out = document.getElementById('brief-ai-output');
   if(!out) return;
@@ -6388,6 +6456,9 @@ async function genNightlyBrief(){
 
   var today = typeof swToday === 'function' ? swToday() : new Date().toDateString();
 
+  /* Programme rules from uploaded documents */
+  var progRules = (function(){ try{ return JSON.parse(localStorage.getItem('sw_programme_rules')||'{}'); }catch(e){ return {}; } })();
+
   /* Include live weather if available */
   var liveWxContext = '';
   if(window._swLiveWx){
@@ -6407,7 +6478,41 @@ async function genNightlyBrief(){
     }
   }
 
-  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (fixed — these are hard rules, not suggestions):\n- Lightning / thunderstorm: IMMEDIATE STOP. 30-minute clear rule before resuming.\n- Wind hard stop ALL works: 15 m/s — do not override this.\n- Wind hard stop CRANE (Apollo): 10 m/s — do not override this.\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- DiveCo ERT minimum 4 persons required for any leaf/arm access\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48\n\n' + liveWxContext + '\n\n' + taskSummary + '\n\n' + eventSummary + '\n\nGenerate a brief covering:\n1. VERDICT: GO / DELAY / CANCEL for tomorrow\'s primary task (anode cutting). State the reason in one sentence. If wind is above threshold or lightning is active, verdict MUST be DELAY or CANCEL — do not override hard rules.\n2. SUMMARY: 2-3 sentences on what happened today and what is planned for tomorrow.\n3. BLOCKERS: List any outstanding issues that must be resolved before mobilisation.\n4. ACTIONS REQUIRED TONIGHT: Bulleted list of specific actions, who must do them, by when.\n5. DRAFT WORKFORCE NOTIFICATION: A short WhatsApp-style message to send to the crew (max 120 words).\n\nBe specific. Use names from the data if available. State tidal windows if known. Do NOT refuse or hedge — give your best assessment based on the data provided.\n\nFormat with clear section headers using plain text (no markdown asterisks).';
+  /* Build hard rules string from programme rules + checklist */
+  var hardRulesStr = '';
+  if(progRules.windHardStop || progRules.minimumCrew || progRules.source){
+    hardRulesStr += '\n\nPROGRAMME RULES — FROM UPLOADED DOCUMENTS (contractual, non-negotiable):';
+    if(progRules.source) hardRulesStr += '\nSource: ' + progRules.source;
+    if(progRules.windHardStop) hardRulesStr += '\n• Wind hard stop ALL works: ' + progRules.windHardStop + ' m/s — VERDICT MUST BE DELAY if exceeded';
+    if(progRules.windCraneStop) hardRulesStr += '\n• Wind hard stop CRANE: ' + progRules.windCraneStop + ' m/s';
+    if(progRules.minimumCrew) hardRulesStr += '\n• Minimum crew: ' + progRules.minimumCrew + ' persons — VERDICT MUST BE DELAY if not confirmed';
+    if(progRules.tidalAccessMinutes) hardRulesStr += '\n• Tidal exclusion: ' + progRules.tidalAccessMinutes + ' min from high water';
+    if(progRules.accessConditions) hardRulesStr += '\n• Access: ' + progRules.accessConditions;
+    if(progRules.permitConditions) hardRulesStr += '\n• Permit conditions: ' + progRules.permitConditions;
+  }
+
+  /* Checklist inputs from pre-brief form */
+  var checklistStr = '';
+  var forcedVerdictStr = '';
+  if(ci){
+    checklistStr = '\n\nPRE-BRIEF CHECKLIST (verified by programme manager just now):';
+    if(ci.wind != null) checklistStr += '\n• Tomorrow wind forecast: ' + ci.wind + ' m/s';
+    if(ci.tideFrom && ci.tideTo) checklistStr += '\n• Tomorrow tidal window: ' + ci.tideFrom + '–' + ci.tideTo;
+    checklistStr += '\n• Minimum crew confirmed for tomorrow: ' + (ci.crewConfirmed ? 'YES' : 'NOT YET — THIS FORCES A DELAY');
+    if(ci.permitIssue) checklistStr += '\n• PERMIT/DOCUMENT ISSUE FLAGGED: ' + (ci.permitNote || 'see permit log');
+    if(ci.forcedVerdict){
+      forcedVerdictStr = '\n\nRULE ENGINE — VERDICT IS NON-NEGOTIABLE:\nVERDICT MUST BE: ' + ci.forcedVerdict + '\nTriggered by:\n' + ci.ruleTriggers.join('\n') + '\nYour job is to explain why these rules fired and what must change to clear them. Do not soften or override the verdict.';
+    }
+  }
+
+  var windStop = progRules.windHardStop || 15;
+  var craneStop = progRules.windCraneStop || 10;
+  var minCrew = progRules.minimumCrew ? progRules.minimumCrew + ' persons' : '4 ERT minimum (DiveCo)';
+
+  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (these are HARD RULES — do not override under any circumstances):\n- Lightning / thunderstorm: IMMEDIATE STOP. 30-minute clear rule.\n- Wind hard stop ALL works: ' + windStop + ' m/s\n- Wind hard stop CRANE (Apollo): ' + craneStop + ' m/s\n- Minimum crew: ' + minCrew + '\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48' +
+    hardRulesStr + liveWxContext + checklistStr + forcedVerdictStr +
+    '\n\n' + taskSummary + '\n\n' + eventSummary +
+    '\n\nGenerate a brief covering:\n1. VERDICT: GO / DELAY / CANCEL for tomorrow\'s primary task. State reason in one sentence. Hard rules override everything.\n2. SUMMARY: 2-3 sentences on today and tomorrow\'s plan.\n3. BLOCKERS: Outstanding issues before mobilisation.\n4. ACTIONS REQUIRED TONIGHT: Specific, named, timed.\n5. DRAFT WORKFORCE NOTIFICATION: WhatsApp-style, max 120 words.\n6. MOST EXPOSED ASSUMPTION: One sentence — what single condition, if it changes, flips this verdict. Format: "This verdict assumes [X]. If [Y changes], revert to DELAY."\n\nBe specific. Use names from data. State tidal windows. Do NOT refuse or hedge.\n\nFormat with clear plain-text section headers (no markdown asterisks).';
 
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -7175,6 +7280,277 @@ document.addEventListener('DOMContentLoaded', function(){
 
 window.swLiveWeatherPoll = swLiveWeatherPoll;
 window.swRenderLiveWx = swRenderLiveWx;
+</script>
+
+<script>
+/* ============================================================
+   PRE-BRIEF CHECKLIST SYSTEM
+   swShowBriefChecklist / swHideBriefChecklist / swPrefillChecklist
+   swBcToggle / swUpdateBcWindStatus
+   swGetProgrammeRules / swSaveProgrammeRules / swRenderBcRules
+   swEvalRuleEngine / swRunBriefFromChecklist / swExtractThresholds
+   ============================================================ */
+
+/* -- Toggle state for crew / permit -- */
+var _bcState = { crew: null, permit: null };
+
+window.swShowBriefChecklist = function(){
+  var panel = document.getElementById('brief-checklist-panel');
+  if(!panel) return;
+  panel.style.display = 'block';
+  _bcState = { crew: null, permit: null };
+  /* reset button highlights */
+  ['bc-crew-yes','bc-crew-no','bc-permit-ok','bc-permit-flag'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.style.background='transparent'; el.style.color='#3A5A72'; el.style.borderColor='#1A3350'; }
+  });
+  var pn = document.getElementById('bc-permit-note');
+  if(pn){ pn.style.display='none'; pn.value=''; }
+  var ra = document.getElementById('bc-rule-alert');
+  if(ra){ ra.style.display='none'; ra.textContent=''; }
+  swRenderBcRules();
+  swPrefillChecklist();
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+};
+
+window.swHideBriefChecklist = function(){
+  var panel = document.getElementById('brief-checklist-panel');
+  if(panel) panel.style.display = 'none';
+};
+
+window.swPrefillChecklist = function(){
+  var windEl = document.getElementById('bc-wind');
+  if(!windEl) return;
+  if(window._swLiveWx && window._swLiveWx.wind != null){
+    windEl.value = window._swLiveWx.wind;
+    swUpdateBcWindStatus();
+  }
+};
+
+window.swBcToggle = function(group, val){
+  _bcState[group] = val;
+  if(group === 'crew'){
+    var yes = document.getElementById('bc-crew-yes');
+    var no  = document.getElementById('bc-crew-no');
+    if(val === 'yes'){
+      if(yes){ yes.style.background='rgba(13,122,62,0.15)'; yes.style.color='#22C55E'; yes.style.borderColor='rgba(34,197,94,0.4)'; }
+      if(no){  no.style.background='transparent'; no.style.color='#3A5A72'; no.style.borderColor='#1A3350'; }
+    } else {
+      if(no){  no.style.background='rgba(255,68,68,0.12)'; no.style.color='#FF6B6B'; no.style.borderColor='rgba(255,68,68,0.35)'; }
+      if(yes){ yes.style.background='transparent'; yes.style.color='#3A5A72'; yes.style.borderColor='#1A3350'; }
+    }
+  }
+  if(group === 'permit'){
+    var ok   = document.getElementById('bc-permit-ok');
+    var flag = document.getElementById('bc-permit-flag');
+    var note = document.getElementById('bc-permit-note');
+    if(val === 'ok'){
+      if(ok){   ok.style.background='rgba(13,122,62,0.15)'; ok.style.color='#22C55E'; ok.style.borderColor='rgba(34,197,94,0.4)'; }
+      if(flag){ flag.style.background='transparent'; flag.style.color='#3A5A72'; flag.style.borderColor='#1A3350'; }
+      if(note){ note.style.display='none'; }
+    } else {
+      if(flag){ flag.style.background='rgba(255,149,0,0.12)'; flag.style.color='#F59E0B'; flag.style.borderColor='rgba(245,158,11,0.4)'; }
+      if(ok){   ok.style.background='transparent'; ok.style.color='#3A5A72'; ok.style.borderColor='#1A3350'; }
+      if(note){ note.style.display='block'; note.focus(); }
+    }
+  }
+  swEvalRuleEngine();
+};
+
+window.swUpdateBcWindStatus = function(){
+  var windEl  = document.getElementById('bc-wind');
+  var statusEl = document.getElementById('bc-wind-status');
+  if(!windEl || !statusEl) return;
+  var v = parseFloat(windEl.value);
+  var progRules = swGetProgrammeRules();
+  var hardStop  = progRules.windHardStop  || 15;
+  var craneStop = progRules.windCraneStop || 10;
+  if(isNaN(v)){
+    statusEl.textContent = '';
+    statusEl.style.color = '#3A5A72';
+  } else if(v >= hardStop){
+    statusEl.textContent = 'ALL STOP (' + v + ' m/s)';
+    statusEl.style.color = '#FF4444';
+  } else if(v >= craneStop){
+    statusEl.textContent = 'CRANE STOP (' + v + ' m/s)';
+    statusEl.style.color = '#F59E0B';
+  } else {
+    statusEl.textContent = 'ALL CLEAR (' + v + ' m/s)';
+    statusEl.style.color = '#22C55E';
+  }
+  swEvalRuleEngine();
+};
+
+/* -- localStorage helpers -- */
+window.swGetProgrammeRules = function(){
+  try{ return JSON.parse(localStorage.getItem('sw_programme_rules') || '{}'); }
+  catch(e){ return {}; }
+};
+window.swSaveProgrammeRules = function(r){
+  localStorage.setItem('sw_programme_rules', JSON.stringify(r));
+};
+
+window.swRenderBcRules = function(){
+  var el = document.getElementById('bc-rules-text');
+  if(!el) return;
+  var r = swGetProgrammeRules();
+  var lines = [];
+  if(r.source)              lines.push('Source: ' + r.source);
+  if(r.windHardStop)        lines.push('Wind hard stop (all works): ' + r.windHardStop + ' m/s');
+  if(r.windCraneStop)       lines.push('Wind hard stop (crane): ' + r.windCraneStop + ' m/s');
+  if(r.minimumCrew)         lines.push('Minimum crew: ' + r.minimumCrew + ' persons');
+  if(r.tidalAccessMinutes)  lines.push('Tidal exclusion: ' + r.tidalAccessMinutes + ' min from HW');
+  if(r.accessConditions)    lines.push('Access conditions: ' + r.accessConditions);
+  if(r.permitConditions)    lines.push('Permit conditions: ' + r.permitConditions);
+  if(lines.length === 0){
+    el.innerHTML = '<span style="color:#3A5A72">No documents uploaded yet — using default thresholds (wind stop 15 m/s / crane 10 m/s).</span>';
+  } else {
+    el.innerHTML = lines.map(function(l){ return '<div>' + l + '</div>'; }).join('');
+  }
+};
+
+/* -- Rule engine: returns {forcedVerdict, triggers} -- */
+window.swEvalRuleEngine = function(){
+  var alertEl = document.getElementById('bc-rule-alert');
+  var runBtn  = document.getElementById('bc-run-btn');
+  var progRules = swGetProgrammeRules();
+  var hardStop  = progRules.windHardStop  || 15;
+  var craneStop = progRules.windCraneStop || 10;
+
+  var windEl = document.getElementById('bc-wind');
+  var wind   = windEl ? parseFloat(windEl.value) : NaN;
+
+  var triggers = [];
+  var forcedVerdict = null;
+
+  /* Wind — ALL STOP */
+  if(!isNaN(wind) && wind >= hardStop){
+    triggers.push('• Wind ' + wind + ' m/s ≥ ' + hardStop + ' m/s hard stop — all works must cease');
+    forcedVerdict = 'DELAY';
+  }
+
+  /* Crew not confirmed */
+  if(_bcState.crew === 'no'){
+    triggers.push('• Minimum crew NOT confirmed — mobilisation cannot proceed');
+    forcedVerdict = 'DELAY';
+  }
+
+  /* Permit issue */
+  if(_bcState.permit === 'flag'){
+    var note = (document.getElementById('bc-permit-note') || {}).value || '';
+    triggers.push('• Permit / document issue flagged' + (note ? ': ' + note : ''));
+    forcedVerdict = forcedVerdict || 'DELAY';
+  }
+
+  /* Live lightning */
+  if(window._swLiveWx && (typeof swIsThunder === 'function') && swIsThunder(window._swLiveWx.code)){
+    triggers.push('• LIVE LIGHTNING detected — 30-minute clear rule in force');
+    forcedVerdict = 'DELAY';
+  }
+
+  if(!alertEl) return { forcedVerdict: forcedVerdict, triggers: triggers };
+
+  if(triggers.length > 0){
+    alertEl.style.display = 'block';
+    alertEl.innerHTML = '<div style="font-weight:700;letter-spacing:1px;margin-bottom:6px;color:#FF4444">⚠ RULE ENGINE — VERDICT FORCED: ' + (forcedVerdict||'DELAY') + '</div>' + triggers.join('<br>');
+    if(runBtn){ runBtn.textContent = 'RUN BRIEF (FORCED ' + (forcedVerdict||'DELAY') + ') →'; runBtn.style.background = '#991B1B'; runBtn.style.color = '#FCA5A5'; }
+  } else {
+    alertEl.style.display = 'none';
+    if(runBtn){ runBtn.textContent = 'RUN BRIEF →'; runBtn.style.background = 'var(--accent)'; runBtn.style.color = '#03060A'; }
+  }
+
+  return { forcedVerdict: forcedVerdict, triggers: triggers };
+};
+
+/* -- Collect inputs and run brief -- */
+window.swRunBriefFromChecklist = function(){
+  var windEl  = document.getElementById('bc-wind');
+  var tfrom   = document.getElementById('bc-tide-from');
+  var tto     = document.getElementById('bc-tide-to');
+  var pnote   = document.getElementById('bc-permit-note');
+
+  var ruleResult = swEvalRuleEngine();
+
+  var ci = {
+    wind:           windEl ? (parseFloat(windEl.value) || null) : null,
+    tideFrom:       tfrom  ? tfrom.value.trim()  : '',
+    tideTo:         tto    ? tto.value.trim()    : '',
+    crewConfirmed:  _bcState.crew === 'yes',
+    permitIssue:    _bcState.permit === 'flag',
+    permitNote:     pnote  ? pnote.value.trim()  : '',
+    forcedVerdict:  ruleResult.forcedVerdict,
+    ruleTriggers:   ruleResult.triggers,
+    rules:          swGetProgrammeRules()
+  };
+
+  swHideBriefChecklist();
+
+  if(typeof genNightlyBrief === 'function'){
+    genNightlyBrief(ci);
+  }
+};
+
+/* -- Document threshold extraction -- */
+window.swExtractThresholds = function(input){
+  var file = input && input.files && input.files[0];
+  if(!file) return;
+
+  var statusEl = document.getElementById('bc-extract-status');
+  if(statusEl){ statusEl.textContent = 'Reading document...'; statusEl.style.color = '#3A5A72'; }
+
+  var apiKey = window._swApiKey || localStorage.getItem('sw_api_key') || '';
+  if(!apiKey){
+    if(statusEl){ statusEl.textContent = 'No AI key — add key in the AI tab first.'; statusEl.style.color = '#F59E0B'; }
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = async function(e){
+    var content = e.target.result;
+    /* Trim to first 12,000 chars to stay within token limits */
+    var excerpt = typeof content === 'string' ? content.slice(0, 12000) : '[Binary file — cannot read text]';
+
+    if(statusEl){ statusEl.textContent = 'Sending to AI...'; statusEl.style.color = '#00C4D4'; }
+
+    var extractPrompt = 'You are extracting operational thresholds from a construction method statement or risk assessment for the Thames Barrier Monel Bolt Replacement programme.\n\nDocument excerpt:\n"""\n' + excerpt + '\n"""\n\nExtract the following fields. If a value is not stated in the document, return null for that field. Return ONLY valid JSON, no prose.\n\n{\n  "windHardStop": <number|null>,\n  "windCraneStop": <number|null>,\n  "minimumCrew": <number|null>,\n  "tidalAccessMinutes": <number|null>,\n  "accessConditions": "<string|null>",\n  "permitConditions": "<string|null>",\n  "source": "<document name or type, max 60 chars>"\n}\n\nRules:\n- windHardStop = wind speed in m/s at which ALL works must stop\n- windCraneStop = wind speed in m/s at which crane operations must stop\n- minimumCrew = minimum number of persons required on site\n- tidalAccessMinutes = minutes from high water within which access is prohibited\n- accessConditions = brief summary of any other access conditions (max 120 chars)\n- permitConditions = brief summary of permit or document requirements (max 120 chars)\n- source = the document title or type (e.g. "Method Statement Rev C", "DiveCo RA")\n\nReturn only the JSON object. No explanations.';
+
+    try {
+      var res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5',
+          max_tokens: 600,
+          messages: [{ role: 'user', content: extractPrompt }]
+        })
+      });
+      var data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+
+      var raw = (data.content && data.content[0] && data.content[0].text) || '';
+      /* Strip markdown code fences if present */
+      var jsonStr = raw.replace(/```[a-z]*\n?/gi, '').replace(/```/g,'').trim();
+      var parsed = JSON.parse(jsonStr);
+
+      swSaveProgrammeRules(parsed);
+      swRenderBcRules();
+      swUpdateBcWindStatus();
+      swEvalRuleEngine();
+
+      if(statusEl){ statusEl.textContent = '✓ Rules loaded from: ' + (parsed.source || file.name); statusEl.style.color = '#22C55E'; }
+    } catch(err){
+      if(statusEl){ statusEl.textContent = 'Extraction failed: ' + err.message; statusEl.style.color = '#FF4444'; }
+    }
+  };
+
+  /* Read as text; PDF binary will be messy but often contains extractable text */
+  reader.readAsText(file);
+};
 </script>
 
 </body>
