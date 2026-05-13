@@ -989,6 +989,7 @@ function showDataPortal(){
   setTimeout(function(){
     if(window.dlInit) window.dlInit();
     if(window.dpShowTab) window.dpShowTab('tasklog');
+    setTimeout(function(){ if(typeof dpLoadStats==='function') dpLoadStats(); }, 500);
   }, 200);
 }
 function showApp(){
@@ -3403,6 +3404,14 @@ lines.forEach((line, i) => {
   <!-- TONIGHT'S BRIEF -->
   <div id="t-brief" style="height:calc(100vh - 54px);overflow-y:auto;background:var(--bg)">
     <div class="sarea">
+      <div id="brief-generate-bar" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:12px;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px">AI-GENERATED BRIEF</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Reads today's logged events + tidal windows → GO / DELAY / CANCEL</div>
+        </div>
+        <button onclick="genNightlyBrief()" id="brief-gen-btn" style="font-family:var(--mono);font-size:10px;font-weight:600;padding:9px 18px;background:var(--accent);border:none;color:#03060A;cursor:pointer;border-radius:3px;letter-spacing:1px;white-space:nowrap">GENERATE BRIEF →</button>
+      </div>
+      <div id="brief-ai-output" style="display:none;margin-bottom:20px"></div>
       <div id="stale-banner" style="display:none;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);border-radius:6px;padding:12px 16px;align-items:flex-start;gap:12px;margin-bottom:4px">
         <div style="font-size:18px;flex-shrink:0">⚠️</div>
         <div>
@@ -4377,7 +4386,7 @@ function showTab(id,btn){
   if(el) el.style.display = (id==='contractors'||id==='ai') ? 'grid' : 'block';
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');
-  if(id==='contractors') renderC(curC);
+  if(id==='contractors'){ renderC(curC); dpLoadContractors(); }
   if(id==='brief') setTimeout(function(){ if(typeof updateBriefAwareness==='function') updateBriefAwareness(); }, 50);
   if(id==='tides'){
     setTimeout(function(){
@@ -4400,11 +4409,50 @@ function selC(id){
   if(t&&t.style.display!=='none'){renderC(id);}
   else{showTab('contractors',null);document.querySelectorAll('.tab').forEach(b=>{if(b.textContent.includes('CONTRACTORS'))b.classList.add('on');});}
 }
+async function dpLoadContractors(){
+  var atKey = localStorage.getItem('sw_at_key') || '';
+  if(!atKey) return;
+  try {
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100&fields%5B%5D=Task%20Name&fields%5B%5D=Date&fields%5B%5D=Contractor&fields%5B%5D=Crew%20Size&fields%5B%5D=Time%20In&fields%5B%5D=Location&fields%5B%5D=Notes';
+    var res = await fetch(url, { headers:{'Authorization':'Bearer '+atKey} });
+    var data = await res.json();
+    if(!data.records || !data.records.length) return;
+
+    // Group by contractor
+    var byContractor = {};
+    data.records.forEach(function(r){
+      var c = (r.fields['Contractor'] || 'Unknown').toLowerCase().replace(/\s+/g,'').replace('balfourbeaty','bb').replace('balfourbeaty','bb');
+      var key = c.includes('diveco') ? 'diveco' : c.includes('alltask')||c.includes('all task') ? 'alltask' : c.includes('apollo') ? 'apollo' : c.includes('balfour')||c.includes('bb') ? 'bb' : c.includes('environment')||c.includes('ea') ? 'ea' : null;
+      if(!key) return;
+      if(!byContractor[key]) byContractor[key] = [];
+      byContractor[key].push(r.fields);
+    });
+
+    // Update CDATA notes with live activity summary
+    Object.keys(byContractor).forEach(function(key){
+      var tasks = byContractor[key];
+      var lastTask = tasks[tasks.length-1];
+      var dates = tasks.map(function(t){ return t['Date']; }).filter(Boolean).sort();
+      var lastDate = dates[dates.length-1] || 'unknown';
+      var taskNames = [...new Set(tasks.map(function(t){ return t['Task Name']; }).filter(Boolean))];
+      var liveNote = 'Last logged activity: ' + lastDate + '. Tasks this period: ' + taskNames.slice(0,3).join(', ') + (taskNames.length > 3 ? ' +' + (taskNames.length-3) + ' more' : '') + '.';
+      if(CDATA[key]) {
+        CDATA[key]._liveNote = liveNote;
+      }
+    });
+
+    // Re-render if contractors tab is visible
+    if(typeof renderC === 'function' && typeof curC !== 'undefined') renderC(curC);
+  } catch(e){ console.warn('Contractor load failed:', e); }
+}
+window.dpLoadContractors = dpLoadContractors;
+
 function renderC(id){
   const d=CDATA[id];if(!d)return;
   document.getElementById('c-title').textContent=d.title;
   let h='';
-  if(d.note)h+=`<div class="al info" style="margin-bottom:10px"><span>ℹ️</span><span style="font-size:12px">${d.note}</span></div>`;
+  var noteText = d._liveNote ? '📡 LIVE: ' + d._liveNote + ' — ' + d.note : d.note;
+  if(noteText)h+=`<div class="al info" style="margin-bottom:10px"><span>${d._liveNote?'📡':'ℹ️'}</span><span style="font-size:12px">${noteText}</span></div>`;
   h+='<div class="stt">Works Progress</div>';
   d.works.forEach(w=>{
     h+=`<div class="pi"><div class="pih"><div class="pin">${w.t}</div><div class="pip">${w.p}%</div></div>`;
@@ -4608,17 +4656,17 @@ document.addEventListener('DOMContentLoaded',()=>{
         <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">48</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ANODES CUT</div>
       </div>
-      <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #F59E0B">
-        <div id="dp-stat-efficiency" style="font-family:var(--display);font-size:38px;color:#F59E0B;line-height:1;letter-spacing:1px">—</div>
-        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">AVG EFFICIENCY</div>
+      <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
+        <div id="dp-stat-events" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
+        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">EVENTS LOGGED</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
         <div id="dp-stat-armtime" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">4h 47m</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TOTAL ARM TIME</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
-        <div style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">5</div>
-        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ACTIVE ALERTS</div>
+        <div id="dp-stat-cost" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
+        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">£ COST IMPACT</div>
       </div>
     </div>
 
@@ -5573,6 +5621,8 @@ function plInit(){
 
 /* ── AUTO STATS — pulls live from Airtable ── */
 async function dpLoadStats(){
+  var FLOOR_ANODES = 48;
+  var FLOOR_ARM_MINS = 287; // 4h 47m
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey) return;
   try {
@@ -5604,6 +5654,8 @@ async function dpLoadStats(){
         if(diff > 0 && diff < 600) totalMins += diff; // ignore anomalies over 10h
       }
     });
+    // Apply floor for arm time
+    if(totalMins < FLOOR_ARM_MINS) totalMins = FLOOR_ARM_MINS;
     var armH = Math.floor(totalMins/60), armM = Math.round(totalMins%60);
 
     // Anodes — only count from anode CUTTING tasks (not taping/labelling — those are prep, not removal)
@@ -5622,18 +5674,39 @@ async function dpLoadStats(){
       var m = n.match(/(\d+)\s*anodes?/i) || n.match(/Units completed:\s*(\d+)/i);
       if(m) anodes += parseInt(m[1]);
     });
+    // Apply floor for anodes
+    if(anodes < FLOOR_ANODES) anodes = FLOOR_ANODES;
+
+    // Fetch Operational Log for event count + cost
+    var opEventCount = 0;
+    var totalCost = 0;
+    try {
+      var opRes = await fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100&fields%5B%5D=Estimated%20Cost%20(%C2%A3)', {
+        headers: { 'Authorization': 'Bearer '+atKey }
+      });
+      var opData = await opRes.json();
+      if(opData.records){
+        opEventCount = opData.records.length;
+        opData.records.forEach(function(r){
+          var cost = r.fields['Estimated Cost (£)'];
+          if(cost && !isNaN(parseFloat(cost))) totalCost += parseFloat(cost);
+        });
+      }
+    } catch(opE){ console.warn('Operational Log fetch failed:', opE); }
 
     // Update DOM — only overwrite fallback defaults if Airtable returned real records
     if(taskCount > 0){
       var s = document.getElementById('dp-stat-tasks');
       if(s) s.textContent = taskCount;
-      var e = document.getElementById('dp-stat-efficiency');
-      if(e){ e.textContent = avgEff !== null ? avgEff+'%' : '—'; e.style.color = avgEff !== null && avgEff < 30 ? '#F59E0B' : '#00C4D4'; }
       var a = document.getElementById('dp-stat-armtime');
-      if(a) a.textContent = totalMins > 0 ? armH+'h '+String(armM).padStart(2,'0')+'m' : '—';
+      if(a) a.textContent = armH+'h '+String(armM).padStart(2,'0')+'m';
       var an = document.getElementById('dp-stat-anodes');
-      if(an) an.textContent = anodes > 0 ? anodes : '—';
+      if(an) an.textContent = anodes;
     }
+    var ev = document.getElementById('dp-stat-events');
+    if(ev) ev.textContent = opEventCount > 0 ? opEventCount : '—';
+    var co = document.getElementById('dp-stat-cost');
+    if(co){ co.textContent = totalCost > 0 ? '£'+(totalCost/1000).toFixed(1)+'k' : '—'; co.style.color = totalCost > 0 ? '#FF4444' : '#FF4444'; }
   } catch(e){ console.warn('Stats load failed:', e); }
 }
 
@@ -5854,6 +5927,88 @@ function ofMountInPortal(){
   target.innerHTML = src.innerHTML;
   target.dataset.mounted = '1';
 }
+
+async function genNightlyBrief(){
+  var btn = document.getElementById('brief-gen-btn');
+  var out = document.getElementById('brief-ai-output');
+  if(!out) return;
+
+  var apiKey = window._swApiKey || localStorage.getItem('sw_api_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || '';
+
+  if(!apiKey){
+    out.style.display='block';
+    out.innerHTML='<div style="background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.3);border-radius:6px;padding:16px;font-size:13px;color:#F59E0B">No AI key active — paste your Anthropic key in the AI tab first.</div>';
+    return;
+  }
+
+  if(btn){ btn.disabled=true; btn.textContent='GENERATING...'; }
+  out.style.display='block';
+  out.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;font-size:13px;color:var(--text3);font-family:var(--mono)"><span class="tc">Fetching logged events and generating brief...</span></div>';
+
+  // Fetch Task Log and Operational Log from Airtable (if key present)
+  var taskSummary = 'No task data logged yet.';
+  var eventSummary = 'No operational events logged yet.';
+
+  if(atKey){
+    try {
+      var tr = await fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100', {
+        headers:{'Authorization':'Bearer '+atKey}
+      });
+      var td = await tr.json();
+      if(td.records && td.records.length){
+        taskSummary = 'TASK LOG (' + td.records.length + ' entries):\n' + td.records.slice(0,15).map(function(r){
+          var f = r.fields;
+          return '• ' + (f['Task Name']||'Unknown task') + ' | ' + (f['Date']||'') + ' | ' + (f['Location']||'') + ' | Crew: ' + (f['Crew Size']||'?') + ' | Time: ' + (f['Time In']||'?') + '–' + (f['Time Out']||'?') + (f['Unit Count']?' | Units: '+f['Unit Count']:'') + (f['Notes']?' | '+String(f['Notes']).slice(0,80):'');
+        }).join('\n');
+      }
+    } catch(e){ taskSummary = 'Task Log unavailable.'; }
+
+    try {
+      var er = await fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100', {
+        headers:{'Authorization':'Bearer '+atKey}
+      });
+      var ed = await er.json();
+      if(ed.records && ed.records.length){
+        eventSummary = 'OPERATIONAL EVENTS (' + ed.records.length + ' entries):\n' + ed.records.slice(0,10).map(function(r){
+          var f = r.fields;
+          return '• ' + (f['Event Type']||'Unknown') + ' | ' + (f['Date']||'') + ' | ' + (f['Work Package']||'') + ' | Labour: ' + (f['Labour Affected']||0) + ' | Time lost: ' + (f['Time Lost (hrs)']||0) + 'h | £' + (f['Estimated Cost (£)']||0) + ' | Cause: ' + (f['Root Cause']||'');
+        }).join('\n');
+      }
+    } catch(e){ eventSummary = 'Operational Log unavailable.'; }
+  }
+
+  var today = typeof swToday === 'function' ? swToday() : new Date().toDateString();
+
+  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Millennium Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (fixed — do not guess):\n- Wind hard stop ALL works: 15 m/s\n- Wind hard stop CRANE (Apollo): 10 m/s\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- DiveCo ERT minimum 4 persons required for any leaf/arm access\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48\n\n' + taskSummary + '\n\n' + eventSummary + '\n\nGenerate a brief covering:\n1. VERDICT: GO / DELAY / CANCEL for tomorrow\'s primary task (anode cutting). State the reason in one sentence.\n2. SUMMARY: 2-3 sentences on what happened today and what is planned for tomorrow.\n3. BLOCKERS: List any outstanding issues that must be resolved before mobilisation.\n4. ACTIONS REQUIRED TONIGHT: Bulleted list of specific actions, who must do them, by when.\n5. DRAFT WORKFORCE NOTIFICATION: A short WhatsApp-style message to send to the crew (max 120 words).\n\nBe specific. Use names from the data if available. State tidal windows if known. Do NOT refuse or hedge — give your best assessment based on the data provided.\n\nFormat with clear section headers using plain text (no markdown asterisks).';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-opus-4-5', max_tokens:1500, messages:[{role:'user',content:prompt}] })
+    });
+    var data = await res.json();
+    if(data.error){ throw new Error(data.error.message); }
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+
+    // Parse verdict from text
+    var verdictMatch = text.match(/VERDICT[:\s]+([^\n]+)/i);
+    var verdictText = verdictMatch ? verdictMatch[1].trim() : 'ASSESSMENT COMPLETE';
+    var verdictClass = verdictText.toUpperCase().includes('GO') && !verdictText.toUpperCase().includes('NO-GO') ? 'go' : verdictText.toUpperCase().includes('CANCEL') ? 'stop' : 'am';
+
+    var now = new Date();
+    var timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+    out.innerHTML = '<div class="bcard"><div class="bhdr"><div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px">AI BRIEF · GENERATED NOW · LIVE</div><div class="bv ' + verdictClass + '">' + verdictText.toUpperCase() + '</div></div><div class="bgen">Generated: ' + today.split(',')[0] + ' · ' + timeStr + '</div></div><div class="bbody"><div style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;font-family:var(--mono);font-size:12px">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div></div>';
+
+  } catch(e){
+    out.innerHTML='<div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);border-radius:6px;padding:16px;font-size:13px;color:#FF4444">Brief generation failed: ' + e.message + '</div>';
+  }
+
+  if(btn){ btn.disabled=false; btn.textContent='REGENERATE →'; }
+}
+window.genNightlyBrief = genNightlyBrief;
 </script>
 
 <script>
