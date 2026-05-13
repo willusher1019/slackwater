@@ -3179,6 +3179,33 @@ lines.forEach((line, i) => {
     </div>
   </div>
 
+  <!-- LIGHTNING / WEATHER HOLD BANNER — shown when thunderstorm detected or 30-min rule active -->
+  <div id="sw-lightning-banner" style="display:none;background:#4A0000;border-bottom:2px solid #FF2020;padding:10px 20px;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px;flex-shrink:0">⚡</span>
+      <div>
+        <div id="sw-lightning-title" style="font-family:var(--mono);font-size:10px;font-weight:700;color:#FF4444;letter-spacing:2px">LIGHTNING / THUNDERSTORM — ALL WORKS STOPPED</div>
+        <div id="sw-lightning-detail" style="font-family:var(--mono);font-size:9px;color:#FF9999;margin-top:2px"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div id="sw-lightning-timer" style="font-family:var(--mono);font-size:9px;color:#FF9999;text-align:right"></div>
+      <a href="https://map.blitzortung.org/#10/51.499/0.038" target="_blank" style="font-family:var(--mono);font-size:9px;color:#FF4444;text-decoration:none;border:1px solid rgba(255,68,68,0.5);padding:5px 10px;border-radius:3px;white-space:nowrap">LIVE STRIKE MAP →</a>
+    </div>
+  </div>
+
+  <!-- LIVE WEATHER STRIP — always visible when logged in -->
+  <div id="sw-live-wx-bar" style="display:flex;align-items:center;gap:14px;padding:5px 20px;background:rgba(0,196,212,0.04);border-bottom:1px solid rgba(0,196,212,0.1);flex-shrink:0;font-family:var(--mono);font-size:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+    <span style="color:#3A5A72;letter-spacing:1px;flex-shrink:0">LIVE ·</span>
+    <span id="sw-wx-cond" style="color:#8896A5;flex-shrink:0">Fetching weather...</span>
+    <span id="sw-wx-wind" style="color:#8896A5;flex-shrink:0"></span>
+    <span id="sw-wx-gust" style="color:#3A5A72;flex-shrink:0"></span>
+    <span id="sw-wx-status" style="font-weight:700;flex-shrink:0"></span>
+    <span style="margin-left:auto;color:#3A5A72;flex-shrink:0" id="sw-wx-updated"></span>
+    <button onclick="swLiveWeatherPoll()" style="background:transparent;border:1px solid #1A3350;color:#3A5A72;font-family:var(--mono);font-size:8px;padding:2px 8px;cursor:pointer;border-radius:2px;flex-shrink:0">↻</button>
+    <a href="https://map.blitzortung.org/#10/51.499/0.038" target="_blank" id="sw-wx-lightning-link" style="display:none;color:#FF4444;text-decoration:none;flex-shrink:0;font-weight:700">⚡ Strike map →</a>
+  </div>
+
   <!-- OVERVIEW -->
   <div id="t-overview" style="height:calc(100vh - 54px);display:none;overflow-y:auto;background:var(--bg)">
     <div class="sarea" style="padding:20px;gap:16px">
@@ -6331,7 +6358,26 @@ async function genNightlyBrief(){
 
   var today = typeof swToday === 'function' ? swToday() : new Date().toDateString();
 
-  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (fixed — do not guess):\n- Wind hard stop ALL works: 15 m/s\n- Wind hard stop CRANE (Apollo): 10 m/s\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- DiveCo ERT minimum 4 persons required for any leaf/arm access\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48\n\n' + taskSummary + '\n\n' + eventSummary + '\n\nGenerate a brief covering:\n1. VERDICT: GO / DELAY / CANCEL for tomorrow\'s primary task (anode cutting). State the reason in one sentence.\n2. SUMMARY: 2-3 sentences on what happened today and what is planned for tomorrow.\n3. BLOCKERS: List any outstanding issues that must be resolved before mobilisation.\n4. ACTIONS REQUIRED TONIGHT: Bulleted list of specific actions, who must do them, by when.\n5. DRAFT WORKFORCE NOTIFICATION: A short WhatsApp-style message to send to the crew (max 120 words).\n\nBe specific. Use names from the data if available. State tidal windows if known. Do NOT refuse or hedge — give your best assessment based on the data provided.\n\nFormat with clear section headers using plain text (no markdown asterisks).';
+  /* Include live weather if available */
+  var liveWxContext = '';
+  if(window._swLiveWx){
+    var lw = window._swLiveWx;
+    var lwThunder = (typeof swIsThunder === 'function') ? swIsThunder(lw.code) : (lw.code===95||lw.code===96||lw.code===99);
+    liveWxContext = '\n\nLIVE WEATHER (Thames Barrier · polled ' + lw.updated.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '):\n' +
+      '• Condition: ' + ((typeof swWmoLabel==='function') ? swWmoLabel(lw.code) : ('Code '+lw.code)) + '\n' +
+      '• Wind: ' + lw.wind + ' m/s\n' +
+      '• Gusts: ' + lw.gust + ' m/s\n' +
+      '• Temperature: ' + lw.temp + '°C\n' +
+      '• Lightning / thunderstorm active: ' + (lwThunder ? 'YES — works are currently stopped under the lightning rule' : 'No') + '\n' +
+      '• Wind status: ' + (lwThunder ? 'THUNDER STOP' : lw.wind>=15 ? 'ALL STOP (>15 m/s)' : lw.wind>=10 ? 'CRANE STOP (>10 m/s)' : 'ALL CLEAR');
+    if(!lwThunder && window._swLastThunderTime){
+      var elapsed = (new Date() - window._swLastThunderTime)/60000;
+      var remaining = Math.max(0, 30-elapsed);
+      if(remaining > 0) liveWxContext += '\n• 30-MIN RULE: Storm cleared ' + Math.round(elapsed) + ' min ago — works cannot resume for another ' + Math.ceil(remaining) + ' min';
+    }
+  }
+
+  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (fixed — these are hard rules, not suggestions):\n- Lightning / thunderstorm: IMMEDIATE STOP. 30-minute clear rule before resuming.\n- Wind hard stop ALL works: 15 m/s — do not override this.\n- Wind hard stop CRANE (Apollo): 10 m/s — do not override this.\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- DiveCo ERT minimum 4 persons required for any leaf/arm access\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48\n\n' + liveWxContext + '\n\n' + taskSummary + '\n\n' + eventSummary + '\n\nGenerate a brief covering:\n1. VERDICT: GO / DELAY / CANCEL for tomorrow\'s primary task (anode cutting). State the reason in one sentence. If wind is above threshold or lightning is active, verdict MUST be DELAY or CANCEL — do not override hard rules.\n2. SUMMARY: 2-3 sentences on what happened today and what is planned for tomorrow.\n3. BLOCKERS: List any outstanding issues that must be resolved before mobilisation.\n4. ACTIONS REQUIRED TONIGHT: Bulleted list of specific actions, who must do them, by when.\n5. DRAFT WORKFORCE NOTIFICATION: A short WhatsApp-style message to send to the crew (max 120 words).\n\nBe specific. Use names from the data if available. State tidal windows if known. Do NOT refuse or hedge — give your best assessment based on the data provided.\n\nFormat with clear section headers using plain text (no markdown asterisks).';
 
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -6866,5 +6912,139 @@ window.ofShowAtStatus = ofShowAtStatus;
 window.ofInitDate = ofInitDate;
 
 </script>
+
+<script>
+/* ── LIVE WEATHER + LIGHTNING MONITOR ── */
+/* Thames Barrier, Woolwich SE18 — 51.4993°N 0.0383°E */
+var SW_WX_LAT = 51.4993;
+var SW_WX_LON = 0.0383;
+window._swLiveWx = null;
+window._swLastThunderTime = null;
+
+var _SW_WMO = {
+  0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Fog', 48:'Freezing fog',
+  51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+  61:'Light rain', 63:'Rain', 65:'Heavy rain',
+  71:'Light snow', 73:'Snow', 75:'Heavy snow', 77:'Snow grains',
+  80:'Light showers', 81:'Showers', 82:'Heavy showers',
+  85:'Snow showers', 86:'Heavy snow showers',
+  95:'THUNDERSTORM ⚡', 96:'THUNDERSTORM + HAIL ⚡', 99:'THUNDERSTORM + HEAVY HAIL ⚡'
+};
+
+function swWmoLabel(c){ return _SW_WMO[c] || ('Cond '+c); }
+function swIsThunder(c){ return c===95||c===96||c===99; }
+
+async function swLiveWeatherPoll(){
+  try {
+    var url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude='+SW_WX_LAT+'&longitude='+SW_WX_LON +
+      '&current=weather_code,wind_speed_10m,wind_gusts_10m,precipitation,temperature_2m' +
+      '&timezone=Europe%2FLondon&wind_speed_unit=ms';
+    var res = await fetch(url);
+    if(!res.ok) return;
+    var wx = await res.json();
+    var cur = wx.current;
+    var code = cur.weather_code || 0;
+    var wind = Math.round((cur.wind_speed_10m || 0) * 10) / 10;
+    var gust = Math.round((cur.wind_gusts_10m || 0) * 10) / 10;
+    var temp = Math.round(cur.temperature_2m || 0);
+    var now = new Date();
+
+    window._swLiveWx = { code: code, wind: wind, gust: gust, temp: temp, updated: now };
+
+    /* Record when thunder was last seen */
+    if(swIsThunder(code)){
+      window._swLastThunderTime = now;
+    }
+
+    swRenderLiveWx();
+  } catch(e){ /* silent — site works without this */ }
+}
+
+function swRenderLiveWx(){
+  var wx = window._swLiveWx;
+  if(!wx) return;
+  var code = wx.code, wind = wx.wind, gust = wx.gust, temp = wx.temp;
+  var now = new Date();
+  var timeStr = wx.updated.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  /* --- Work status --- */
+  var thunder = swIsThunder(code);
+  var wStatus, wColor;
+  if(thunder){ wStatus='THUNDER STOP'; wColor='#FF2020'; }
+  else if(wind >= 15){ wStatus='ALL STOP'; wColor='#FF4444'; }
+  else if(wind >= 10){ wStatus='CRANE STOP'; wColor='#FF9500'; }
+  else { wStatus='ALL CLEAR'; wColor='#00D96E'; }
+
+  /* --- Live strip --- */
+  var el = function(id){ return document.getElementById(id); };
+  if(el('sw-wx-cond')) el('sw-wx-cond').textContent = swWmoLabel(code) + ' · ' + temp + '°C';
+  if(el('sw-wx-wind')) el('sw-wx-wind').textContent = 'Wind ' + wind + ' m/s';
+  if(el('sw-wx-gust')) el('sw-wx-gust').textContent = '(gust ' + gust + ' m/s)';
+  if(el('sw-wx-updated')) el('sw-wx-updated').textContent = 'Updated ' + timeStr;
+  if(el('sw-wx-status')){ el('sw-wx-status').textContent = wStatus; el('sw-wx-status').style.color = wColor; }
+  if(el('sw-wx-lightning-link')) el('sw-wx-lightning-link').style.display = (thunder || wind>=15) ? 'inline' : 'none';
+
+  var bar = el('sw-live-wx-bar');
+  if(bar){
+    if(thunder){ bar.style.background='rgba(100,0,0,0.2)'; bar.style.borderBottomColor='rgba(255,32,32,0.4)'; }
+    else if(wind>=15){ bar.style.background='rgba(255,59,59,0.07)'; bar.style.borderBottomColor='rgba(255,59,59,0.3)'; }
+    else { bar.style.background='rgba(0,196,212,0.04)'; bar.style.borderBottomColor='rgba(0,196,212,0.1)'; }
+  }
+
+  /* --- Lightning banner --- */
+  var banner = el('sw-lightning-banner');
+  var title = el('sw-lightning-title');
+  var detail = el('sw-lightning-detail');
+  var timerEl = el('sw-lightning-timer');
+
+  /* 30-min rule: was thunder before but not now? */
+  var thirtyMinRule = false;
+  var minutesUntilClear = 0;
+  if(!thunder && window._swLastThunderTime){
+    var elapsed = (now - window._swLastThunderTime) / 60000;
+    minutesUntilClear = Math.max(0, 30 - elapsed);
+    if(minutesUntilClear > 0) thirtyMinRule = true;
+    else window._swLastThunderTime = null; /* clear once 30 min passed */
+  }
+
+  if(banner){
+    var show = thunder || thirtyMinRule;
+    banner.style.display = show ? 'flex' : 'none';
+
+    if(thunder){
+      banner.style.background = '#4A0000';
+      banner.style.borderBottomColor = '#FF2020';
+      if(title){ title.textContent = 'LIGHTNING / THUNDERSTORM — ALL WORKS STOPPED'; title.style.color = '#FF4444'; }
+      if(detail) detail.textContent = 'Wind ' + wind + ' m/s · Gust ' + gust + ' m/s · ' + swWmoLabel(code) + ' · Thames Barrier · ' + timeStr;
+      if(timerEl) timerEl.textContent = '';
+    } else if(thirtyMinRule){
+      var resumeAt = new Date(window._swLastThunderTime.getTime() + 30*60000);
+      var resumeStr = resumeAt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      banner.style.background = '#1C1400';
+      banner.style.borderBottomColor = '#FF9500';
+      if(title){ title.textContent = 'STORM CLEARED — ' + Math.ceil(minutesUntilClear) + ' MIN REMAINING BEFORE WORKS CAN RESUME'; title.style.color = '#FF9500'; }
+      if(detail) detail.textContent = 'Lightning observed — 30-minute clear rule applies. Wind now ' + wind + ' m/s · Updated ' + timeStr;
+      if(timerEl) timerEl.textContent = 'Resume at ' + resumeStr;
+    }
+  }
+
+  /* Pulse the Live pill red during thunder */
+  var pill = document.querySelector('.pill.live');
+  if(pill){ pill.style.background = thunder ? 'rgba(255,32,32,0.15)' : ''; }
+}
+
+/* Poll on load (slight delay) and every 5 min */
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(swLiveWeatherPoll, 1500);
+  setInterval(swLiveWeatherPoll, 5 * 60 * 1000);
+  setInterval(swRenderLiveWx, 60 * 1000); /* refresh countdown every minute */
+});
+
+window.swLiveWeatherPoll = swLiveWeatherPoll;
+window.swRenderLiveWx = swRenderLiveWx;
+</script>
+
 </body>
 </html>
