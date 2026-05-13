@@ -930,6 +930,18 @@ var msgs = [];
 var loading = false;
 var SITES = {'thames barrier':'barrier2026','m25 depot':'m25ops','hornsea wind':'hornsea3','mark':'test'};
 
+/* ── MARKDOWN → HTML (lightweight) ── */
+function swMd(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')  /* escape HTML first */
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')                   /* **bold** */
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')                               /* *italic* */
+    .replace(/`(.+?)`/g,'<code style="font-family:var(--mono);font-size:0.9em;background:rgba(0,196,212,0.08);padding:1px 4px;border-radius:2px">$1</code>') /* `code` */
+    .replace(/^(\d+)\.\s+/gm,'<span style="color:var(--accent);font-weight:600">$1.</span> ') /* numbered lists */
+    .replace(/\n/g,'<br>');
+}
+window.swMd = swMd;
+
 /* ── LIVE DATE HELPER ── */
 function swToday(){
   var d = new Date();
@@ -1188,7 +1200,7 @@ function renderMsgs(){
     var d = document.createElement('div');
     d.className = 'amsg ' + (m.r==='agent'?'agent':'user');
     d.innerHTML = (m.r==='agent'?'<div class="awho">Slackwater · Thames Barrier</div>':'') +
-      '<div class="abub">' + m.c.replace(/\n/g,'<br>') + '</div>' +
+      '<div class="abub">' + swMd(m.c) + '</div>' +
       (m.r==='user'?'<div class="awho" style="text-align:right">Supervisor</div>':'');
     c.appendChild(d);
   });
@@ -4419,7 +4431,7 @@ function renderMsgs(){
   msgs.forEach(m=>{
     const d=document.createElement('div');
     d.className='amsg '+(m.r==='agent'?'agent':'user');
-    d.innerHTML=`${m.r==='agent'?'<div class="awho">Slackwater · Thames Barrier</div>':''}<div class="abub">${m.c.replace(/\n/g,'<br>')}</div>${m.r==='user'?'<div class="awho" style="text-align:right">Supervisor</div>':''}`;
+    d.innerHTML=`${m.r==='agent'?'<div class="awho">Slackwater · Thames Barrier</div>':''}<div class="abub">${swMd(m.c)}</div>${m.r==='user'?'<div class="awho" style="text-align:right">Supervisor</div>':''}`;
     c.appendChild(d);
   });
   c.scrollTop=c.scrollHeight;
