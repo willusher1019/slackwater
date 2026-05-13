@@ -5793,9 +5793,9 @@ function plReadFile(file){
     var text = ev.target.result || '';
     // Strip WhatsApp export header lines (e.g. "[07/05/2026, 08:22:45] ‎Messages and calls are end-to-end encrypted")
     text = text.replace(/^\[.*?\] ‎Messages and calls are end-to-end encrypted.*\n?/m, '');
-    // Normalise WhatsApp timestamps from "[dd/mm/yyyy, hh:mm:ss] Name: " format
-    // Keep the content but make it cleaner for the AI
-    text = text.replace(/^\[(\d{2}\/\d{2}\/\d{4}), (\d{2}:\d{2}):\d{2}\] ([^:]+): /gm, '$2 [$3] ');
+    // Normalise WhatsApp timestamps — keep DD/MM HH:MM [Name] for cross-referencing with operational logs
+    // "[07/05/2026, 08:22:45] Will Usher: ..." → "07/05 08:22 [Will Usher] ..."
+    text = text.replace(/^\[(\d{2})\/(\d{2})\/\d{4}, (\d{2}:\d{2}):\d{2}\] ([^:]+): /gm, '$1/$2 $3 [$4] ');
     var ta = document.getElementById('pl-raw');
     if(ta){ ta.value = text.trim(); ta.style.borderColor='#00C4D4'; setTimeout(function(){ ta.style.borderColor='#1A3350'; },1500); }
     // Auto-detect date from file content if possible
