@@ -6260,8 +6260,8 @@ async function plSaveAll(){
     var d = t.date || '';
     var f = { 'Task Name': t.taskName || 'Untitled task', 'Date': d };
     if(t.location) f['Location'] = t.location;
-    if(t.timeIn && d) f['Time In'] = d+'T'+t.timeIn+':00.000Z';
-    if(t.timeOut && d) f['Time Out'] = d+'T'+t.timeOut+':00.000Z';
+    if(t.timeIn) f['Time In'] = t.timeIn;
+    if(t.timeOut) f['Time Out'] = t.timeOut;
     if(t.crewSize) f['Crew Size'] = t.crewSize;
     if(t.productiveWorkers !== undefined) f['Productive Workers'] = t.productiveWorkers;
     if(t.notes) f['Notes'] = (t.contractor?'Contractor: '+t.contractor+' | ':'')+t.notes;
@@ -6292,14 +6292,28 @@ async function plSaveAll(){
   }
 
   btn.textContent = 'SAVE ALL TO AIRTABLE →'; btn.disabled = false;
-  var msg = '✓ '+taskOk+' task'+(taskOk!==1?'s':'')+' → Task Log';
-  if(plParsed.opEvents.length) msg += ' · '+opOk+' event'+(opOk!==1?'s':'')+' → Operational Log';
-  if(taskFail||opFail) msg += ' · '+(taskFail+opFail)+' failed (check console)';
-  msg += ' — refresh Airtable to see them.';
-  saveStatus.textContent = msg;
-  saveStatus.style.color = (taskFail||opFail) ? '#F59E0B' : '#00C4D4';
   var totalFail = taskFail + opFail;
-  if(!totalFail){ plParsed={tasks:[],opEvents:[]}; document.getElementById('pl-raw').value=''; document.getElementById('pl-results').style.display='none'; document.getElementById('pl-status').textContent=''; }
+  var msg = '✓ ' + taskOk + ' task' + (taskOk!==1?'s':'') + ' → Task Log';
+  if(plParsed.opEvents.length) msg += ' · ' + opOk + ' event' + (opOk!==1?'s':'') + ' → Operational Log';
+  if(totalFail) msg += ' · ' + totalFail + ' failed (check Airtable field names)';
+  else msg += ' — saved. Clearing in 3s...';
+  saveStatus.textContent = msg;
+  saveStatus.style.color = totalFail ? '#F59E0B' : '#00C4D4';
+
+  /* Always clear after save — success clears immediately after 3s, partial fail shows error then clears */
+  setTimeout(function(){
+    plParsed = { tasks: [], opEvents: [] };
+    var raw = document.getElementById('pl-raw');
+    var results = document.getElementById('pl-results');
+    var status = document.getElementById('pl-status');
+    var dropLabel = document.getElementById('pl-drop-label');
+    if(raw) raw.value = '';
+    if(results) results.style.display = 'none';
+    if(status) status.textContent = '';
+    if(dropLabel) dropLabel.textContent = 'DROP WHATSAPP EXPORT HERE';
+    saveStatus.textContent = '';
+    saveStatus.style.display = 'none';
+  }, totalFail ? 6000 : 3000);
 }
 
 /* Mount operational log HTML into the portal tab */
