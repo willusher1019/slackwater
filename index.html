@@ -7,6 +7,7 @@
 <meta name="description" content="The platform that tells you the night before whether to mobilise. AI-powered operational coordination for infrastructure and construction.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:16px}
@@ -1026,28 +1027,41 @@ function showApp(){
 }
 
 /* ── LOGIN ── */
+/* ── NETLIFY IDENTITY AUTH ── */
+var SW_ADMIN_EMAIL = 'will.g.usher@gmail.com';
+
+function swHandleNetlifyLogin(user){
+  if(!user) return;
+  netlifyIdentity.close();
+  var roles = (user.app_metadata && user.app_metadata.roles) || [];
+  var isAdmin = user.email === SW_ADMIN_EMAIL || roles.includes('admin');
+  window._swCurrentUser = user.email;
+  window._swIsAdmin = isAdmin;
+  if(window._swLoginTarget === 'portal'){ showDataPortal(); }
+  else { showApp(); }
+  window._swLoginTarget = null;
+}
+
+// Wire Netlify Identity events once DOM is ready
+document.addEventListener('DOMContentLoaded', function(){
+  if(typeof netlifyIdentity === 'undefined') return;
+  netlifyIdentity.on('init', function(user){ if(user) swHandleNetlifyLogin(user); });
+  netlifyIdentity.on('login', function(user){ swHandleNetlifyLogin(user); });
+  netlifyIdentity.on('logout', function(){ showLanding(); });
+});
+
 function doLogin(){
-  var s = document.getElementById('si').value.toLowerCase().trim();
-  var p = document.getElementById('pi').value;
+  window._swLoginTarget = 'app';
+  if(typeof netlifyIdentity !== 'undefined'){ netlifyIdentity.open(); return; }
+  // Fallback if widget fails to load
   var e = document.getElementById('lerr');
-  // Admin override — will + hashed password gives admin access
-  if(s==='will'){ swCheckAdminPass(p, function(ok){ if(ok){ window._swCurrentUser='will'; window._swIsAdmin=true; e.style.display='none'; showApp(); } else { e.textContent='Incorrect password.'; e.style.display='block'; } }); return; }
-  if(!SITES[s]){ e.textContent='Site not recognised.'; e.style.display='block'; return; }
-  if(SITES[s]!==p){ e.textContent='Incorrect password.'; e.style.display='block'; return; }
-  window._swCurrentUser='user'; window._swIsAdmin=false;
-  e.style.display='none';
-  showApp();
+  if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
 }
 function doDataLogin(){
-  var u = document.getElementById('dl-user').value.toLowerCase().trim();
-  var p = document.getElementById('dl-pass').value;
+  window._swLoginTarget = 'portal';
+  if(typeof netlifyIdentity !== 'undefined'){ netlifyIdentity.open(); return; }
   var e = document.getElementById('dl-err');
-  if(u==='will'){ swCheckAdminPass(p, function(ok){ if(ok){ window._swCurrentUser=u; window._swIsAdmin=true; e.style.display='none'; showDataPortal(); } else { e.textContent='Incorrect password.'; e.style.display='block'; } }); return; }
-  if(u==='mark' && p==='test'){
-    window._swCurrentUser=u; window._swIsAdmin=false;
-    e.style.display='none'; showDataPortal();
-  }
-  else{ e.textContent='Incorrect credentials.'; e.style.display='block'; }
+  if(e){ e.textContent = 'Auth unavailable — reload and try again.'; e.style.display = 'block'; }
 }
 
 /* ── TABS ── */
@@ -3046,10 +3060,9 @@ lines.forEach((line, i) => {
         <div class="lsub">AI OPERATIONAL INTELLIGENCE</div>
       </div>
       <div class="lform">
-        <div class="lfield"><label class="llabel">Site Name</label><input class="linput" id="si" placeholder="e.g. Thames Barrier" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <div class="lfield"><label class="llabel">Password</label><input class="linput" id="pi" type="password" placeholder="Site access password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div style="font-family:var(--mono);font-size:10px;color:#3A5A72;letter-spacing:1px;text-align:center;margin-bottom:16px;line-height:1.7">Sign in with your Slackwater account.<br>First time? Check your email for an invite.</div>
         <div id="lerr" class="lerr" style="display:none"></div>
-        <button class="lbtn" onclick="doLogin()">ACCESS SITE →</button>
+        <button class="lbtn" onclick="doLogin()">SIGN IN →</button>
       </div>
       <button class="lback" onclick="showLanding()">← Back to overview</button>
       <div class="lhint">Access restricted to authorised personnel only.<br>Contact your site administrator for credentials.</div>
@@ -4673,16 +4686,9 @@ window.loadDocuments = loadDocuments;
       <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:3px">DATA LOGGING PORTAL</div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:11px">
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:2px">Username</label>
-        <input id="dl-user" style="width:100%;background:#070F18;border:1px solid #1E3A52;color:#EBF5FF;padding:11px 13px;font-size:14px;outline:none;transition:border-color 0.2s" placeholder="Username" autocomplete="off" onkeydown="if(event.key==='Enter')doDataLogin()">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:2px">Password</label>
-        <input id="dl-pass" type="password" style="width:100%;background:#070F18;border:1px solid #1E3A52;color:#EBF5FF;padding:11px 13px;font-size:14px;outline:none;transition:border-color 0.2s" placeholder="Password" onkeydown="if(event.key==='Enter')doDataLogin()">
-      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:#3A5A72;letter-spacing:1px;text-align:center;line-height:1.8">Sign in with your Slackwater account.<br>Access is invite-only — contact Will Usher to request access.</div>
       <div id="dl-err" style="display:none;font-family:var(--mono);font-size:10px;color:#FF3A3A;text-align:center"></div>
-      <button onclick="doDataLogin()" style="width:100%;padding:13px;background:linear-gradient(135deg,rgba(0,150,180,0.9),rgba(0,110,140,0.9));border:none;border-top:2px solid #00C4D4;color:#EBF5FF;font-family:var(--display);font-size:15px;letter-spacing:3px;cursor:pointer;margin-top:4px">ACCESS PORTAL →</button>
+      <button onclick="doDataLogin()" style="width:100%;padding:13px;background:linear-gradient(135deg,rgba(0,150,180,0.9),rgba(0,110,140,0.9));border:none;border-top:2px solid #00C4D4;color:#EBF5FF;font-family:var(--display);font-size:15px;letter-spacing:3px;cursor:pointer;margin-top:4px">SIGN IN →</button>
     </div>
     <button onclick="showLanding()" style="background:none;border:none;color:#3A5A72;font-family:var(--mono);font-size:9px;letter-spacing:2px;cursor:pointer;padding:4px">← Back to overview</button>
     <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;text-align:center;line-height:2;margin-top:4px">Access restricted to authorised personnel only.</div>
