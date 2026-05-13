@@ -6303,7 +6303,7 @@ async function ofQuickLog(){
   var now = new Date();
   var todayStr = now.toISOString().slice(0,10);
 
-  var prompt = 'Parse this site event log entry for the Thames Barrier Monel Bolt Replacement programme and return ONLY a JSON object, no other text.\n\nEntry: "' + text + '"\n\nToday: ' + todayStr + '. If no date mentioned, use today. If no time mentioned, use current time ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + '.\n\nReturn this exact JSON structure:\n{\n  "site": "Thames Barrier",\n  "date": "YYYY-MM-DD",\n  "workPackage": "brief description of what was planned",\n  "eventType": one of exactly: "DELAYED START"|"STAND DOWN"|"ACCESS ISSUE"|"PERMIT ISSUE"|"ENVIRONMENTAL HOLD"|"PLANT FAILURE"|"LABOUR SHORTAGE"|"INSPECTION CONFLICT"|"MATERIAL ISSUE"|"SEQUENCING CLASH"|"WEATHER HOLD"|"TIDE RESTRICTION",\n  "constraintType": one of exactly: "TIDE"|"WEATHER"|"PERMIT"|"THIRD-PARTY"|"ACCESS"|"LABOUR"|"PLANT"|"SAFETY",\n  "impactClass": one of exactly: "PROGRAMME CRITICAL"|"COST IMPACT ONLY"|"REPORTABLE EVENT"|"NEAR MISS"|"LEARNING EVENT",\n  "preventability": one of exactly: "FORESEEABLE AND PREVENTABLE"|"FORESEEABLE BUT UNAVOIDABLE"|"NOT FORESEEABLE"|"UNDER REVIEW",\n  "causeCat": one of exactly: "INFORMATION FAILURE"|"COORDINATION FAILURE"|"PLANNING FAILURE"|"PERMIT / REGULATORY"|"RESOURCE FAILURE"|"ENVIRONMENTAL",\n  "timeIn": "HH:MM or null",\n  "labourAffected": number or null,\n  "timeLostHrs": decimal or null,\n  "rootCause": "one clear sentence explaining what happened and why",\n  "recovery": "what was done instead, or null"\n}';
+  var prompt = 'Parse this site event log entry for the Thames Barrier Monel Bolt Replacement programme and return ONLY a JSON object, no other text.\n\nEntry: "' + text + '"\n\nToday: ' + todayStr + '. If no date mentioned, use today. If no time mentioned, use current time ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + '.\n\nReturn this EXACT JSON structure (use ONLY the values listed — these must match exactly):\n{\n  "site": "Thames Barrier",\n  "date": "YYYY-MM-DD",\n  "workPackage": "brief description of what was planned or attempted",\n  "eventType": "DELAYED START" or "STAND DOWN" or "ACCESS ISSUE" or "PERMIT ISSUE" or "ENVIRONMENTAL HOLD" or "PLANT FAILURE" or "LABOUR SHORTAGE" or "INSPECTION CONFLICT" or "MATERIAL ISSUE" or "SEQUENCING CLASH" or "WEATHER HOLD" or "TIDE RESTRICTION",\n  "constraintType": "TIDE" or "WEATHER" or "PERMIT" or "THIRD-PARTY" or "ACCESS" or "LABOUR" or "PLANT" or "SAFETY",\n  "impactClass": "PROGRAMME CRITICAL" or "COST IMPACT ONLY" or "REPORTABLE EVENT" or "NEAR MISS" or "LEARNING EVENT",\n  "preventability": "FORESEEABLE" or "PREVENTABLE" or "PARTIALLY PREVENTABLE" or "UNAVOIDABLE",\n  "causeCat": "INFORMATION FAILURE" or "COORDINATION FAILURE" or "PLANNING FAILURE" or "PERMIT / REGULATORY" or "RESOURCE FAILURE" or "ENVIRONMENTAL",\n  "recoveryAction": "FALLBACK WORK" or "REDUCED CREW" or "RESEQUENCE" or "STAND DOWN" or "DELAY START" or "SPLIT TASKS" or null,\n  "timeIn": "HH:MM" or null,\n  "labourAffected": number or null,\n  "timeLostHrs": decimal number or null,\n  "rootCause": "one clear sentence — what happened, what caused it, what was the impact",\n  "recovery": "brief description of what was done instead, or null"\n}';
 
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -6326,9 +6326,23 @@ async function ofQuickLog(){
 }
 
 function ofQuickApply(j){
-  // Text fields
-  var setVal = function(id, val){ var el=document.getElementById(id); if(el && val!=null) el.value=val; };
-  setVal('of-site', j.site||'Thames Barrier');
+  // Set a <select> by matching option text or value
+  function setSelect(id, val){
+    var el = document.getElementById(id);
+    if(!el || !val) return;
+    // Try direct value match first
+    el.value = val;
+    // If that didn't work, scan options by text
+    if(el.value !== val){
+      for(var i=0; i<el.options.length; i++){
+        if(el.options[i].text.trim() === val){ el.selectedIndex = i; break; }
+      }
+    }
+  }
+  // Set a text/number input
+  var setVal = function(id, val){ var el=document.getElementById(id); if(el && val!=null && val!=='null') el.value=val; };
+
+  setSelect('of-site', j.site||'Thames Barrier');
   setVal('of-date', j.date||new Date().toISOString().slice(0,10));
   setVal('of-pkg', j.workPackage||'');
   setVal('of-labour', j.labourAffected||'');
@@ -6336,7 +6350,7 @@ function ofQuickApply(j){
   setVal('of-cause', j.rootCause||'');
   setVal('of-recovery-other', j.recovery||'');
 
-  // Time — put in notes area if no dedicated field
+  // Prepend time to root cause if provided
   if(j.timeIn && j.timeIn!=='null'){
     var cause = document.getElementById('of-cause');
     if(cause && cause.value && !cause.value.includes(j.timeIn)){
@@ -6344,13 +6358,11 @@ function ofQuickApply(j){
     }
   }
 
-  // Chip selections — click the matching chip
+  // Chip selections — click the chip whose text matches exactly
   function clickChip(group, value){
     if(!value || value==='null') return;
     document.querySelectorAll('.of-chip[data-g="'+group+'"]').forEach(function(chip){
-      if(chip.textContent.trim() === value){
-        chip.click();
-      }
+      if(chip.textContent.trim() === value){ chip.click(); }
     });
   }
   clickChip('event', j.eventType);
@@ -6358,10 +6370,11 @@ function ofQuickApply(j){
   clickChip('prev', j.preventability);
   clickChip('causeCat', j.causeCat);
   clickChip('impact', j.impactClass);
+  clickChip('recovery', j.recoveryAction);
 
-  // Scroll to form
-  var form = document.getElementById('of-site');
-  if(form) form.scrollIntoView({behavior:'smooth', block:'nearest'});
+  // Scroll back to top of form so user can review from the start
+  var top = document.getElementById('dp-oplog') || document.getElementById('of-site');
+  if(top) top.scrollTo ? top.scrollTo({top:0, behavior:'smooth'}) : top.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function ofQuickFillBasic(text){
