@@ -7171,13 +7171,14 @@ function ofRender(events){
   var existing = feed.querySelectorAll('.of-event');
   existing.forEach(function(el){ el.remove(); });
 
-  events.forEach(function(ev){
+  events.forEach(function(ev, idx){
     var prevClass = (ev.preventability||'').toLowerCase().replace(' ','').replace(' ','');
     if(prevClass==='partiallypreventable') prevClass='partial';
     var card = document.createElement('div');
     card.className = 'of-event ev-'+prevClass;
     var d = ev.date || ev.timestamp.split('T')[0];
     var dispDate = d ? new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '';
+    var cascadeId = 'of-cascade-'+idx+'-'+Date.now();
     card.innerHTML =
       '<div class="of-ev-top">'+
         '<span class="of-ev-type">'+ofEsc(ev.eventType||'')+'</span>'+
@@ -7193,7 +7194,8 @@ function ofRender(events){
         (ev.estimatedCost ? '<span class="of-ev-tag" style="color:var(--stop)">£'+ev.estimatedCost.toLocaleString()+'</span>' : '')+
         (ev.preventability ? '<span class="of-ev-prev '+prevClass+'">'+ofEsc(ev.preventability)+'</span>' : '')+
       '</div>'+
-      (ev.rootCause ? '<div class="of-ev-cause">'+ofEsc(ev.rootCause)+'</div>' : '');
+      (ev.rootCause ? '<div class="of-ev-cause">'+ofEsc(ev.rootCause)+'</div>' : '')+
+      ofBuildCascade(ev, cascadeId);
     feed.appendChild(card);
   });
 
@@ -7204,6 +7206,94 @@ function ofRender(events){
 }
 
 function ofEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+window.ofToggleCascade = function(id){
+  var el = document.getElementById(id);
+  var btn = document.getElementById(id+'-btn');
+  if(!el || !btn) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? 'CASCADE →' : 'CASCADE ▲';
+};
+
+function ofBuildCascade(ev, id){
+  /* Need at least a root cause or recovery to show something meaningful */
+  var hasChain = ev.rootCause || ev.recovery || ev.lessonsLearned || ev.constraintType;
+  if(!hasChain) return '';
+
+  /* Build the chain nodes */
+  var nodes = [];
+
+  /* Node 1 — Trigger */
+  var triggerLabel = ev.constraintType || ev.causeCat || 'CONSTRAINT';
+  var triggerDetail = ev.rootCause || '';
+  nodes.push({
+    label: triggerLabel,
+    detail: triggerDetail,
+    color: '#F59E0B'
+  });
+
+  /* Node 2 — Immediate effect */
+  var effectLabel = ev.eventType || 'IMPACT';
+  var effectDetail = ev.workPackage ? ev.workPackage + (ev.labourAffected ? ' — ' + ev.labourAffected + ' people affected' : '') : (ev.labourAffected ? ev.labourAffected + ' people affected' : '');
+  nodes.push({
+    label: effectLabel,
+    detail: effectDetail,
+    color: '#FF4444'
+  });
+
+  /* Node 3 — Secondary effect / recovery (if present) */
+  if(ev.recovery && ev.recovery.trim() && ev.recovery.toLowerCase() !== 'n/a'){
+    nodes.push({
+      label: 'SECONDARY EFFECT',
+      detail: ev.recovery,
+      color: '#FF6B6B'
+    });
+  }
+
+  /* Node 4 — Cost */
+  var costParts = [];
+  if(ev.estimatedCost) costParts.push('£'+ev.estimatedCost.toLocaleString());
+  if(ev.timeLostHrs) costParts.push(ev.timeLostHrs+'h lost');
+  if(ev.labourAffected) costParts.push(ev.labourAffected+' people idle');
+  if(costParts.length){
+    nodes.push({
+      label: 'COST',
+      detail: costParts.join(' · '),
+      color: '#FF4444'
+    });
+  }
+
+  /* Render chain nodes */
+  var nodesHtml = nodes.map(function(n, i){
+    return '<div style="display:flex;align-items:flex-start;gap:6px;min-width:0">' +
+      (i > 0 ? '<div style="font-family:var(--mono);font-size:14px;color:#1A3350;flex-shrink:0;padding-top:12px">→</div>' : '') +
+      '<div style="background:#060E18;border:1px solid #1A3350;border-top:2px solid '+n.color+';border-radius:3px;padding:8px 10px;min-width:80px;flex:1">' +
+        '<div style="font-family:var(--mono);font-size:7px;color:'+n.color+';letter-spacing:1.5px;margin-bottom:4px;white-space:nowrap">'+ofEsc(n.label)+'</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;color:#8896A5;line-height:1.6">'+ofEsc(n.detail)+'</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  /* Prevention rule from lessons learned */
+  var ruleHtml = '';
+  if(ev.lessonsLearned && ev.lessonsLearned.trim() && ev.lessonsLearned.toLowerCase() !== 'n/a'){
+    ruleHtml = '<div style="margin-top:8px;border-left:2px solid #00C4D4;padding:6px 10px;background:#060E18;border-radius:0 3px 3px 0">' +
+      '<div style="font-family:var(--mono);font-size:7px;color:#00C4D4;letter-spacing:2px;margin-bottom:3px">PREVENTION RULE</div>' +
+      '<div style="font-family:var(--mono);font-size:9px;color:#8896A5;line-height:1.6">'+ofEsc(ev.lessonsLearned)+'</div>' +
+    '</div>';
+  }
+
+  return '<div style="margin-top:8px">' +
+    '<button id="'+id+'-btn" onclick="ofToggleCascade(\''+id+'\')" style="font-family:var(--mono);font-size:8px;letter-spacing:1px;background:transparent;border:1px solid #1A3350;color:#3A5A72;padding:3px 10px;cursor:pointer;border-radius:3px" onmouseover="this.style.borderColor=\'#F59E0B\';this.style.color=\'#F59E0B\'" onmouseout="this.style.borderColor=\'#1A3350\';this.style.color=\'#3A5A72\'">CASCADE →</button>' +
+    '<div id="'+id+'" style="display:none;margin-top:8px">' +
+      '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding-bottom:4px">' +
+        nodesHtml +
+      '</div>' +
+      ruleHtml +
+    '</div>' +
+  '</div>';
+}
 
 function ofRenderPatterns(events){
   var pat = document.getElementById('of-patterns');
