@@ -4764,9 +4764,21 @@ window.loadDocuments = loadDocuments;
           <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">DATE THESE NOTES ARE FROM</label>
           <input id="pl-date" type="date" style="background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:9px 11px;font-size:13px;outline:none;border-radius:4px;font-family:var(--mono)" onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'">
         </div>
+        <!-- WhatsApp file drop zone -->
+        <div id="pl-drop-zone" ondragover="plDragOver(event)" ondragleave="plDragLeave(event)" ondrop="plDrop(event)" style="border:1.5px dashed #1A3350;border-radius:6px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color 0.15s,background 0.15s" onclick="document.getElementById('pl-file-inp').click()">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="font-size:20px">💬</div>
+            <div>
+              <div style="font-family:var(--mono);font-size:10px;color:#A8C4DC;font-weight:600">DROP WHATSAPP EXPORT HERE</div>
+              <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">iPhone: Group chat → Export Chat → Without Media → share .txt file here</div>
+            </div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;border:1px solid #1A3350;padding:5px 10px;border-radius:3px;white-space:nowrap">Browse file</div>
+          <input id="pl-file-inp" type="file" accept=".txt,.zip" style="display:none" onchange="plFileSelect(this)">
+        </div>
         <div style="margin-bottom:14px">
-          <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">YOUR NOTES — paste exactly as written, any format</label>
-          <textarea id="pl-raw" rows="14" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:12px;font-size:13px;font-family:var(--mono);line-height:1.7;outline:none;border-radius:4px;resize:vertical" placeholder="e.g.&#10;7:30 morning briefing starts&#10;7:45 briefing done&#10;8:47 Jack Hogie Idris into Golf leaf — jet washing&#10;11:40 Hogie done. Lunch.&#10;..." onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
+          <label style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px;display:block;margin-bottom:6px">YOUR NOTES — or paste directly, any format</label>
+          <textarea id="pl-raw" rows="12" style="width:100%;box-sizing:border-box;background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:12px;font-size:13px;font-family:var(--mono);line-height:1.7;outline:none;border-radius:4px;resize:vertical" placeholder="e.g.&#10;7:30 morning briefing starts&#10;7:45 briefing done&#10;8:47 Jack Hogie Idris into Golf leaf — jet washing&#10;11:40 Hogie done. Lunch.&#10;..." onfocus="this.style.borderColor='#00C4D4'" onblur="this.style.borderColor='#1A3350'"></textarea>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <button onclick="plParse()" style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:11px 28px;cursor:pointer;border-radius:4px" onmouseover="this.style.background='#00A8B8'" onmouseout="this.style.background='#00C4D4'">PARSE WITH AI →</button>
@@ -5749,6 +5761,57 @@ function plRefreshKeyPanel(){
     if(label){ label.style.color = '#F59E0B'; label.textContent = '⚠ AI KEY REQUIRED'; }
     if(sub){ sub.textContent = 'One-time setup. Paste your Anthropic key below — saved to your browser, never sent anywhere except Anthropic.'; }
   }
+}
+
+/* ── WHATSAPP FILE IMPORT ── */
+function plDragOver(e){
+  e.preventDefault();
+  var z = document.getElementById('pl-drop-zone');
+  if(z){ z.style.borderColor='#00C4D4'; z.style.background='rgba(0,196,212,0.05)'; }
+}
+function plDragLeave(e){
+  var z = document.getElementById('pl-drop-zone');
+  if(z){ z.style.borderColor='#1A3350'; z.style.background=''; }
+}
+function plDrop(e){
+  e.preventDefault();
+  plDragLeave(e);
+  var file = e.dataTransfer && e.dataTransfer.files[0];
+  if(file) plReadFile(file);
+}
+function plFileSelect(inp){
+  var file = inp && inp.files[0];
+  if(file) plReadFile(file);
+  inp.value = ''; // reset so same file can be re-selected
+}
+function plReadFile(file){
+  var status = document.getElementById('pl-status');
+  var zone = document.getElementById('pl-drop-zone');
+  if(status){ status.textContent = 'Reading ' + file.name + '...'; status.style.color = '#00C4D4'; }
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var text = ev.target.result || '';
+    // Strip WhatsApp export header lines (e.g. "[07/05/2026, 08:22:45] ‎Messages and calls are end-to-end encrypted")
+    text = text.replace(/^\[.*?\] ‎Messages and calls are end-to-end encrypted.*\n?/m, '');
+    // Normalise WhatsApp timestamps from "[dd/mm/yyyy, hh:mm:ss] Name: " format
+    // Keep the content but make it cleaner for the AI
+    text = text.replace(/^\[(\d{2}\/\d{2}\/\d{4}), (\d{2}:\d{2}):\d{2}\] ([^:]+): /gm, '$2 [$3] ');
+    var ta = document.getElementById('pl-raw');
+    if(ta){ ta.value = text.trim(); ta.style.borderColor='#00C4D4'; setTimeout(function(){ ta.style.borderColor='#1A3350'; },1500); }
+    // Auto-detect date from file content if possible
+    var dateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if(dateMatch){
+      var d = document.getElementById('pl-date');
+      if(d && !d.value){
+        var y=dateMatch[3], m=dateMatch[2], day=dateMatch[1];
+        d.value = y+'-'+m+'-'+day;
+      }
+    }
+    if(zone){ zone.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="font-size:20px">✅</div><div><div style="font-family:var(--mono);font-size:10px;color:#00C4D4;font-weight:600">'+file.name+' loaded</div><div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">'+text.split('\n').length+' lines · review below then click PARSE WITH AI</div></div></div>'; }
+    if(status){ status.textContent = ''; }
+  };
+  reader.onerror = function(){ if(status){ status.textContent = 'Could not read file.'; status.style.color='#FF4444'; } };
+  reader.readAsText(file, 'UTF-8');
 }
 
 function plClearKey(){
