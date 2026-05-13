@@ -2544,6 +2544,9 @@ function submitTask(){
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey){ alert('No Airtable key connected — go to OPERATIONAL LOG tab and connect your key first.'); return; }
 
+  var taskFp = [date, task.slice(0,30)].join('|');
+  if(!swDupCheck(taskFp, '"' + task + '" on ' + date)) return;
+
   var btn = document.querySelector('[onclick="submitTask()"]');
   if(btn){ btn.textContent = 'Saving...'; btn.disabled = true; }
 
@@ -2587,6 +2590,7 @@ function submitTask(){
   .then(function(res){ return res.json(); })
   .then(function(data){
     if(data.id){
+      swDupMark(taskFp);
       // Auto-create operational log entry if there are blockers or task was not fully completed
       var bad = g('f-bad'), complete = g('f-complete'), contractor = g('f-contractor');
       var isIssue = bad || complete === 'No — aborted' || complete === 'Partial — continued next window';
@@ -6151,7 +6155,7 @@ async function plParse(){
     text = text.slice(jsonStart, jsonEnd + 1);
 
     var parsed = JSON.parse(text);
-    plParsed = { tasks: parsed.tasks || [], opEvents: parsed.opEvents || [] };
+    plParsed = { tasks: parsed.tasks || [], opEvents: parsed.opEvents || [], _batchId: Date.now().toString(36) };
     var tCount = plParsed.tasks.length, oCount = plParsed.opEvents.length;
     status.textContent = tCount + ' task' + (tCount!==1?'s':'') + ' + ' + oCount + ' operational event' + (oCount!==1?'s':'') + ' found — review below';
     status.style.color = '#00C4D4';
@@ -6246,11 +6250,9 @@ async function plSaveAll(){
   var atKey = localStorage.getItem('sw_at_key') || '';
   if(!atKey){ alert('No Airtable key set.'); return; }
   if(!plParsed.tasks.length && !plParsed.opEvents.length){ alert('Nothing to save.'); return; }
-  if(plParsed._saved){
-    var total = (plParsed.tasks.length||0) + (plParsed.opEvents.length||0);
-    var ok = confirm('These ' + total + ' record' + (total!==1?'s':'') + ' were already saved to Airtable.\n\nSave again? This will create duplicates.');
-    if(!ok) return;
-  }
+  var plFp = 'batch|' + (plParsed.tasks.length||0) + 't|' + (plParsed.opEvents.length||0) + 'e|' + (plParsed._batchId||'');
+  var plTotal = (plParsed.tasks.length||0) + (plParsed.opEvents.length||0);
+  if(!swDupCheck(plFp, 'This batch of ' + plTotal + ' record' + (plTotal!==1?'s':''))) return;
 
   btn.textContent = 'Saving...'; btn.disabled = true;
   saveStatus.style.display = 'block';
@@ -6304,7 +6306,7 @@ async function plSaveAll(){
   else msg += ' — saved. Clearing in 3s...';
   saveStatus.textContent = msg;
   saveStatus.style.color = totalFail ? '#F59E0B' : '#00C4D4';
-  if(!totalFail) plParsed._saved = true;
+  if(!totalFail) swDupMark(plFp);
 
   /* Always clear after save — success clears immediately after 3s, partial fail shows error then clears */
   setTimeout(function(){
@@ -6799,6 +6801,9 @@ window.ofSubmit = function(){
   if(!ofState.prev){ alert('Please select preventability.'); return; }
   if(!cause){ alert('Please enter the root cause — this is the most important field.'); return; }
 
+  var ofFp = [date, pkg.slice(0,30), ofState.event].join('|');
+  if(!swDupCheck(ofFp, pkg + ' (' + ofState.event + ') on ' + date)) return;
+
   var btn = document.getElementById('of-submit');
   btn.disabled = true;
   btn.textContent = 'LOGGING...';
@@ -6832,6 +6837,7 @@ window.ofSubmit = function(){
   var events = ofLoad();
   events.unshift(event);
   ofSave(events);
+  swDupMark(ofFp);
 
   // Push to Airtable (requires "Operational Log" table in your Airtable base)
   var atKey = ofGetAtKey();
@@ -7025,6 +7031,19 @@ window.ofInitDate = ofInitDate;
 </script>
 
 <script>
+/* ── DUPLICATE SAVE GUARD — shared across all log forms ── */
+window._swSaved = new Set(); // fingerprints of records saved this session
+
+window.swDupCheck = function(fingerprint, label){
+  /* Returns true if safe to proceed, false if user cancelled */
+  if(!window._swSaved.has(fingerprint)) return true;
+  return confirm(label + ' looks like it was already saved this session.\n\nSave again? This will create a duplicate in Airtable.');
+};
+
+window.swDupMark = function(fingerprint){
+  window._swSaved.add(fingerprint);
+};
+
 /* ── LIVE WEATHER + LIGHTNING MONITOR ── */
 /* Thames Barrier, Woolwich SE18 — 51.4993°N 0.0383°E */
 var SW_WX_LAT = 51.4993;
