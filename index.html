@@ -6288,7 +6288,7 @@ async function plSaveAll(){
       'Event Type': o.eventType||'', 'Constraint Type': o.constraintType||'',
       'Labour Affected': o.labourAffected||0, 'Time Lost (hrs)': o.timeLostHrs||0,
       'Estimated Cost (£)': o.estimatedCost||0, 'Preventability': o.preventability||'',
-      'Cause Category': o.causeCat||'', 'Root Cause': o.rootCause||'',
+      'Cause': o.causeCat||'', 'Root Cause': o.rootCause||'',
       'Recovery Action': o.recovery||'', 'Lessons Learned': o.lessonsLearned||''
     };
     Object.keys(of_).forEach(function(k){ if(of_[k]===''||of_[k]===0) delete of_[k]; });
@@ -6856,7 +6856,7 @@ window.ofSubmit = function(){
         'Time Lost (hrs)': event.timeLostHrs,
         'Estimated Cost (£)': event.estimatedCost,
         'Preventability': event.preventability,
-        'Cause Category': event.causeCat,
+        'Cause': event.causeCat,
         'Root Cause': event.rootCause,
         'Recovery Action': event.recoveryAction,
         'Lessons Learned': event.lessonsLearned,
