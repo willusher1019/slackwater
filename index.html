@@ -5053,14 +5053,10 @@ window.loadDocuments = loadDocuments;
     </div>
 
     <!-- STATS ROW -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px">
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
         <div id="dp-stat-tasks" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">7</div>
         <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">TASKS LOGGED</div>
-      </div>
-      <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #00C4D4">
-        <div id="dp-stat-anodes" style="font-family:var(--display);font-size:38px;color:#00C4D4;line-height:1;letter-spacing:1px">48</div>
-        <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;margin-top:6px;letter-spacing:2px">ANODES CUT</div>
       </div>
       <div style="background:#0A1828;border:1px solid #1A3350;padding:14px;border-radius:4px;text-align:center;border-top:2px solid #FF4444">
         <div id="dp-stat-events" style="font-family:var(--display);font-size:38px;color:#FF4444;line-height:1;letter-spacing:1px">—</div>
@@ -7204,38 +7200,10 @@ function swRenderLiveWx(){
   var code = wx.code, wind = wx.wind, gust = wx.gust, temp = wx.temp;
   var now = new Date();
   var timeStr = wx.updated.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-
-  /* --- Work status --- */
-  var thunder = swIsThunder(code);
-  var wStatus, wColor;
-  if(thunder){ wStatus='THUNDER STOP'; wColor='#FF2020'; }
-  else if(wind >= 15){ wStatus='ALL STOP'; wColor='#FF4444'; }
-  else if(wind >= 10){ wStatus='CRANE STOP'; wColor='#FF9500'; }
-  else { wStatus='ALL CLEAR'; wColor='#00D96E'; }
-
-  /* --- Live strip --- */
   var el = function(id){ return document.getElementById(id); };
-  if(el('sw-wx-cond')) el('sw-wx-cond').textContent = swWmoLabel(code) + ' · ' + temp + '°C';
-  if(el('sw-wx-wind')) el('sw-wx-wind').textContent = 'Wind ' + wind + ' m/s';
-  if(el('sw-wx-gust')) el('sw-wx-gust').textContent = '(gust ' + gust + ' m/s)';
-  if(el('sw-wx-updated')) el('sw-wx-updated').textContent = 'Updated ' + timeStr;
-  if(el('sw-wx-status')){ el('sw-wx-status').textContent = wStatus; el('sw-wx-status').style.color = wColor; }
-  if(el('sw-wx-lightning-link')) el('sw-wx-lightning-link').style.display = (thunder || wind>=15) ? 'inline' : 'none';
 
-  var bar = el('sw-live-wx-bar');
-  if(bar){
-    if(thunder){ bar.style.background='rgba(100,0,0,0.2)'; bar.style.borderBottomColor='rgba(255,32,32,0.4)'; }
-    else if(wind>=15){ bar.style.background='rgba(255,59,59,0.07)'; bar.style.borderBottomColor='rgba(255,59,59,0.3)'; }
-    else { bar.style.background='rgba(0,196,212,0.04)'; bar.style.borderBottomColor='rgba(0,196,212,0.1)'; }
-  }
-
-  /* --- Lightning banner --- */
-  var banner = el('sw-lightning-banner');
-  var title = el('sw-lightning-title');
-  var detail = el('sw-lightning-detail');
-  var timerEl = el('sw-lightning-timer');
-
-  /* 30-min rule: was thunder before but not now? */
+  /* --- Determine thunder / 30-min rule state first (used everywhere) --- */
+  var thunder = swIsThunder(code);
   var thirtyMinRule = false;
   var minutesUntilClear = 0;
   if(!thunder && window._swLastThunderTime){
@@ -7245,15 +7213,55 @@ function swRenderLiveWx(){
     else window._swLastThunderTime = null; /* clear once 30 min passed */
   }
 
+  /* --- Work status badge in the live strip --- */
+  var wStatus, wColor;
+  if(thunder){
+    wStatus = 'WORKS STOOD DOWN — LIGHTNING';
+    wColor = '#FF2020';
+  } else if(thirtyMinRule){
+    wStatus = '30-MIN CLEAR RULE — ' + Math.ceil(minutesUntilClear) + 'MIN TO GO';
+    wColor = '#FF9500';
+  } else if(wind >= 15){
+    wStatus = 'ALL STOP';
+    wColor = '#FF4444';
+  } else if(wind >= 10){
+    wStatus = 'CRANE STOP';
+    wColor = '#FF9500';
+  } else {
+    wStatus = 'ALL CLEAR';
+    wColor = '#00D96E';
+  }
+
+  /* --- Live strip --- */
+  if(el('sw-wx-cond')) el('sw-wx-cond').textContent = swWmoLabel(code) + ' · ' + temp + '°C';
+  if(el('sw-wx-wind')) el('sw-wx-wind').textContent = 'Wind ' + wind + ' m/s';
+  if(el('sw-wx-gust')) el('sw-wx-gust').textContent = '(gust ' + gust + ' m/s)';
+  if(el('sw-wx-updated')) el('sw-wx-updated').textContent = 'Updated ' + timeStr;
+  if(el('sw-wx-status')){ el('sw-wx-status').textContent = wStatus; el('sw-wx-status').style.color = wColor; }
+  if(el('sw-wx-lightning-link')) el('sw-wx-lightning-link').style.display = (thunder || thirtyMinRule || wind>=15) ? 'inline' : 'none';
+
+  var bar = el('sw-live-wx-bar');
+  if(bar){
+    if(thunder || thirtyMinRule){ bar.style.background='rgba(100,0,0,0.2)'; bar.style.borderBottomColor='rgba(255,32,32,0.4)'; }
+    else if(wind>=15){ bar.style.background='rgba(255,59,59,0.07)'; bar.style.borderBottomColor='rgba(255,59,59,0.3)'; }
+    else { bar.style.background='rgba(0,196,212,0.04)'; bar.style.borderBottomColor='rgba(0,196,212,0.1)'; }
+  }
+
+  /* --- Lightning / 30-min banner --- */
+  var banner = el('sw-lightning-banner');
+  var title  = el('sw-lightning-title');
+  var detail = el('sw-lightning-detail');
+  var timerEl = el('sw-lightning-timer');
+
   if(banner){
-    var show = thunder || thirtyMinRule;
-    banner.style.display = show ? 'flex' : 'none';
+    var showBanner = thunder || thirtyMinRule;
+    banner.style.display = showBanner ? 'flex' : 'none';
 
     if(thunder){
       banner.style.background = '#4A0000';
       banner.style.borderBottomColor = '#FF2020';
-      if(title){ title.textContent = 'LIGHTNING / THUNDERSTORM — ALL WORKS STOPPED'; title.style.color = '#FF4444'; }
-      if(detail) detail.textContent = 'Wind ' + wind + ' m/s · Gust ' + gust + ' m/s · ' + swWmoLabel(code) + ' · Thames Barrier · ' + timeStr;
+      if(title){ title.textContent = 'LIGHTNING / THUNDERSTORM — ALL WORKS STOOD DOWN'; title.style.color = '#FF4444'; }
+      if(detail) detail.textContent = 'Wind ' + wind + ' m/s · Gust ' + gust + ' m/s · ' + swWmoLabel(code) + ' · Thames Barrier · ' + timeStr + ' · Works cannot resume until 30 min after last strike';
       if(timerEl) timerEl.textContent = '';
     } else if(thirtyMinRule){
       var resumeAt = new Date(window._swLastThunderTime.getTime() + 30*60000);
@@ -7261,14 +7269,14 @@ function swRenderLiveWx(){
       banner.style.background = '#1C1400';
       banner.style.borderBottomColor = '#FF9500';
       if(title){ title.textContent = 'STORM CLEARED — ' + Math.ceil(minutesUntilClear) + ' MIN REMAINING BEFORE WORKS CAN RESUME'; title.style.color = '#FF9500'; }
-      if(detail) detail.textContent = 'Lightning observed — 30-minute clear rule applies. Wind now ' + wind + ' m/s · Updated ' + timeStr;
-      if(timerEl) timerEl.textContent = 'Resume at ' + resumeStr;
+      if(detail) detail.textContent = 'Lightning cleared — 30-minute stand-down rule still applies. Wind now ' + wind + ' m/s · Updated ' + timeStr;
+      if(timerEl) timerEl.textContent = 'Earliest resume: ' + resumeStr;
     }
   }
 
-  /* Pulse the Live pill red during thunder */
+  /* Pulse the Live pill red during thunder or 30-min hold */
   var pill = document.querySelector('.pill.live');
-  if(pill){ pill.style.background = thunder ? 'rgba(255,32,32,0.15)' : ''; }
+  if(pill){ pill.style.background = (thunder || thirtyMinRule) ? 'rgba(255,32,32,0.15)' : ''; }
 }
 
 /* Poll on load (slight delay) and every 5 min */
