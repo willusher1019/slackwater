@@ -3142,103 +3142,108 @@ lines.forEach((line, i) => {
 </div>
 
 <!-- DEMO REQUEST SCREEN -->
-<div id="demo-screen" style="display:none;min-height:100vh;background:#03070C;position:relative">
+<div id="demo-screen" style="display:none;min-height:100vh;background:#060E18;position:relative">
+
+  <style>
+    #demo-screen input::placeholder, #demo-screen textarea::placeholder { color:#4A6A82; }
+    #demo-screen input, #demo-screen textarea, #demo-screen select { color-scheme: dark; }
+  </style>
 
   <!-- Grid bg -->
-  <div style="position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,196,212,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(0,196,212,0.012) 1px,transparent 1px);background-size:80px 80px"></div>
+  <div style="position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,196,212,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,196,212,0.015) 1px,transparent 1px);background-size:80px 80px"></div>
 
   <!-- Nav -->
-  <div style="position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;background:rgba(3,6,10,0.95);backdrop-filter:blur(8px);border-bottom:1px solid #0D1E30">
+  <div style="position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;background:rgba(6,14,24,0.97);backdrop-filter:blur(8px);border-bottom:1px solid #162840">
     <div style="display:flex;align-items:center;gap:10px">
       <div style="width:26px;height:26px;background:rgba(0,196,212,0.08);border:1px solid rgba(0,196,212,0.25);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#00C4D4;letter-spacing:1px;border-radius:2px;cursor:pointer" onclick="showLanding()">SW</div>
       <span style="font-family:var(--display);font-size:15px;color:#EDF6FF;letter-spacing:3px;cursor:pointer" onclick="showLanding()">SLACKWATER</span>
     </div>
-    <button onclick="showLanding()" style="font-family:var(--mono);font-size:9px;color:#3A5A72;background:none;border:none;cursor:pointer;letter-spacing:1px" onmouseover="this.style.color='#EDF6FF'" onmouseout="this.style.color='#3A5A72'">← BACK</button>
+    <button onclick="showLanding()" style="font-family:var(--mono);font-size:9px;color:#6A8A9E;background:none;border:none;cursor:pointer;letter-spacing:1px" onmouseover="this.style.color='#EDF6FF'" onmouseout="this.style.color='#6A8A9E'">← BACK</button>
   </div>
 
   <!-- Form content -->
-  <div style="max-width:640px;margin:0 auto;padding:120px 40px 80px;position:relative;z-index:1">
+  <div style="max-width:660px;margin:0 auto;padding:100px 40px 80px;position:relative;z-index:1">
 
-    <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:3px;margin-bottom:24px">GET STARTED</div>
-    <h1 style="font-family:var(--display);font-size:clamp(28px,4vw,44px);color:#EDF6FF;line-height:1.1;letter-spacing:0.5px;margin:0 0 12px">Tell us about<br>your programme.</h1>
-    <p style="font-family:var(--mono);font-size:11px;color:#6A8A9E;line-height:1.8;margin:0 0 56px">We'll be in touch within one working day. All fields marked * are required.</p>
+    <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;letter-spacing:3px;margin-bottom:20px">GET STARTED</div>
+    <h1 style="font-family:var(--display);font-size:clamp(32px,4.5vw,52px);color:#EDF6FF;line-height:1.08;letter-spacing:0.5px;margin:0 0 16px">Tell us about<br>your programme.</h1>
+    <p style="font-family:'Instrument Sans',sans-serif;font-size:15px;color:#8896A5;line-height:1.7;margin:0 0 56px">We'll be in touch within one working day.<br>Fields marked * are required.</p>
 
     <form name="demo-request" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="swDemoSubmit(event)">
       <input type="hidden" name="form-name" value="demo-request">
       <input type="hidden" name="bot-field" style="display:none">
 
       <!-- Name row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:36px">
         <div>
-          <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">FIRST NAME *</label>
+          <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">FIRST NAME *</label>
           <input id="demo-first" name="first-name" type="text" required autocomplete="given-name"
-            style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;transition:border-color 0.15s"
-            onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
+            style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;transition:border-color 0.15s"
+            onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
         </div>
         <div>
-          <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">LAST NAME *</label>
+          <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">LAST NAME *</label>
           <input name="last-name" type="text" required autocomplete="family-name"
-            style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;transition:border-color 0.15s"
-            onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
+            style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;transition:border-color 0.15s"
+            onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
         </div>
       </div>
 
-      <div style="margin-bottom:40px">
-        <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">BUSINESS EMAIL ADDRESS *</label>
+      <div style="margin-bottom:36px">
+        <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">BUSINESS EMAIL *</label>
         <input name="email" type="email" required autocomplete="email"
-          style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;transition:border-color 0.15s"
-          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
+          style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
       </div>
 
-      <div style="margin-bottom:40px">
-        <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">PHONE NUMBER</label>
+      <div style="margin-bottom:36px">
+        <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">PHONE NUMBER</label>
         <input name="phone" type="tel" autocomplete="tel"
-          style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;transition:border-color 0.15s"
-          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
+          style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
       </div>
 
-      <div style="margin-bottom:40px">
-        <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">JOB TITLE *</label>
+      <div style="margin-bottom:36px">
+        <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">JOB TITLE *</label>
         <input name="job-title" type="text" required
-          style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;transition:border-color 0.15s"
-          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
+          style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
       </div>
 
-      <div style="margin-bottom:40px">
-        <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">ORGANISATION *</label>
+      <div style="margin-bottom:36px">
+        <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">ORGANISATION *</label>
         <input name="organisation" type="text" required
-          style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;transition:border-color 0.15s"
-          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
+          style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
       </div>
 
-      <div style="margin-bottom:40px">
-        <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">PROGRAMME TYPE</label>
+      <div style="margin-bottom:36px">
+        <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">PROGRAMME TYPE</label>
         <select name="programme-type"
-          style="width:100%;background:#03070C;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;appearance:none;cursor:pointer;transition:border-color 0.15s"
-          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'">
-          <option value="" style="background:#03070C">Select...</option>
-          <option value="tidal-marine" style="background:#03070C">Tidal &amp; marine works</option>
-          <option value="rail" style="background:#03070C">Rail possessions</option>
-          <option value="highways" style="background:#03070C">Highway lane closures</option>
-          <option value="bridges-structures" style="background:#03070C">Bridge &amp; structure access</option>
-          <option value="airside" style="background:#03070C">Airside works</option>
-          <option value="confined-space" style="background:#03070C">Confined space operations</option>
-          <option value="nuclear" style="background:#03070C">Nuclear outages</option>
-          <option value="offshore" style="background:#03070C">Offshore &amp; coastal works</option>
-          <option value="other" style="background:#03070C">Other</option>
+          style="width:100%;background:#060E18;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;appearance:none;cursor:pointer;transition:border-color 0.15s"
+          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'">
+          <option value="" style="background:#060E18">Select...</option>
+          <option value="tidal-marine" style="background:#060E18">Tidal &amp; marine works</option>
+          <option value="rail" style="background:#060E18">Rail possessions</option>
+          <option value="highways" style="background:#060E18">Highway lane closures</option>
+          <option value="bridges-structures" style="background:#060E18">Bridge &amp; structure access</option>
+          <option value="airside" style="background:#060E18">Airside works</option>
+          <option value="confined-space" style="background:#060E18">Confined space operations</option>
+          <option value="nuclear" style="background:#060E18">Nuclear outages</option>
+          <option value="offshore" style="background:#060E18">Offshore &amp; coastal works</option>
+          <option value="other" style="background:#060E18">Other</option>
         </select>
       </div>
 
-      <div style="margin-bottom:56px">
-        <label style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3A5A72;display:block;margin-bottom:10px">TELL US ABOUT YOUR PROGRAMME *</label>
+      <div style="margin-bottom:48px">
+        <label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#A8C4DC;display:block;margin-bottom:12px">TELL US ABOUT YOUR PROGRAMME *</label>
         <textarea name="message" required rows="5"
-          style="width:100%;background:none;border:none;border-bottom:1px solid #1A3350;color:#EDF6FF;font-family:var(--mono);font-size:13px;padding:8px 0;outline:none;resize:none;line-height:1.7;transition:border-color 0.15s"
-          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#1A3350'"
+          style="width:100%;background:none;border:none;border-bottom:1px solid #243F60;color:#EDF6FF;font-family:'Instrument Sans',sans-serif;font-size:15px;padding:10px 0;outline:none;resize:none;line-height:1.7;transition:border-color 0.15s"
+          onfocus="this.style.borderBottomColor='#00C4D4'" onblur="this.style.borderBottomColor='#243F60'"
           placeholder="What are you working on? What constraints govern the work? What does a lost day cost?"></textarea>
       </div>
 
       <button type="submit" id="demo-submit-btn"
-        style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;padding:16px 40px;background:#00C4D4;color:#03060A;border:none;cursor:pointer;border-radius:2px;transition:background 0.15s;display:flex;align-items:center;gap:10px"
+        style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;padding:18px 44px;background:#00C4D4;color:#03060A;border:none;cursor:pointer;border-radius:2px;transition:background 0.15s"
         onmouseover="this.style.background='#00A8B8'" onmouseout="this.style.background='#00C4D4'">
         SUBMIT REQUEST →
       </button>
@@ -3246,14 +3251,14 @@ lines.forEach((line, i) => {
       <!-- Success message (hidden) -->
       <div id="demo-success" style="display:none;margin-top:32px;padding:24px;background:rgba(0,196,212,0.06);border:1px solid rgba(0,196,212,0.25);border-radius:3px">
         <div style="font-family:var(--mono);font-size:9px;color:#00C4D4;letter-spacing:2px;margin-bottom:10px">REQUEST RECEIVED</div>
-        <p style="font-family:var(--mono);font-size:11px;color:#8896A5;line-height:1.8;margin:0">Thank you. We'll be in touch within one working day.</p>
+        <p style="font-family:'Instrument Sans',sans-serif;font-size:14px;color:#8896A5;line-height:1.7;margin:0">Thank you. We'll be in touch within one working day.</p>
       </div>
 
     </form>
 
     <!-- Admin bypass — subtle, bottom of page -->
-    <div style="margin-top:80px;padding-top:24px;border-top:1px solid #0A1525;text-align:center">
-      <button onclick="(function(){ var k=localStorage.getItem('sw_at_key'); if(k) showApp(); else showDataLogin(); })()" style="font-family:var(--mono);font-size:8px;color:#1A3350;background:none;border:none;cursor:pointer;letter-spacing:1px;transition:color 0.15s" onmouseover="this.style.color='#3A5A72'" onmouseout="this.style.color='#1A3350'">admin</button>
+    <div style="margin-top:80px;padding-top:24px;border-top:1px solid #0F1E2E;text-align:center">
+      <button onclick="(function(){ var k=localStorage.getItem('sw_at_key'); if(k) showApp(); else showDataLogin(); })()" style="font-family:var(--mono);font-size:8px;color:#162840;background:none;border:none;cursor:pointer;letter-spacing:1px;transition:color 0.15s" onmouseover="this.style.color='#3A5A72'" onmouseout="this.style.color='#162840'">admin</button>
     </div>
 
   </div>
