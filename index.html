@@ -8094,25 +8094,68 @@ function rdLoadImage(file){
 
   var isHeic = /\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
 
-  if(isHeic && typeof heic2any !== 'undefined'){
-    // Use heic2any — works in Chrome/Firefox where HEIC isn't natively decoded
-    if(status){ status.textContent = 'Converting HEIC...'; }
-    heic2any({ blob: file, toType: 'image/jpeg', quality: 0.90 })
-      .then(function(jpegBlob){
-        rdCanvasToDisplay(jpegBlob, file.name, status);
-      })
-      .catch(function(err){
-        if(status){ status.textContent = 'HEIC conversion failed — try sharing as JPEG from Photos app.'; status.style.color = '#FF4444'; }
-      });
-  } else {
-    // Non-HEIC: read as DataURL then canvas → JPEG (handles PNG, WebP, etc.)
-    var reader = new FileReader();
-    reader.onload = function(ev){
-      var blob = new Blob([reader.result], { type: file.type || 'image/jpeg' });
-      rdCanvasToDisplay(blob, file.name, status);
+  function tryCanvasDirect(){
+    // Works natively on Safari (Mac/iPhone) which decodes HEIC
+    var url = URL.createObjectURL(file);
+    var tmp = new Image();
+    tmp.onload = function(){
+      var maxDim = 1600, w = tmp.naturalWidth, h = tmp.naturalHeight;
+      if(!w || !h){ URL.revokeObjectURL(url); showHeicInstructions(status); return; }
+      if(w > maxDim || h > maxDim){
+        if(w >= h){ h = Math.round(h * maxDim/w); w = maxDim; }
+        else       { w = Math.round(w * maxDim/h); h = maxDim; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(tmp, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      var jpegUrl = canvas.toDataURL('image/jpeg', 0.90);
+      _rdImageB64 = jpegUrl.split(',')[1];
+      var prevImg = document.getElementById('rd-preview-img');
+      var wrap    = document.getElementById('rd-preview-wrap');
+      var nameEl  = document.getElementById('rd-preview-name');
+      var drop    = document.getElementById('rd-drop');
+      if(prevImg){ prevImg.src = jpegUrl; }
+      if(wrap)   { wrap.style.display = 'block'; }
+      if(nameEl) { nameEl.textContent = file.name + ' · JPEG · ' + Math.round(_rdImageB64.length * 0.75 / 1024) + 'KB'; }
+      if(drop)   { drop.style.display = 'none'; }
+      var btn = document.getElementById('rd-read-btn');
+      if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+      var results = document.getElementById('rd-results');
+      if(results) results.style.display = 'none';
+      if(status){ status.textContent = ''; }
     };
-    reader.onerror = function(){ if(status){ status.textContent = 'Could not read file.'; status.style.color = '#FF4444'; } };
-    reader.readAsArrayBuffer(file);
+    tmp.onerror = function(){ URL.revokeObjectURL(url); showHeicInstructions(status); };
+    tmp.src = url;
+  }
+
+  function showHeicInstructions(status){
+    if(status){
+      status.innerHTML = 'On Chrome, HEIC needs converting first. On your iPhone: open Photos → share → &ldquo;Save as JPEG&rdquo; or AirDrop to Mac and open in Preview → Export as JPEG.';
+      status.style.color = '#F59E0B';
+    }
+    var btn = document.getElementById('rd-read-btn');
+    if(btn){ btn.disabled = true; btn.style.opacity = '0.4'; }
+  }
+
+  if(isHeic){
+    if(typeof heic2any !== 'undefined'){
+      if(status){ status.textContent = 'Converting HEIC...'; }
+      heic2any({ blob: file, toType: 'image/jpeg', quality: 0.90 })
+        .then(function(result){
+          var jpegBlob = Array.isArray(result) ? result[0] : result;
+          rdCanvasToDisplay(jpegBlob, file.name, status);
+        })
+        .catch(function(){
+          // heic2any failed — try native canvas (works in Safari)
+          tryCanvasDirect();
+        });
+    } else {
+      tryCanvasDirect();
+    }
+  } else {
+    // Non-HEIC: read as blob then canvas → JPEG
+    rdCanvasToDisplay(file, file.name, status);
   }
 }
 
