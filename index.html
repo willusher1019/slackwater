@@ -1262,7 +1262,9 @@ function sendAi(){
     }, 900);
     return;
   }
-  var SYS = "You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme. Respond clearly in plain English. Be specific — name people, permits, exact thresholds.\n\nTODAY: " + swToday() + "\n\nSITE: Thames Barrier, Woolwich. LEAVES: B and G. BOLTS: 1,200 total.\n\nCONSTRAINTS: Wind hard stop 15 m/s (all works), 10 m/s (Apollo crane only). No leaf access ±90 mins high water. CTC mandatory for all personnel. DiveCo ERT mandatory before any leaf access. No crane lifts over water during arm operations.\n\nTASK LOG: Anode cutting Leaf G (07 May): 09:20–11:52, 24 anodes, 6.3 min each, 2 workers, ~13 total on task. Anode taping Leaf B (08 May): 09:45–11:00, 24 anodes, 3.1 min each, 2 workers. Anode cutting Leaf B afternoon (08 May): 13:35–14:35 aborted, 12 of 24 cut, rising tide. Mobilisation time: 33 mins from MOB to arm.\n\nCRITICAL: Hot Works Permit expires tomorrow. Confined Space Permit missing. Scaffold inspection Leaf B expires 2 days. RAMS expires 10 May. BB CTC expires 12 May. C. James and F. Mensah — no CTC. Leaf G PTW pending EA director.\n\nWEEKEND: Sat wind 17 m/s, Sun 19 m/s — all works suspended. Best window: Tue 13 May (4h+, wind 7 m/s).";
+  // Pull any additional context saved by the READ DOCUMENT feature
+  var _rdCtx = (function(){ try{ var s=localStorage.getItem('sw_doc_context'); return s ? '\n\nDOCUMENT CONTEXT (read from site photos):\n'+s : ''; }catch(e){ return ''; } })();
+  var SYS = "You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme. Respond clearly in plain English. Be specific — name people, permits, exact thresholds. You are a decision-support tool. Your job is to help the site team mobilise correctly each morning.\n\nTODAY: " + swToday() + "\n\nPROGRAMME: Monel Bolt Fixing Replacement — Thames Barrier, Woolwich. Client framework: SCAPE Civil Engineers. Contractor: Balfour Beatty. Programme commenced: 30 April 2026. ZEROHARM safety framework in operation.\n\nSITE: Thames Barrier, Woolwich. LEAVES: B (Bravo) and G (Golf). BOLTS: 1,200 total. PIERS: 1–9. Active work piers: 3, 4, 8, 9. MOB area is crew base.\n\nPERSONNEL (as of 14 May 2026): Will — forward-deployed programme lead. Sam — on-site team. Nick — topman. Hugh, Scott, Idris — dive team (DiveCo). Hogie, Jack — standby crew. ERT required for all dive operations.\n\nCONSTRAINTS:\n- Wind hard stop 15 m/s (all works)\n- 10 m/s (Apollo crane only)\n- No leaf access ±90 mins high water (tidal window)\n- CTC mandatory for all personnel\n- DiveCo ERT mandatory before any leaf access\n- No crane lifts over water during arm operations\n- Confined space permits required for end box and leaf access (ZEROHARM board — Gate Golf)\n\nTASK LOG (chronological):\n- 07 May: Anode cutting Leaf G, 09:20–11:52, 24 anodes, 6.3 min each, 2 workers. 13 total on task.\n- 08 May: Anode taping Leaf B, 09:45–11:00, 24 anodes, 3.1 min each, 2 workers.\n- 08 May: Anode cutting Leaf B (afternoon), 13:35–14:35 — aborted at 12/24, rising tide.\n- 14 May: 07:30 briefing. 08:20 DiveCo brief. 08:50 Hugh, Scott, Idris enter leaf — end box cleaning (water ingress from prior jet washing). Hugh out 09:09. 11:00–11:45 mandatory mental health talk. 11:45–13:30 lunch. 13:30 trolley retrieval. 13:45 loading anodes pier 8. 14:00–14:50 anode removal logistics: 48 anodes off piers 3/4, 48 anodes off piers 8/9 (96 total). 14:53 back in MOB. Nick topman. Hogie and Jack standby — not deployed.\n\nPROGRAMME STATUS: Anode removal phase underway across both leaves. 96 anodes moved 14 May. Mobilisation time: 33 mins from MOB to arm. Active PTWs on Gate Golf (ZEROHARM board). Confined space permits in operation for leaf access." + _rdCtx;
   var history = msgs.map(function(m){ return {role: m.r==='agent'?'assistant':'user', content: m.c}; });
   fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -5118,6 +5120,7 @@ window.loadDocuments = loadDocuments;
       <button id="dp-tab-oplog" onclick="dpShowTab('oplog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">OPERATIONAL LOG</button>
       <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer;white-space:nowrap;flex-shrink:0">TASK LOG</button>
       <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">DOCUMENTS</button>
+      <button id="dp-tab-readdoc" onclick="dpShowTab('readdoc')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">READ DOCUMENT</button>
     </div>
   </div>
 
@@ -5896,6 +5899,69 @@ window.loadDocuments = loadDocuments;
     </div>
 
   </div></div><!-- end dp-documents -->
+
+<!-- DP: READ DOCUMENT TAB -->
+<div id="dp-readdoc" style="display:none">
+<div style="max-width:860px;margin:0 auto;padding:24px 20px">
+
+  <div style="margin-bottom:24px">
+    <div style="font-family:var(--display);font-size:28px;color:#EBF5FF;letter-spacing:2px;margin-bottom:4px">READ DOCUMENT</div>
+    <div style="font-family:var(--mono);font-size:11px;color:#3A5A72">Photograph a permit, programme, method statement or risk assessment — AI reads it and extracts what matters for the brief</div>
+  </div>
+
+  <!-- UPLOAD ZONE -->
+  <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden;margin-bottom:20px">
+    <div style="padding:12px 16px;background:#070F18;border-bottom:1px solid #1A3350">
+      <div style="font-family:var(--display);font-size:18px;color:#00C4D4;letter-spacing:2px">UPLOAD DOCUMENT PHOTO</div>
+      <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">Works with photos of permits, Gantt charts, method statements, RAMS, ZEROHARM boards — any site document</div>
+    </div>
+    <div style="padding:20px">
+      <!-- Drop zone -->
+      <div id="rd-drop" ondragover="rdDragOver(event)" ondragleave="rdDragLeave(event)" ondrop="rdDrop(event)"
+           onclick="document.getElementById('rd-file-inp').click()"
+           style="border:2px dashed #1A3350;border-radius:6px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:16px">
+        <div style="font-size:32px;margin-bottom:10px">📄</div>
+        <div style="font-family:var(--mono);font-size:11px;color:#A8C4DC;font-weight:600;margin-bottom:4px">DROP PHOTO HERE or CLICK TO BROWSE</div>
+        <div style="font-family:var(--mono);font-size:9px;color:#3A5A72">JPEG, PNG, HEIC — phone camera works fine</div>
+        <input id="rd-file-inp" type="file" accept="image/*" capture="environment" style="display:none" onchange="rdFileSelect(this)">
+      </div>
+      <!-- Preview -->
+      <div id="rd-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
+        <img id="rd-preview-img" style="max-width:100%;max-height:300px;border-radius:4px;border:1px solid #1A3350" alt="Document preview">
+        <div id="rd-preview-name" style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:6px"></div>
+      </div>
+      <!-- Action -->
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button id="rd-read-btn" onclick="rdAnalyse()" disabled style="background:#00C4D4;border:none;color:#03070C;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:11px 28px;cursor:pointer;border-radius:4px;opacity:0.4;transition:opacity 0.2s">READ WITH AI →</button>
+        <button onclick="rdClear()" style="background:transparent;border:1px solid #1A3350;color:#3A5A72;font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:11px 18px;cursor:pointer;border-radius:4px">CLEAR</button>
+        <div id="rd-status" style="font-family:var(--mono);font-size:10px;color:#3A5A72"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="rd-results" style="display:none;background:#0A1828;border:1px solid #1A3350;border-radius:6px;overflow:hidden;margin-bottom:20px">
+    <div style="padding:12px 16px;background:#070F18;border-bottom:1px solid #1A3350;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="font-family:var(--display);font-size:18px;color:#EBF5FF;letter-spacing:2px">EXTRACTED INTELLIGENCE</div>
+      <button id="rd-save-btn" onclick="rdSaveContext()" style="background:rgba(0,196,212,0.1);border:1px solid rgba(0,196,212,0.4);color:#00C4D4;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;padding:7px 16px;cursor:pointer;border-radius:3px">+ ADD TO BRIEF CONTEXT</button>
+    </div>
+    <div id="rd-output" style="padding:20px;font-family:'DM Sans',sans-serif;font-size:13px;color:#A8C4DC;line-height:1.7;white-space:pre-wrap"></div>
+  </div>
+
+  <!-- SAVED CONTEXT -->
+  <div id="rd-saved-wrap" style="display:none;background:#0A1828;border:1px solid rgba(0,196,212,0.2);border-radius:6px;overflow:hidden">
+    <div style="padding:12px 16px;background:rgba(0,196,212,0.04);border-bottom:1px solid rgba(0,196,212,0.2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:var(--display);font-size:14px;color:#00C4D4;letter-spacing:2px">ACTIVE BRIEF CONTEXT</div>
+        <div style="font-family:var(--mono);font-size:9px;color:#3A5A72;margin-top:2px">This context is injected into every AI brief until cleared</div>
+      </div>
+      <button onclick="rdClearContext()" style="background:transparent;border:1px solid rgba(255,68,68,0.3);color:#FF4444;font-family:var(--mono);font-size:9px;padding:5px 12px;cursor:pointer;border-radius:3px">CLEAR CONTEXT</button>
+    </div>
+    <div id="rd-saved-text" style="padding:16px 20px;font-family:var(--mono);font-size:10px;color:#3A5A72;line-height:1.65;white-space:pre-wrap"></div>
+  </div>
+
+</div>
+</div><!-- end dp-readdoc -->
 </div>
 
 <script>
@@ -6123,7 +6189,7 @@ window.loadDocuments = loadDocuments;
 <script>
 /* ── DATA PORTAL TABS ── */
 function dpShowTab(tab){
-  ['oplog','tasklog','documents'].forEach(function(t){
+  ['oplog','tasklog','documents','readdoc'].forEach(function(t){
     var el = document.getElementById('dp-'+t);
     var btn = document.getElementById('dp-tab-'+t);
     if(el) el.style.display = t===tab ? (t==='oplog'?'flex':'block') : 'none';
@@ -6135,6 +6201,7 @@ function dpShowTab(tab){
   });
   if(tab==='oplog'){ if(typeof ofMountInPortal==='function') ofMountInPortal(); if(typeof ofShowAtStatus==='function') ofShowAtStatus(); if(typeof ofRender==='function') ofRender(typeof ofLoad==='function' ? ofLoad() : []); }
   if(tab==='tasklog'){ dpLoadStats(); plInit(); }
+  if(tab==='readdoc'){ rdInit(); }
 }
 window.dpShowTab = dpShowTab;
 
@@ -7944,6 +8011,177 @@ window.swExtractThresholds = function(input){
   /* Read as text; PDF binary will be messy but often contains extractable text */
   reader.readAsText(file);
 };
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════
+   READ DOCUMENT — AI Vision document reader
+   Sends a site document photo to Claude Vision,
+   extracts operational intelligence, saves to brief
+   ══════════════════════════════════════════════════ */
+
+var _rdImageB64 = null;
+var _rdImageType = 'image/jpeg';
+
+function rdInit(){
+  rdRefreshSaved();
+}
+
+function rdDragOver(e){
+  e.preventDefault();
+  var z = document.getElementById('rd-drop');
+  if(z){ z.style.borderColor='#00C4D4'; z.style.background='rgba(0,196,212,0.04)'; }
+}
+function rdDragLeave(e){
+  var z = document.getElementById('rd-drop');
+  if(z){ z.style.borderColor='#1A3350'; z.style.background=''; }
+}
+function rdDrop(e){
+  e.preventDefault();
+  rdDragLeave(e);
+  var file = e.dataTransfer && e.dataTransfer.files[0];
+  if(file && file.type.startsWith('image/')) rdLoadImage(file);
+}
+function rdFileSelect(inp){
+  var file = inp && inp.files[0];
+  if(file) rdLoadImage(file);
+  inp.value = '';
+}
+
+function rdLoadImage(file){
+  _rdImageType = file.type || 'image/jpeg';
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var dataUrl = ev.target.result;
+    // Strip the data:...;base64, prefix — we send raw base64
+    _rdImageB64 = dataUrl.split(',')[1];
+    // Show preview
+    var img = document.getElementById('rd-preview-img');
+    var wrap = document.getElementById('rd-preview-wrap');
+    var name = document.getElementById('rd-preview-name');
+    var drop = document.getElementById('rd-drop');
+    if(img){ img.src = dataUrl; }
+    if(wrap){ wrap.style.display = 'block'; }
+    if(name){ name.textContent = file.name + ' · ' + (file.size/1024).toFixed(0) + 'KB'; }
+    if(drop){ drop.style.display = 'none'; }
+    // Enable read button
+    var btn = document.getElementById('rd-read-btn');
+    if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+    document.getElementById('rd-results').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function rdClear(){
+  _rdImageB64 = null;
+  var wrap = document.getElementById('rd-preview-wrap');
+  var drop = document.getElementById('rd-drop');
+  var results = document.getElementById('rd-results');
+  var btn = document.getElementById('rd-read-btn');
+  var status = document.getElementById('rd-status');
+  if(wrap){ wrap.style.display = 'none'; }
+  if(drop){ drop.style.display = 'block'; }
+  if(results){ results.style.display = 'none'; }
+  if(btn){ btn.disabled = true; btn.style.opacity = '0.4'; }
+  if(status){ status.textContent = ''; }
+}
+
+function rdAnalyse(){
+  if(!_rdImageB64){ alert('No image loaded.'); return; }
+  var key = localStorage.getItem('sw_api_key') || window._swApiKey || '';
+  if(!key){ alert('No Anthropic API key set. Go to the TASK LOG tab and add your key in the PASTE YOUR DAY\'S LOG section first.'); return; }
+
+  var btn = document.getElementById('rd-read-btn');
+  var status = document.getElementById('rd-status');
+  var results = document.getElementById('rd-results');
+  var output = document.getElementById('rd-output');
+
+  if(btn){ btn.disabled = true; btn.textContent = 'READING...'; }
+  if(status){ status.textContent = 'Sending to AI...'; status.style.color = '#00C4D4'; }
+  if(results){ results.style.display = 'none'; }
+
+  var SYS_RD = "You are Slackwater's document reader. You are being shown a photograph of a site document from the Thames Barrier Monel Bolt Replacement programme (Balfour Beatty / SCAPE). Your job is to extract operational intelligence that would affect the morning mobilisation brief.\n\nFor every document you read, identify:\n1. DOCUMENT TYPE — what kind of document is this (permit to work, method statement, risk assessment, RAMS, programme/Gantt chart, ZEROHARM board, other)\n2. DOCUMENT REFERENCE — any reference number, permit number, or document ID visible\n3. ISSUED / SIGNED — who issued or signed it, and when\n4. EXPIRY — when does it expire (exact date if visible, otherwise approximate)\n5. SCOPE — what work does it cover (location, task, plant, personnel)\n6. KEY CONSTRAINTS — any specific restrictions, hard stops, or conditions embedded in this document (wind limits, water depth, exclusion zones, adjacent works restrictions, etc.)\n7. PERSONNEL NAMED — any names listed as responsible, authorised, or signing\n8. CURRENT STATUS — based on what you can see, is this document current, expired, or pending?\n9. BRIEF FLAG — one sentence for the morning brief: what does the site team need to know from this document today?\n\nIf the image is a programme or Gantt chart, extract: project name, current phase, key upcoming milestones, any tasks shown as delayed or behind programme.\n\nBe direct and specific. If something is not readable, say so — do not guess. Format your response with clear section headings.";
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 1200,
+      system: SYS_RD,
+      messages: [{
+        role: 'user',
+        content: [{
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: _rdImageType,
+            data: _rdImageB64
+          }
+        },{
+          type: 'text',
+          text: 'Read this site document and extract the operational intelligence.'
+        }]
+      }]
+    })
+  })
+  .then(function(res){ return res.json().then(function(d){ return {ok:res.ok, data:d}; }); })
+  .then(function(r){
+    var text;
+    if(r.ok && r.data.content){
+      text = r.data.content.map(function(x){ return x.text||''; }).join('');
+    } else {
+      text = 'Error: ' + (r.data.error ? r.data.error.message : 'Unexpected response. Check your API key.');
+    }
+    if(output){ output.textContent = text; }
+    if(results){ results.style.display = 'block'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'READ WITH AI →'; btn.style.opacity = '1'; }
+    if(status){ status.textContent = ''; }
+  })
+  .catch(function(err){
+    if(output){ output.textContent = 'Connection error: ' + err.message; }
+    if(results){ results.style.display = 'block'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'READ WITH AI →'; btn.style.opacity = '1'; }
+    if(status){ status.textContent = ''; }
+  });
+}
+
+function rdSaveContext(){
+  var output = document.getElementById('rd-output');
+  if(!output || !output.textContent.trim()){ alert('No extracted content to save.'); return; }
+  var existing = '';
+  try{ existing = localStorage.getItem('sw_doc_context') || ''; }catch(e){}
+  var separator = existing ? '\n\n---\n\n' : '';
+  var newContext = existing + separator + output.textContent.trim();
+  try{ localStorage.setItem('sw_doc_context', newContext); }catch(e){ alert('Could not save context.'); return; }
+  var btn = document.getElementById('rd-save-btn');
+  if(btn){ btn.textContent = '✓ SAVED TO BRIEF'; btn.style.background = 'rgba(0,196,212,0.2)'; setTimeout(function(){ btn.textContent = '+ ADD TO BRIEF CONTEXT'; btn.style.background = 'rgba(0,196,212,0.1)'; }, 2000); }
+  rdRefreshSaved();
+}
+
+function rdClearContext(){
+  if(!confirm('Remove all saved document context from the brief?')) return;
+  try{ localStorage.removeItem('sw_doc_context'); }catch(e){}
+  rdRefreshSaved();
+}
+
+function rdRefreshSaved(){
+  var wrap = document.getElementById('rd-saved-wrap');
+  var text = document.getElementById('rd-saved-text');
+  var saved = '';
+  try{ saved = localStorage.getItem('sw_doc_context') || ''; }catch(e){}
+  if(saved && wrap && text){
+    wrap.style.display = 'block';
+    text.textContent = saved;
+  } else if(wrap){
+    wrap.style.display = 'none';
+  }
+}
 </script>
 
 </body>
