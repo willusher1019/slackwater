@@ -8139,20 +8139,33 @@ function rdLoadImage(file){
   }
 
   if(isHeic){
-    if(typeof heic2any !== 'undefined'){
-      if(status){ status.textContent = 'Converting HEIC...'; }
-      heic2any({ blob: file, toType: 'image/jpeg', quality: 0.90 })
-        .then(function(result){
-          var jpegBlob = Array.isArray(result) ? result[0] : result;
-          rdCanvasToDisplay(jpegBlob, file.name, status);
-        })
-        .catch(function(){
-          // heic2any failed — try native canvas (works in Safari)
-          tryCanvasDirect();
-        });
-    } else {
-      tryCanvasDirect();
-    }
+    // Primary path: server-side conversion via Netlify Function (works in all browsers)
+    if(status){ status.textContent = 'Converting HEIC...'; }
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var b64 = ev.target.result.split(',')[1];
+      fetch('/.netlify/functions/convert-heic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: b64 })
+      })
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if(json.error) throw new Error(json.error);
+        // Got back base64 JPEG — build a blob and display
+        var bytes = atob(json.data);
+        var arr = new Uint8Array(bytes.length);
+        for(var i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
+        var jpegBlob = new Blob([arr], { type: 'image/jpeg' });
+        rdCanvasToDisplay(jpegBlob, file.name, status);
+      })
+      .catch(function(){
+        // Function unavailable — try native canvas (works in Safari)
+        tryCanvasDirect();
+      });
+    };
+    reader.onerror = function(){ tryCanvasDirect(); };
+    reader.readAsDataURL(file);
   } else {
     // Non-HEIC: read as blob then canvas → JPEG
     rdCanvasToDisplay(file, file.name, status);

@@ -1,0 +1,9 @@
+{
+  "name": "slackwater-site",
+  "version": "1.0.0",
+  "description": "Slackwater — AI operational intelligence for Thames Barrier",
+  "private": true,
+  "dependencies": {
+    "heic-convert": "^2.1.0"
+  }
+}
