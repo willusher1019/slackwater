@@ -5922,8 +5922,8 @@ window.loadDocuments = loadDocuments;
            style="border:2px dashed #1A3350;border-radius:6px;padding:32px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:16px">
         <div style="font-size:32px;margin-bottom:10px">📄</div>
         <div style="font-family:var(--mono);font-size:11px;color:#A8C4DC;font-weight:600;margin-bottom:4px">DROP PHOTO HERE or CLICK TO BROWSE</div>
-        <div style="font-family:var(--mono);font-size:9px;color:#3A5A72">JPEG, PNG, HEIC — phone camera works fine</div>
-        <input id="rd-file-inp" type="file" accept="image/*" capture="environment" style="display:none" onchange="rdFileSelect(this)">
+        <div style="font-family:var(--mono);font-size:9px;color:#3A5A72">HEIC, JPEG, PNG — iPhone camera works fine, converted automatically</div>
+        <input id="rd-file-inp" type="file" accept="image/*,.heic,.heif" style="display:none" onchange="rdFileSelect(this)">
       </div>
       <!-- Preview -->
       <div id="rd-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
@@ -8049,25 +8049,50 @@ function rdFileSelect(inp){
 }
 
 function rdLoadImage(file){
-  _rdImageType = file.type || 'image/jpeg';
+  // Always output JPEG — API only accepts jpeg/png/gif/webp. This also handles HEIC.
+  _rdImageType = 'image/jpeg';
+  var status = document.getElementById('rd-status');
+  if(status){ status.textContent = 'Loading image...'; status.style.color = '#3A5A72'; }
+
   var reader = new FileReader();
   reader.onload = function(ev){
     var dataUrl = ev.target.result;
-    // Strip the data:...;base64, prefix — we send raw base64
-    _rdImageB64 = dataUrl.split(',')[1];
-    // Show preview
-    var img = document.getElementById('rd-preview-img');
-    var wrap = document.getElementById('rd-preview-wrap');
-    var name = document.getElementById('rd-preview-name');
-    var drop = document.getElementById('rd-drop');
-    if(img){ img.src = dataUrl; }
-    if(wrap){ wrap.style.display = 'block'; }
-    if(name){ name.textContent = file.name + ' · ' + (file.size/1024).toFixed(0) + 'KB'; }
-    if(drop){ drop.style.display = 'none'; }
-    // Enable read button
-    var btn = document.getElementById('rd-read-btn');
-    if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
-    document.getElementById('rd-results').style.display = 'none';
+    // Load into an Image element, draw to canvas, export as JPEG.
+    // Safari renders HEIC natively so this conversion path works on iPhone/Mac.
+    var tmp = new Image();
+    tmp.onload = function(){
+      var canvas = document.createElement('canvas');
+      // Cap longest side at 1600px — keeps base64 payload reasonable without losing OCR quality
+      var maxDim = 1600, w = tmp.naturalWidth, h = tmp.naturalHeight;
+      if(w > maxDim || h > maxDim){
+        if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else       { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(tmp, 0, 0, w, h);
+      var jpegUrl = canvas.toDataURL('image/jpeg', 0.90);
+      _rdImageB64 = jpegUrl.split(',')[1];
+
+      var prevImg = document.getElementById('rd-preview-img');
+      var wrap    = document.getElementById('rd-preview-wrap');
+      var nameEl  = document.getElementById('rd-preview-name');
+      var drop    = document.getElementById('rd-drop');
+      if(prevImg){ prevImg.src = jpegUrl; }
+      if(wrap)   { wrap.style.display = 'block'; }
+      if(nameEl) { nameEl.textContent = file.name + ' · converted to JPEG · ' + Math.round(_rdImageB64.length * 0.75 / 1024) + 'KB'; }
+      if(drop)   { drop.style.display = 'none'; }
+      var btn = document.getElementById('rd-read-btn');
+      if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+      document.getElementById('rd-results').style.display = 'none';
+      if(status){ status.textContent = ''; }
+    };
+    tmp.onerror = function(){
+      if(status){ status.textContent = 'Could not decode image. Try a JPEG or PNG instead.'; status.style.color = '#FF4444'; }
+    };
+    tmp.src = dataUrl;
+  };
+  reader.onerror = function(){
+    if(status){ status.textContent = 'Could not read file.'; status.style.color = '#FF4444'; }
   };
   reader.readAsDataURL(file);
 }
