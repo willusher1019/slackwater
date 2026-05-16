@@ -14,28 +14,67 @@
 (function(){
   var PW = 'Simba2026';
   var SESSION_KEY = 'sw_access';
+  var MODE_KEY = 'sw_mode';
 
-  // Hide page content immediately (before paint) if gate is needed
-  if(sessionStorage.getItem(SESSION_KEY) !== '1'){
-    var _hs = document.createElement('style');
-    _hs.id = 'sw-hide-style';
-    _hs.textContent = 'body{visibility:hidden!important}#sw-gate{visibility:visible!important}';
-    document.head.appendChild(_hs);
-  }
+  // Always hide body immediately — revealed only after mode is chosen
+  var _hs = document.createElement('style');
+  _hs.id = 'sw-hide-style';
+  _hs.textContent = 'body{visibility:hidden!important}#sw-gate{visibility:visible!important}';
+  document.head.appendChild(_hs);
 
-  function dismissGate(cb){
-    var g = document.getElementById('sw-gate');
+  function reveal(modeFn){
     var hs = document.getElementById('sw-hide-style');
     if(hs) hs.remove();
-    if(g){ g.style.opacity='0'; g.style.transition='opacity 0.4s'; setTimeout(function(){ g.remove(); if(cb) cb(); },400); }
-    else { if(cb) cb(); }
+    document.body.style.visibility = '';
     document.body.style.overflow = '';
+    if(modeFn) modeFn();
+  }
+
+  function goDemo(){ reveal(function(){ if(typeof showDemo==='function') showDemo(); }); }
+  function goLog(){ reveal(function(){ if(typeof showDataPortal==='function') showDataPortal(); }); }
+
+  function dismissGate(modeFn){
     sessionStorage.setItem(SESSION_KEY,'1');
+    var g = document.getElementById('sw-gate');
+    if(g){ g.style.opacity='0'; g.style.transition='opacity 0.4s'; setTimeout(function(){ g.remove(); reveal(modeFn); },400); }
+    else { reveal(modeFn); }
+  }
+
+  function buildChooser(){
+    // Shown to returning users with no stored mode
+    var gate = document.createElement('div');
+    gate.id = 'sw-gate';
+    gate.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#03070C;display:flex;flex-direction:column;align-items:center;justify-content:center';
+    var style = document.createElement('style');
+    style.textContent = '#sw-demo-btn,#sw-log-btn{font-family:"DM Mono",monospace;font-size:9px;font-weight:700;letter-spacing:4px;padding:16px 0;cursor:pointer;transition:all 0.2s;border:none}#sw-demo-btn{flex:1;background:#00C4D4;color:#03070C}#sw-demo-btn:hover{background:#00D8EA}#sw-log-btn{flex:1;background:transparent;color:#4A7A9A;border:1px solid #162840}#sw-log-btn:hover{color:#EDF6FF;border-color:#3A5A72}';
+    gate.appendChild(style);
+    gate.innerHTML += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:clamp(52px,6vw,80px);letter-spacing:0.14em;color:#EDF6FF;line-height:1;margin-bottom:10px">SLACKWATER</div>'
+      + '<div style="width:320px;height:1px;background:#162840;margin-bottom:10px"></div>'
+      + '<div style="font-family:\'DM Mono\',monospace;font-size:8px;letter-spacing:5px;color:#2A4A64;margin-bottom:40px">SELECT ENVIRONMENT</div>'
+      + '<div style="display:flex;gap:10px;width:320px"><button id="sw-demo-btn">DEMO</button><button id="sw-log-btn">LOG</button></div>';
+    var foot = document.createElement('div');
+    foot.style.cssText = 'position:absolute;bottom:32px;font-family:"DM Mono",monospace;font-size:7px;letter-spacing:3px;color:#162840';
+    foot.textContent = '© 2026 SLACKWATER · PRIVATE';
+    gate.appendChild(foot);
+    document.body.appendChild(gate);
+    document.getElementById('sw-demo-btn').addEventListener('click', function(){
+      sessionStorage.setItem(MODE_KEY,'demo');
+      dismissGate(function(){ if(typeof showDemo==='function') showDemo(); });
+    });
+    document.getElementById('sw-log-btn').addEventListener('click', function(){
+      sessionStorage.setItem(MODE_KEY,'log');
+      dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); });
+    });
   }
 
   function grantAccess(){
     var g = document.getElementById('sw-gate');
     if(!g) return;
+    sessionStorage.setItem(SESSION_KEY,'1');
+    // If mode already known from URL param, skip chooser
+    var mode = sessionStorage.getItem(MODE_KEY);
+    if(mode === 'demo'){ dismissGate(function(){ if(typeof showDemo==='function') showDemo(); }); return; }
+    if(mode === 'log'){ dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); }); return; }
     var pwWrap = g.querySelector('#sw-pw-wrap');
     var err = g.querySelector('#sw-err');
     if(err) err.style.display = 'none';
@@ -55,9 +94,11 @@
       else g.appendChild(chooser);
       setTimeout(function(){ chooser.style.opacity='1'; }, 30);
       document.getElementById('sw-demo-btn').addEventListener('click', function(){
+        sessionStorage.setItem(MODE_KEY,'demo');
         dismissGate(function(){ if(typeof showDemo==='function') showDemo(); });
       });
       document.getElementById('sw-log-btn').addEventListener('click', function(){
+        sessionStorage.setItem(MODE_KEY,'log');
         dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); });
       });
     }, 200);
@@ -123,8 +164,21 @@
   }
 
   document.addEventListener('DOMContentLoaded', function(){
-    if(sessionStorage.getItem(SESSION_KEY)==='1'){ return; }
-    buildGate();
+    // Read URL param ?mode=demo or ?mode=log
+    var urlMode = new URLSearchParams(window.location.search).get('mode');
+    var storedMode = sessionStorage.getItem(MODE_KEY);
+    var mode = urlMode || storedMode;
+
+    if(sessionStorage.getItem(SESSION_KEY)==='1'){
+      // Returning user — go straight to last chosen mode (or show chooser if unknown)
+      if(mode === 'demo'){ goDemo(); }
+      else if(mode === 'log'){ goLog(); }
+      else { buildChooser(); }
+    } else {
+      // New visit — show password gate (with intended mode stored for after auth)
+      if(urlMode) sessionStorage.setItem(MODE_KEY, urlMode);
+      buildGate();
+    }
   });
 })();
 </script>
@@ -1073,23 +1127,10 @@ footer{
 </head>
 <body>
 
-<!-- ── INTRO OVERLAY ── -->
-<div id="sw-intro">
-  <div id="sw-intro-logo">SLACKWATER</div>
-  <div id="sw-intro-line"></div>
-  <div id="sw-intro-tag">Operational Intelligence</div>
-</div>
 <script>
-/* ── INTRO DISMISS ── */
+/* ── INTRO DISMISS (disabled on app) ── */
 (function(){
-  /* animations finish at ~2.05s (tag: 1.45s delay + 0.6s). Hold 0.55s → lift at 2.6s */
   setTimeout(function(){
-    var intro = document.getElementById('sw-intro');
-    if(intro){ intro.classList.add('sw-exit'); }
-    setTimeout(function(){
-      var intro = document.getElementById('sw-intro');
-      if(intro){ intro.style.display='none'; }
-    }, 920);
   }, 2600);
 })();
 </script>
