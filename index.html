@@ -5122,6 +5122,7 @@ window.loadDocuments = loadDocuments;
       <button id="dp-tab-tasklog" onclick="dpShowTab('tasklog')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid #00C4D4;background:rgba(0,196,212,0.05);color:#00C4D4;cursor:pointer;white-space:nowrap;flex-shrink:0">TASK LOG</button>
       <button id="dp-tab-documents" onclick="dpShowTab('documents')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">DOCUMENTS</button>
       <button id="dp-tab-readdoc" onclick="dpShowTab('readdoc')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">READ DOCUMENT</button>
+      <button id="dp-tab-intelligence" onclick="dpShowTab('intelligence')" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#3A5A72;cursor:pointer;white-space:nowrap;flex-shrink:0">SITE INTELLIGENCE</button>
     </div>
   </div>
 
@@ -5902,6 +5903,49 @@ window.loadDocuments = loadDocuments;
   </div></div><!-- end dp-documents -->
 
 <!-- DP: READ DOCUMENT TAB -->
+<!-- DP: SITE INTELLIGENCE TAB -->
+<div id="dp-intelligence" style="display:none">
+<div style="max-width:960px;margin:0 auto;padding:24px 20px">
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
+    <div>
+      <div style="font-family:var(--display);font-size:28px;color:#EBF5FF;letter-spacing:2px;margin-bottom:4px">SITE INTELLIGENCE</div>
+      <div style="font-family:var(--mono);font-size:11px;color:#3A5A72">Everything the AI has learned from uploaded documents — injected into every brief and chat automatically</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div id="si-sync-status" style="font-family:var(--mono);font-size:9px;color:#3A5A72;letter-spacing:1px"></div>
+      <button onclick="siClearAll()" style="font-family:var(--mono);font-size:9px;letter-spacing:1px;background:transparent;border:1px solid rgba(255,68,68,0.3);color:#FF4444;padding:6px 14px;cursor:pointer;border-radius:3px" onmouseover="this.style.borderColor='#FF4444'" onmouseout="this.style.borderColor='rgba(255,68,68,0.3)'">CLEAR ALL</button>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+    <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;padding:16px 18px">
+      <div id="si-stat-docs" style="font-family:var(--display);font-size:28px;color:#00C4D4;letter-spacing:1px">0</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:2px;margin-top:4px">DOCUMENTS LEARNED</div>
+    </div>
+    <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;padding:16px 18px">
+      <div id="si-stat-ctx" style="font-family:var(--display);font-size:28px;color:#00C4D4;letter-spacing:1px">0</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:2px;margin-top:4px">CONTEXT TOKENS (EST.)</div>
+    </div>
+    <div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;padding:16px 18px">
+      <div id="si-stat-status" style="font-family:var(--display);font-size:14px;color:#00C4D4;letter-spacing:1px;margin-top:4px">ACTIVE</div>
+      <div style="font-family:var(--mono);font-size:8px;color:#3A5A72;letter-spacing:2px;margin-top:4px">BRIEF INJECTION STATUS</div>
+    </div>
+  </div>
+
+  <!-- Intelligence entries -->
+  <div id="si-list"></div>
+
+  <!-- Empty state -->
+  <div id="si-empty" style="display:none;text-align:center;padding:48px 20px;border:1px dashed #1A3350;border-radius:6px">
+    <div style="font-family:var(--display);font-size:18px;color:#3A5A72;letter-spacing:2px;margin-bottom:8px">NO INTELLIGENCE YET</div>
+    <div style="font-family:var(--mono);font-size:11px;color:#243F60;line-height:1.7">Upload documents in the DOCUMENTS tab — AI reads them automatically and stores what it learns here.<br>Every permit, programme, method statement, and site photo builds the picture.</div>
+  </div>
+
+</div>
+</div>
+
 <div id="dp-readdoc" style="display:none">
 <div style="max-width:860px;margin:0 auto;padding:24px 20px">
 
@@ -6194,10 +6238,13 @@ window.loadDocuments = loadDocuments;
       dlSaveLocal();
       dlRender();
 
-      // Push into brief context automatically
-      var existing=''; try{ existing=localStorage.getItem('sw_doc_context')||''; }catch(e){}
-      var header='\n\n['+file.name+' · '+new Date().toLocaleDateString('en-GB')+']:\n';
-      try{ localStorage.setItem('sw_doc_context', existing+header+analysis); }catch(e){}
+      // Push into structured intelligence store — feeds every brief and chat automatically
+      if(typeof siAdd==='function') siAdd(file.name, analysis, cat||'document');
+      else {
+        var existing=''; try{ existing=localStorage.getItem('sw_doc_context')||''; }catch(e){}
+        var header='\n\n['+file.name+' · '+new Date().toLocaleDateString('en-GB')+']:\n';
+        try{ localStorage.setItem('sw_doc_context', existing+header+analysis); }catch(e){}
+      }
 
     } catch(err){
       doc.ai_status = 'error';
@@ -6306,7 +6353,7 @@ window.loadDocuments = loadDocuments;
 <script>
 /* ── DATA PORTAL TABS ── */
 function dpShowTab(tab){
-  ['oplog','tasklog','documents','readdoc'].forEach(function(t){
+  ['oplog','tasklog','documents','readdoc','intelligence'].forEach(function(t){
     var el = document.getElementById('dp-'+t);
     var btn = document.getElementById('dp-tab-'+t);
     if(el) el.style.display = t===tab ? (t==='oplog'?'flex':'block') : 'none';
@@ -6319,8 +6366,138 @@ function dpShowTab(tab){
   if(tab==='oplog'){ if(typeof ofMountInPortal==='function') ofMountInPortal(); if(typeof ofShowAtStatus==='function') ofShowAtStatus(); if(typeof ofRender==='function') ofRender(typeof ofLoad==='function' ? ofLoad() : []); }
   if(tab==='tasklog'){ dpLoadStats(); plInit(); }
   if(tab==='readdoc'){ rdInit(); }
+  if(tab==='intelligence'){ siRender(); siSyncFromSupabase(); }
 }
 window.dpShowTab = dpShowTab;
+
+/* ══════════════════════════════════════════════════════
+   SITE INTELLIGENCE — structured knowledge store
+   Items saved to localStorage('sw_intel_items') as JSON array
+   and synced to Supabase site_intelligence table.
+   Auto-injected into every brief and chat via _rdCtx.
+   ══════════════════════════════════════════════════════ */
+
+function siLoad(){
+  try{ return JSON.parse(localStorage.getItem('sw_intel_items')||'[]'); }catch(e){ return []; }
+}
+function siSave(items){
+  try{ localStorage.setItem('sw_intel_items', JSON.stringify(items)); }catch(e){}
+  // Also rebuild legacy sw_doc_context string so existing brief injection still works
+  var ctx = items.map(function(it){ return '['+it.filename+' · '+it.date+']:\n'+it.analysis; }).join('\n\n');
+  try{ localStorage.setItem('sw_doc_context', ctx); }catch(e){}
+}
+
+function siAdd(filename, analysis, category){
+  var items = siLoad();
+  // Avoid exact duplicates (same filename + same day)
+  var today = new Date().toLocaleDateString('en-GB');
+  var exists = items.some(function(it){ return it.filename===filename && it.date===today; });
+  if(exists) return;
+  var item = {
+    id: 'si_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    filename: filename,
+    category: category||'document',
+    analysis: analysis,
+    date: today,
+    addedAt: new Date().toISOString()
+  };
+  items.unshift(item);
+  siSave(items);
+  siPushToSupabase(item);
+  siRender();
+}
+
+function siRemove(id){
+  var items = siLoad().filter(function(it){ return it.id!==id; });
+  siSave(items);
+  siRender();
+}
+
+window.siClearAll = function(){
+  if(!confirm('Clear all site intelligence? The AI will no longer know about uploaded documents until they are re-read.')) return;
+  try{ localStorage.removeItem('sw_intel_items'); localStorage.removeItem('sw_doc_context'); }catch(e){}
+  siRender();
+};
+
+function siRender(){
+  var items = siLoad();
+  var list = document.getElementById('si-list');
+  var empty = document.getElementById('si-empty');
+  var statDocs = document.getElementById('si-stat-docs');
+  var statCtx = document.getElementById('si-stat-ctx');
+  if(statDocs) statDocs.textContent = items.length;
+  var totalChars = items.reduce(function(s,it){ return s+(it.analysis||'').length; },0);
+  if(statCtx) statCtx.textContent = Math.round(totalChars/4).toLocaleString();
+  if(!list) return;
+  if(items.length===0){
+    list.innerHTML='';
+    if(empty) empty.style.display='block';
+    return;
+  }
+  if(empty) empty.style.display='none';
+  list.innerHTML = items.map(function(it){
+    var snippet = (it.analysis||'').substring(0,300).replace(/</g,'&lt;');
+    var hasMore = (it.analysis||'').length > 300;
+    return '<div style="background:#0A1828;border:1px solid #1A3350;border-radius:6px;margin-bottom:12px;overflow:hidden">'+
+      '<div style="padding:14px 16px;background:#070F18;border-bottom:1px solid #1A3350;display:flex;align-items:center;justify-content:space-between;gap:12px">'+
+        '<div style="display:flex;align-items:center;gap:10px;min-width:0">'+
+          '<div style="font-family:var(--mono);font-size:9px;color:#00C4D4;background:rgba(0,196,212,0.08);border:1px solid rgba(0,196,212,0.2);padding:3px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0">'+(it.category||'doc').toUpperCase()+'</div>'+
+          '<div style="font-family:var(--mono);font-size:10px;color:#A8C4DC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+it.filename+'</div>'+
+          '<div style="font-family:var(--mono);font-size:9px;color:#3A5A72;flex-shrink:0">'+it.date+'</div>'+
+        '</div>'+
+        '<button onclick="siRemove(\''+it.id+'\')" style="font-family:var(--mono);font-size:9px;background:transparent;border:1px solid rgba(255,68,68,0.25);color:#FF4444;padding:4px 10px;cursor:pointer;border-radius:2px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.borderColor=\'#FF4444\'" onmouseout="this.style.borderColor=\'rgba(255,68,68,0.25)\'">REMOVE</button>'+
+      '</div>'+
+      '<div style="padding:14px 16px">'+
+        '<pre style="font-family:var(--mono);font-size:10px;color:#6A90AA;line-height:1.7;white-space:pre-wrap;margin:0">'+snippet+(hasMore?'\n<span style="color:#3A5A72">… '+((it.analysis||'').length-300)+' more chars</span>':'')+'</pre>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function siPushToSupabase(item){
+  var url = window.SW_SUPABASE_URL||localStorage.getItem('sw_sb_url')||'';
+  var key = window.SW_SUPABASE_KEY||localStorage.getItem('sw_sb_key')||'';
+  if(!url||!key) return;
+  try{
+    await fetch(url+'/rest/v1/site_intelligence', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key,'Prefer':'return=minimal'},
+      body:JSON.stringify({site:'Thames Barrier',filename:item.filename,category:item.category,analysis:item.analysis,added_at:item.addedAt,client_id:item.id})
+    });
+  }catch(e){}
+}
+
+async function siSyncFromSupabase(){
+  var url = window.SW_SUPABASE_URL||localStorage.getItem('sw_sb_url')||'';
+  var key = window.SW_SUPABASE_KEY||localStorage.getItem('sw_sb_key')||'';
+  var status = document.getElementById('si-sync-status');
+  if(!url||!key){ if(status) status.textContent='LOCAL ONLY — connect Supabase for cross-device sync'; return; }
+  if(status) status.textContent='SYNCING...';
+  try{
+    var r = await fetch(url+'/rest/v1/site_intelligence?site=eq.Thames%20Barrier&order=added_at.desc&limit=100',{
+      headers:{'apikey':key,'Authorization':'Bearer '+key}
+    });
+    if(!r.ok){ if(status){ status.textContent='SUPABASE — table not yet created'; status.style.color='#F59E0B'; } return; }
+    var rows = await r.json();
+    if(!Array.isArray(rows)||rows.length===0){ if(status){ status.textContent='● SUPABASE CONNECTED'; status.style.color='#00C4D4'; } return; }
+    // Merge remote items into local, deduplicating by client_id
+    var local = siLoad();
+    var localIds = new Set(local.map(function(it){ return it.id; }));
+    var added = 0;
+    rows.forEach(function(row){
+      if(!localIds.has(row.client_id)){
+        local.push({id:row.client_id||row.id,filename:row.filename,category:row.category||'document',analysis:row.analysis,date:new Date(row.added_at).toLocaleDateString('en-GB'),addedAt:row.added_at});
+        added++;
+      }
+    });
+    if(added>0){ siSave(local); siRender(); }
+    if(status){ status.textContent='● SUPABASE SYNCED'+(added?' · '+added+' new':''); status.style.color='#00C4D4'; }
+  }catch(e){
+    if(status){ status.textContent='SYNC ERROR'; status.style.color='#FF4444'; }
+  }
+}
+window.siAdd = siAdd;
+window.siRender = siRender;
 
 /* ══════════════════════════════════
    PASTE LOG — AI log parser
@@ -8370,11 +8547,15 @@ function rdAnalyse(){
 function rdSaveContext(){
   var output = document.getElementById('rd-output');
   if(!output || !output.textContent.trim()){ alert('No extracted content to save.'); return; }
-  var existing = '';
-  try{ existing = localStorage.getItem('sw_doc_context') || ''; }catch(e){}
-  var separator = existing ? '\n\n---\n\n' : '';
-  var newContext = existing + separator + output.textContent.trim();
-  try{ localStorage.setItem('sw_doc_context', newContext); }catch(e){ alert('Could not save context.'); return; }
+  var analysis = output.textContent.trim();
+  var filename = (document.getElementById('rd-preview-name')||{}).textContent || 'Manual read';
+  // Save into structured intelligence store
+  if(typeof siAdd==='function'){
+    siAdd(filename, analysis, 'document');
+  } else {
+    var existing=''; try{ existing=localStorage.getItem('sw_doc_context')||''; }catch(e){}
+    try{ localStorage.setItem('sw_doc_context', existing+(existing?'\n\n---\n\n':'')+analysis); }catch(e){}
+  }
   var btn = document.getElementById('rd-save-btn');
   if(btn){ btn.textContent = '✓ SAVED TO BRIEF'; btn.style.background = 'rgba(0,196,212,0.2)'; setTimeout(function(){ btn.textContent = '+ ADD TO BRIEF CONTEXT'; btn.style.background = 'rgba(0,196,212,0.1)'; }, 2000); }
   rdRefreshSaved();
