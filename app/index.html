@@ -15,6 +15,9 @@
   var SESSION_KEY = 'sw_access_v3';
   var MODE_KEY = 'sw_mode_v3';
 
+  // Always gate on page load — session only lives within a tab session, not across reloads
+  sessionStorage.removeItem(SESSION_KEY);
+
   function goDemo(){ if(typeof showApp==='function') showApp(); }
   function goLog(){  if(typeof showDataPortal==='function') showDataPortal(); }
 
