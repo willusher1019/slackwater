@@ -45,14 +45,10 @@
       else g.appendChild(chooser);
       setTimeout(function(){ chooser.style.opacity='1'; }, 30);
       document.getElementById('sw-demo-btn').addEventListener('click', function(){
-        dismissGate(function(){ if(typeof showLanding==='function') showLanding(); });
+        dismissGate(function(){ if(typeof showDemo==='function') showDemo(); });
       });
       document.getElementById('sw-log-btn').addEventListener('click', function(){
-        dismissGate(function(){
-          var atKey = localStorage.getItem('sw_at_key');
-          if(atKey && typeof showDataPortal==='function') showDataPortal();
-          else if(typeof showDataLogin==='function') showDataLogin();
-        });
+        dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); });
       });
     }, 200);
   }
