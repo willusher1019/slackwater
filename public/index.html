@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Slackwater — Pre-Mobilisation Intelligence</title>
+<meta name="description" content="Slackwater tells infrastructure programme managers whether tomorrow's work should go ahead — and why — before the crews leave home.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0D1B2A;
+  --ink2:#2C3E50;
+  --mid:#6B7C8D;
+  --rule:#D8E4ED;
+  --bg:#F7F9FB;
+  --white:#FFFFFF;
+  --signal:#0B4F8A;
+  --go:#0A6E3F;
+  --delay:#7A4700;
+  --mono:'DM Mono',monospace;
+  --sans:'Instrument Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(247,249,251,0.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);padding:0 40px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:2px;color:var(--ink);text-decoration:none}
+.nav-logo span{color:var(--signal)}
+.nav-cta{font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:8px 20px;background:var(--signal);color:#fff;border:none;cursor:pointer;border-radius:2px;text-decoration:none;transition:background 0.15s}
+.nav-cta:hover{background:#0a3d6b}
+
+/* SECTIONS */
+section{padding:100px 40px}
+.inner{max-width:780px;margin:0 auto}
+.inner-wide{max-width:1000px;margin:0 auto}
+
+/* HERO */
+#hero{padding:140px 40px 100px;background:var(--white);border-bottom:1px solid var(--rule)}
+.hero-label{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--mid);margin-bottom:24px}
+.hero-h1{font-family:var(--sans);font-size:clamp(28px,4vw,48px);font-weight:600;line-height:1.2;color:var(--ink);max-width:720px;margin-bottom:28px}
+.hero-h1 em{font-style:normal;color:var(--signal)}
+.hero-sub{font-size:18px;color:var(--ink2);max-width:560px;line-height:1.7;margin-bottom:40px}
+.hero-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.btn-primary{font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:13px 28px;background:var(--signal);color:#fff;border:none;cursor:pointer;border-radius:2px;text-decoration:none;transition:background 0.15s}
+.btn-primary:hover{background:#0a3d6b}
+.btn-ghost{font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:13px 24px;background:transparent;color:var(--mid);border:1px solid var(--rule);cursor:pointer;border-radius:2px;text-decoration:none;transition:all 0.15s}
+.btn-ghost:hover{border-color:var(--ink2);color:var(--ink)}
+
+/* PROBLEM */
+#problem{background:var(--bg);border-bottom:1px solid var(--rule)}
+.section-label{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--mid);margin-bottom:20px}
+.section-h2{font-size:clamp(22px,3vw,34px);font-weight:600;line-height:1.25;color:var(--ink);margin-bottom:20px}
+.section-body{font-size:17px;color:var(--ink2);line-height:1.8;max-width:640px}
+.section-body p+p{margin-top:16px}
+
+/* INCIDENT */
+#incident{background:var(--white);border-bottom:1px solid var(--rule)}
+.incident-card{border-left:3px solid var(--signal);padding:28px 32px;background:var(--bg);border-radius:0 4px 4px 0;margin:32px 0}
+.incident-card p{font-size:16px;color:var(--ink2);line-height:1.75}
+.incident-card p+p{margin-top:12px}
+.incident-pull{font-size:clamp(18px,2.5vw,26px);font-weight:600;color:var(--ink);line-height:1.35;margin:32px 0;font-style:italic}
+
+/* VERDICT */
+#verdict{background:var(--bg);border-bottom:1px solid var(--rule)}
+.verdict-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin-top:40px}
+.verdict-cell{background:var(--white);padding:32px 28px}
+.verdict-tag{font-family:var(--mono);font-size:10px;letter-spacing:2px;font-weight:500;margin-bottom:12px}
+.verdict-tag.go{color:var(--go)}
+.verdict-tag.delay{color:var(--delay)}
+.verdict-tag.cancel{color:#7A1F1F}
+.verdict-cell h3{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.verdict-cell p{font-size:14px;color:var(--mid);line-height:1.6}
+@media(max-width:640px){.verdict-grid{grid-template-columns:1fr}}
+
+/* HOW */
+#how{background:var(--white);border-bottom:1px solid var(--rule)}
+.how-steps{margin-top:36px;display:flex;flex-direction:column;gap:0}
+.how-step{display:flex;gap:32px;padding:28px 0;border-bottom:1px solid var(--rule)}
+.how-step:last-child{border-bottom:none}
+.how-num{font-family:var(--mono);font-size:11px;color:var(--mid);letter-spacing:1px;min-width:32px;padding-top:3px}
+.how-content h3{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.how-content p{font-size:15px;color:var(--ink2);line-height:1.65}
+
+/* ENVIRONMENTS */
+#environments{background:var(--bg);border-bottom:1px solid var(--rule)}
+.env-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:36px}
+.env-card{background:var(--white);border:1px solid var(--rule);border-radius:4px;padding:32px}
+.env-card h3{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.env-card p{font-size:14px;color:var(--mid);line-height:1.65}
+.env-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--mid);margin-bottom:14px}
+@media(max-width:600px){.env-grid{grid-template-columns:1fr}}
+
+/* DEMO FORM */
+#demo{background:var(--ink);border-bottom:1px solid #1a2b3c}
+#demo .section-label{color:rgba(255,255,255,0.35)}
+#demo .section-h2{color:#fff}
+#demo .section-body{color:rgba(255,255,255,0.6)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+label{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4)}
+input,select,textarea{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:11px 14px;font-family:var(--sans);font-size:15px;outline:none;border-radius:2px;transition:border-color 0.15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:rgba(255,255,255,0.35)}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.2)}
+select option{background:#1a2b3c;color:#fff}
+textarea{resize:vertical;min-height:100px}
+.form-submit{margin-top:8px}
+.btn-submit{font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:13px 32px;background:#fff;color:var(--ink);border:none;cursor:pointer;border-radius:2px;transition:background 0.15s}
+.btn-submit:hover{background:#e8f0f8}
+#demo-success{display:none;margin-top:28px;padding:20px 24px;border:1px solid rgba(255,255,255,0.15);border-radius:3px}
+#demo-success p{font-size:15px;color:rgba(255,255,255,0.75);line-height:1.6}
+
+/* FOOTER */
+footer{padding:40px;background:var(--ink);border-top:1px solid #1a2b3c;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-logo{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.3)}
+.footer-contact{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.25)}
+.footer-contact a{color:rgba(255,255,255,0.35);text-decoration:none}
+.footer-contact a:hover{color:rgba(255,255,255,0.6)}
+
+/* UTIL */
+.rule{width:40px;height:2px;background:var(--signal);margin-bottom:28px}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#"><span>SW</span> SLACKWATER</a>
+  <a class="nav-cta" href="#demo">REQUEST ACCESS</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="inner">
+    <div class="hero-label">PRE-MOBILISATION INTELLIGENCE</div>
+    <h1 class="hero-h1">We tell infrastructure programme managers whether <em>tomorrow's work should go ahead</em> — and why — before the crews leave home.</h1>
+    <p class="hero-sub">Slackwater prevents wasted mobilisation in constrained infrastructure operations. One decision. Made the night before. With everything the morning team needs to act on it.</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="#demo">Request access</a>
+      <a class="btn-ghost" href="#incident">See the problem</a>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="inner">
+    <div class="rule"></div>
+    <div class="section-label">THE PROBLEM</div>
+    <h2 class="section-h2">Infrastructure mobilisation is decided on incomplete information — every morning.</h2>
+    <div class="section-body">
+      <p>Constrained operations — tidal infrastructure, confined access, complex sequencing, safety-critical permits — require dozens of conditions to align before a crew can move. Wind thresholds. Tidal windows. Permit validity. Contractor readiness. Equipment clearance.</p>
+      <p>That information sits across multiple systems, documents, and inboxes. Nobody connects it the night before. The decision to mobilise is made on instinct, experience, and incomplete data — at 7am, when the crew is already at the gate.</p>
+      <p>The cost is not just financial. It is programme time, crew confidence, and the compounding effect of repeated, preventable delays.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INCIDENT -->
+<section id="incident">
+  <div class="inner">
+    <div class="rule"></div>
+    <div class="section-label">WHAT THIS LOOKS LIKE IN PRACTICE</div>
+    <h2 class="section-h2">Real incidents. Preventable decisions.</h2>
+
+    <div class="incident-card">
+      <p>A dive team mobilised to a tidal infrastructure site. The tidal window was known. The weather forecast was available. A confined space permit had been issued. A crane was on standby.</p>
+      <p>What nobody had connected, the night before, was that the crane's wind threshold had been exceeded in the overnight forecast — and the confined space permit had been issued for a different access point than the one planned for that morning. The crew arrived. The work could not proceed.</p>
+      <p>Three hours of standby pay. A compressed tidal window lost. The sequence pushed back two days.</p>
+    </div>
+
+    <p class="incident-pull">"Nobody did anything wrong. The system simply failed to connect the dots the night before."</p>
+
+    <div class="section-body">
+      <p>This is not a rare failure mode. It is the default operating condition for constrained infrastructure works — and it compounds across every programme that runs without a pre-mobilisation readiness check.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VERDICT -->
+<section id="verdict">
+  <div class="inner-wide">
+    <div class="inner" style="max-width:780px">
+      <div class="rule"></div>
+      <div class="section-label">THE PRODUCT</div>
+      <h2 class="section-h2">One decision. Delivered the night before.</h2>
+      <div class="section-body">
+        <p>Slackwater reads the full constraint picture — permits, weather, programme, personnel, plant — and produces a single pre-mobilisation verdict before the crews leave home. Not a dashboard. Not a report. A decision.</p>
+      </div>
+    </div>
+    <div class="verdict-grid">
+      <div class="verdict-cell">
+        <div class="verdict-tag go">GO</div>
+        <h3>All conditions met</h3>
+        <p>Every constraint checked. Permits valid. Weather within threshold. Sequence clear. The crew can mobilise.</p>
+      </div>
+      <div class="verdict-cell">
+        <div class="verdict-tag delay">DELAY</div>
+        <h3>Condition unresolved</h3>
+        <p>One or more constraints are not met. The specific issue is named, with what needs to change before mobilisation can proceed.</p>
+      </div>
+      <div class="verdict-cell">
+        <div class="verdict-tag cancel" style="color:#7A1F1F">STAND DOWN</div>
+        <h3>Works cannot proceed</h3>
+        <p>A hard constraint — tidal window, permit expiry, safety clearance — makes the planned works impossible. Stand down before the crew moves.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="inner">
+    <div class="rule"></div>
+    <div class="section-label">HOW IT WORKS</div>
+    <h2 class="section-h2">The night before is when the decision gets made.</h2>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-num">01</div>
+        <div class="how-content">
+          <h3>Reads the constraint stack</h3>
+          <p>Permits, method statements, risk assessments, programme documents. Slackwater reads what's in the system and extracts what matters — expiry dates, scope conditions, personnel requirements, plant restrictions.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">02</div>
+        <div class="how-content">
+          <h3>Checks live conditions</h3>
+          <p>Weather forecast against wind and tidal thresholds. Programme schedule against planned task sequence. Personnel clearances against operational requirements.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">03</div>
+        <div class="how-content">
+          <h3>Produces the brief</h3>
+          <p>One document. What can move tomorrow, what cannot, and why. Named constraints. Specific conditions. Delivered before the crews leave home.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">04</div>
+        <div class="how-content">
+          <h3>Builds the dataset</h3>
+          <p>Every brief adds to a permanent record of decisions, conditions, and outcomes. Over time, that dataset becomes the operational intelligence asset — the pattern of how a site actually behaves.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENVIRONMENTS -->
+<section id="environments">
+  <div class="inner">
+    <div class="rule"></div>
+    <div class="section-label">WHERE WE WORK</div>
+    <h2 class="section-h2">Built for constrained operations.</h2>
+    <div class="section-body">
+      <p>Slackwater is not general construction software. It is designed specifically for infrastructure environments where works are constrained by tidal windows, safety-critical permits, restricted access, complex sequencing, or multiple contractor dependencies.</p>
+    </div>
+    <div class="env-grid">
+      <div class="env-card">
+        <div class="env-tag">ENVIRONMENT</div>
+        <h3>Tidal infrastructure</h3>
+        <p>Barriers, locks, flood defences. Work windows governed by tide, not preference.</p>
+      </div>
+      <div class="env-card">
+        <div class="env-tag">ENVIRONMENT</div>
+        <h3>Confined access</h3>
+        <p>Confined space permits, gas certificates, ERT requirements. Every entry is a gated event.</p>
+      </div>
+      <div class="env-card">
+        <div class="env-tag">ENVIRONMENT</div>
+        <h3>Complex sequencing</h3>
+        <p>Multi-contractor programmes where one missed constraint cascades across the schedule.</p>
+      </div>
+      <div class="env-card">
+        <div class="env-tag">ENVIRONMENT</div>
+        <h3>Safety-critical works</h3>
+        <p>ZEROHARM environments, RAMS-controlled operations, permit-to-work frameworks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="inner">
+    <div class="section-label">REQUEST ACCESS</div>
+    <h2 class="section-h2">Early access is by invitation.</h2>
+    <p class="section-body">Slackwater is currently deployed on live infrastructure programmes. If you are running constrained operations and want to see what pre-mobilisation intelligence looks like in practice, get in touch.</p>
+
+    <form name="access-request" method="POST" data-netlify="true" onsubmit="swFormSubmit(event)">
+      <input type="hidden" name="form-name" value="access-request">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>FIRST NAME</label>
+          <input type="text" name="first_name" placeholder="James" required>
+        </div>
+        <div class="form-group">
+          <label>LAST NAME</label>
+          <input type="text" name="last_name" placeholder="Patterson" required>
+        </div>
+        <div class="form-group">
+          <label>BUSINESS EMAIL</label>
+          <input type="email" name="email" placeholder="j.patterson@contractor.com" required>
+        </div>
+        <div class="form-group">
+          <label>ORGANISATION</label>
+          <input type="text" name="organisation" placeholder="Balfour Beatty" required>
+        </div>
+        <div class="form-group">
+          <label>ROLE</label>
+          <input type="text" name="role" placeholder="Programme Manager">
+        </div>
+        <div class="form-group">
+          <label>PROGRAMME TYPE</label>
+          <select name="programme_type">
+            <option value="">Select...</option>
+            <option>Tidal / marine infrastructure</option>
+            <option>Confined space / underground</option>
+            <option>Multi-contractor sequencing</option>
+            <option>Safety-critical maintenance</option>
+            <option>Other constrained operations</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label>TELL US ABOUT YOUR PROGRAMME</label>
+          <textarea name="programme_detail" placeholder="Briefly describe the type of works, constraints, and what you're trying to solve..."></textarea>
+        </div>
+        <div class="form-submit form-full">
+          <button class="btn-submit" type="submit">SUBMIT REQUEST →</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="demo-success">
+      <p>Request received. We'll be in touch within two working days to arrange a briefing.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">SW SLACKWATER</div>
+  <div class="footer-contact">
+    <a href="mailto:will.g.usher@gmail.com">will.g.usher@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+function swFormSubmit(e){
+  e.preventDefault();
+  var form = e.target;
+  fetch('/', {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: new URLSearchParams(new FormData(form)).toString()
+  }).then(function(){
+    form.style.display = 'none';
+    document.getElementById('demo-success').style.display = 'block';
+  }).catch(function(){
+    form.style.display = 'none';
+    document.getElementById('demo-success').style.display = 'block';
+  });
+}
+</script>
+
+</body>
+</html>
