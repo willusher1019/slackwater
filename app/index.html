@@ -15,8 +15,18 @@
   var PW = 'Simba2026';
   var SESSION_KEY = 'sw_access';
 
+  // Hide page content immediately (before paint) if gate is needed
+  if(sessionStorage.getItem(SESSION_KEY) !== '1'){
+    var _hs = document.createElement('style');
+    _hs.id = 'sw-hide-style';
+    _hs.textContent = 'body{visibility:hidden!important}#sw-gate{visibility:visible!important}';
+    document.head.appendChild(_hs);
+  }
+
   function dismissGate(cb){
     var g = document.getElementById('sw-gate');
+    var hs = document.getElementById('sw-hide-style');
+    if(hs) hs.remove();
     if(g){ g.style.opacity='0'; g.style.transition='opacity 0.4s'; setTimeout(function(){ g.remove(); if(cb) cb(); },400); }
     else { if(cb) cb(); }
     document.body.style.overflow = '';
