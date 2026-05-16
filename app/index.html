@@ -12,8 +12,8 @@
 <script>
 (function(){
   var PW = 'Simba2026';
-  var SESSION_KEY = 'sw_access';
-  var MODE_KEY = 'sw_mode';
+  var SESSION_KEY = 'sw_access_v3';
+  var MODE_KEY = 'sw_mode_v3';
 
   // Always hide body immediately — revealed only after mode is chosen
   var _hs = document.createElement('style');
@@ -1044,6 +1044,11 @@ footer{
 .more-menu button:hover { background:rgba(0,196,212,0.06); color:#00C4D4; }
 .more-menu button:last-child { border-bottom:none; }
 
+/* ── SCREEN DEFAULTS — nothing visible until gate routes to correct screen ── */
+#landing-screen { display: none !important; }
+#login-screen    { display: none !important; }
+#data-login-screen { display: none !important; }
+
 /* ── ALL CARDS — consistent homepage style ── */
 .sw-card {
   background:#0A1828;
@@ -1204,6 +1209,8 @@ function showLogin(){
   setTimeout(function(){var i=document.getElementById('si');if(i)i.focus();},100);
 }
 function showDataLogin(){
+  showDataPortal(); // sign-in screen removed — go straight to portal
+  return;
   _hideAll();
   var el = document.getElementById('data-login-screen');
   if(el) el.style.display = 'block';
