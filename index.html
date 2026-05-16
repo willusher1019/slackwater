@@ -3272,7 +3272,7 @@ window.swDemoSubmit = function(e){
   var data = new FormData(form);
   fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams(data).toString() })
     .then(function(){
-      btn.style.display = 'none';
+      form.style.display = 'none';
       document.getElementById('demo-success').style.display = 'block';
     })
     .catch(function(){
