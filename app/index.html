@@ -164,21 +164,19 @@
   }
 
   document.addEventListener('DOMContentLoaded', function(){
-    // Read URL param ?mode=demo or ?mode=log
     var urlMode = new URLSearchParams(window.location.search).get('mode');
     var storedMode = sessionStorage.getItem(MODE_KEY);
     var mode = urlMode || storedMode;
 
-    if(sessionStorage.getItem(SESSION_KEY)==='1'){
-      // Returning user — go straight to last chosen mode (or show chooser if unknown)
-      if(mode === 'demo'){ goDemo(); }
-      else if(mode === 'log'){ goLog(); }
-      else { buildChooser(); }
-    } else {
-      // New visit — show password gate (with intended mode stored for after auth)
-      if(urlMode) sessionStorage.setItem(MODE_KEY, urlMode);
-      buildGate();
-    }
+    // URL param or returning user with stored mode — go straight there, no gate
+    if(mode === 'demo'){ sessionStorage.setItem(SESSION_KEY,'1'); sessionStorage.setItem(MODE_KEY,'demo'); goDemo(); return; }
+    if(mode === 'log'){  sessionStorage.setItem(SESSION_KEY,'1'); sessionStorage.setItem(MODE_KEY,'log');  goLog();  return; }
+
+    // No mode — returning user with session, show chooser (no password)
+    if(sessionStorage.getItem(SESSION_KEY)==='1'){ buildChooser(); return; }
+
+    // Fresh visit with no mode — show password gate
+    buildGate();
   });
 })();
 </script>
