@@ -2691,7 +2691,6 @@ async function swLoadWasteCounter(){
   </div>
   <div class="nav-right">
     <div class="nav-pill"><div class="live-dot"></div> SYSTEM ONLINE</div>
-    <a href="https://app.slackwater.live" class="nav-cta-alt" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:9px 22px;background:transparent;color:var(--signal);border:1px solid rgba(0,196,212,0.4);cursor:pointer;transition:all 0.2s;margin-right:8px;text-decoration:none">DATA LOG</a><a href="https://app.slackwater.live" class="nav-cta" style="text-decoration:none">REQUEST DEMO</a>
   </div>
 </nav>
 
@@ -3259,10 +3258,6 @@ lines.forEach((line, i) => {
 
     </form>
 
-    <!-- Admin bypass — subtle, bottom of page -->
-    <div style="margin-top:80px;padding-top:24px;border-top:1px solid #0F1E2E;text-align:center">
-      <button onclick="(function(){ var k=localStorage.getItem('sw_at_key'); if(k) showApp(); else showDataLogin(); })()" style="font-family:var(--mono);font-size:8px;color:#162840;background:none;border:none;cursor:pointer;letter-spacing:1px;transition:color 0.15s" onmouseover="this.style.color='#3A5A72'" onmouseout="this.style.color='#162840'">admin</button>
-    </div>
 
   </div>
 </div>
