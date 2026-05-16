@@ -15,28 +15,18 @@
   var SESSION_KEY = 'sw_access_v3';
   var MODE_KEY = 'sw_mode_v3';
 
-  // Always hide body immediately — revealed only after mode is chosen
-  var _hs = document.createElement('style');
-  _hs.id = 'sw-hide-style';
-  _hs.textContent = 'body{visibility:hidden!important}#sw-gate{visibility:visible!important}';
-  document.head.appendChild(_hs);
-
-  function reveal(modeFn){
-    var hs = document.getElementById('sw-hide-style');
-    if(hs) hs.remove();
-    document.body.style.visibility = '';
-    document.body.style.overflow = '';
-    if(modeFn) modeFn();
-  }
-
-  function goDemo(){ reveal(function(){ if(typeof showApp==='function') showApp(); }); }
-  function goLog(){ reveal(function(){ if(typeof showDataPortal==='function') showDataPortal(); }); }
+  function goDemo(){ if(typeof showApp==='function') showApp(); }
+  function goLog(){  if(typeof showDataPortal==='function') showDataPortal(); }
 
   function dismissGate(modeFn){
     sessionStorage.setItem(SESSION_KEY,'1');
     var g = document.getElementById('sw-gate');
-    if(g){ g.style.opacity='0'; g.style.transition='opacity 0.4s'; setTimeout(function(){ g.remove(); reveal(modeFn); },400); }
-    else { reveal(modeFn); }
+    if(g){
+      g.style.opacity='0'; g.style.transition='opacity 0.4s';
+      setTimeout(function(){ g.remove(); if(modeFn) modeFn(); }, 400);
+    } else {
+      if(modeFn) modeFn();
+    }
   }
 
   function buildChooser(){
@@ -58,11 +48,11 @@
     document.body.appendChild(gate);
     document.getElementById('sw-demo-btn').addEventListener('click', function(){
       sessionStorage.setItem(MODE_KEY,'demo');
-      dismissGate(function(){ if(typeof showApp==='function') showApp(); });
+      dismissGate(goDemo);
     });
     document.getElementById('sw-log-btn').addEventListener('click', function(){
       sessionStorage.setItem(MODE_KEY,'log');
-      dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); });
+      dismissGate(goLog);
     });
   }
 
@@ -72,8 +62,8 @@
     sessionStorage.setItem(SESSION_KEY,'1');
     // If mode already known from URL param, skip chooser
     var mode = sessionStorage.getItem(MODE_KEY);
-    if(mode === 'demo'){ dismissGate(function(){ if(typeof showApp==='function') showApp(); }); return; }
-    if(mode === 'log'){ dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); }); return; }
+    if(mode === 'demo'){ dismissGate(goDemo); return; }
+    if(mode === 'log'){  dismissGate(goLog);  return; }
     var pwWrap = g.querySelector('#sw-pw-wrap');
     var err = g.querySelector('#sw-err');
     if(err) err.style.display = 'none';
@@ -94,11 +84,11 @@
       setTimeout(function(){ chooser.style.opacity='1'; }, 30);
       document.getElementById('sw-demo-btn').addEventListener('click', function(){
         sessionStorage.setItem(MODE_KEY,'demo');
-        dismissGate(function(){ if(typeof showApp==='function') showApp(); });
+        dismissGate(goDemo);
       });
       document.getElementById('sw-log-btn').addEventListener('click', function(){
         sessionStorage.setItem(MODE_KEY,'log');
-        dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); });
+        dismissGate(goLog);
       });
     }, 200);
   }
@@ -1044,11 +1034,13 @@ footer{
 .more-menu button:hover { background:rgba(0,196,212,0.06); color:#00C4D4; }
 .more-menu button:last-child { border-bottom:none; }
 
-/* ── SCREEN DEFAULTS — nothing visible until gate routes to correct screen ── */
+/* ── SCREEN DEFAULTS — gate overlay covers page; screens hidden until routed ── */
 #landing-screen    { display: none !important; }
 #login-screen      { display: none !important; }
 #demo-screen       { display: none !important; }
 #data-login-screen { display: none !important; }
+#app               { display: none; }
+#data-portal       { display: none; }
 
 /* ── ALL CARDS — consistent homepage style ── */
 .sw-card {
