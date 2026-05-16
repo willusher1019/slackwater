@@ -15,11 +15,45 @@
   var PW = 'Simba2026';
   var SESSION_KEY = 'sw_access';
 
-  function grantAccess(){
+  function dismissGate(cb){
     var g = document.getElementById('sw-gate');
-    if(g){ g.style.opacity='0'; g.style.transition='opacity 0.4s'; setTimeout(function(){ g.remove(); },400); }
+    if(g){ g.style.opacity='0'; g.style.transition='opacity 0.4s'; setTimeout(function(){ g.remove(); if(cb) cb(); },400); }
+    else { if(cb) cb(); }
     document.body.style.overflow = '';
     sessionStorage.setItem(SESSION_KEY,'1');
+  }
+
+  function grantAccess(){
+    var g = document.getElementById('sw-gate');
+    if(!g) return;
+    // Fade out password form, show mode chooser
+    var inner = g.querySelector('#sw-pw-wrap');
+    if(inner){ inner.style.opacity='0'; inner.style.transition='opacity 0.2s'; }
+    setTimeout(function(){
+      if(inner) inner.remove();
+      var label = g.querySelector('#sw-label');
+      if(label) label.style.color = '#EDF6FF';
+      var sub = g.querySelector('#sw-sub');
+      if(sub) sub.textContent = 'SELECT MODE';
+      var chooser = document.createElement('div');
+      chooser.id = 'sw-chooser';
+      chooser.style.cssText = 'display:flex;gap:16px;margin-top:8px;opacity:0;transition:opacity 0.3s';
+      chooser.innerHTML =
+        '<button id="sw-demo-btn" style="flex:1;background:#00C4D4;border:none;color:#03070C;font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:3px;padding:18px 24px;cursor:pointer;border-radius:3px">DEMO</button>'
+      + '<button id="sw-log-btn" style="flex:1;background:transparent;border:1px solid #1A3350;color:#00C4D4;font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:3px;padding:18px 24px;cursor:pointer;border-radius:3px">LOG</button>';
+      g.appendChild(chooser);
+      setTimeout(function(){ chooser.style.opacity='1'; },30);
+      document.getElementById('sw-demo-btn').addEventListener('click', function(){
+        dismissGate(function(){ if(typeof showLanding==='function') showLanding(); });
+      });
+      document.getElementById('sw-log-btn').addEventListener('click', function(){
+        dismissGate(function(){
+          var atKey = localStorage.getItem('sw_at_key');
+          if(atKey && typeof showDataPortal==='function') showDataPortal();
+          else if(typeof showDataLogin==='function') showDataLogin();
+        });
+      });
+    },220);
   }
 
   function buildGate(){
@@ -27,9 +61,9 @@
     gate.id = 'sw-gate';
     gate.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#03070C;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
     gate.innerHTML =
-      '<div style="font-family:\'DM Mono\',monospace;font-size:11px;letter-spacing:4px;color:#00C4D4;margin-bottom:48px">SW · SLACKWATER</div>'
-    + '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:3px;color:#3A5A72;margin-bottom:20px">PRIVATE ACCESS</div>'
-    + '<div style="display:flex;flex-direction:column;gap:12px;width:280px">'
+      '<div id="sw-label" style="font-family:\'DM Mono\',monospace;font-size:11px;letter-spacing:4px;color:#00C4D4;margin-bottom:48px;transition:color 0.3s">SW · SLACKWATER</div>'
+    + '<div id="sw-sub" style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:3px;color:#3A5A72;margin-bottom:20px;transition:all 0.3s">PRIVATE ACCESS</div>'
+    + '<div id="sw-pw-wrap" style="display:flex;flex-direction:column;gap:12px;width:280px">'
     +   '<input id="sw-pw" type="password" placeholder="Enter access code" autocomplete="off" style="background:#060E18;border:1px solid #1A3350;color:#EDF6FF;padding:13px 16px;font-family:\'DM Mono\',monospace;font-size:13px;outline:none;border-radius:3px;text-align:center;letter-spacing:3px" />'
     +   '<button id="sw-go" style="background:#00C4D4;border:none;color:#03070C;font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:2px;padding:13px;cursor:pointer;border-radius:3px">ENTER →</button>'
     +   '<div id="sw-err" style="font-family:\'DM Mono\',monospace;font-size:9px;color:#FF4444;letter-spacing:2px;text-align:center;min-height:16px"></div>'
