@@ -29,7 +29,7 @@
     if(modeFn) modeFn();
   }
 
-  function goDemo(){ reveal(function(){ if(typeof showDemo==='function') showDemo(); }); }
+  function goDemo(){ reveal(function(){ if(typeof showApp==='function') showApp(); }); }
   function goLog(){ reveal(function(){ if(typeof showDataPortal==='function') showDataPortal(); }); }
 
   function dismissGate(modeFn){
@@ -58,7 +58,7 @@
     document.body.appendChild(gate);
     document.getElementById('sw-demo-btn').addEventListener('click', function(){
       sessionStorage.setItem(MODE_KEY,'demo');
-      dismissGate(function(){ if(typeof showDemo==='function') showDemo(); });
+      dismissGate(function(){ if(typeof showApp==='function') showApp(); });
     });
     document.getElementById('sw-log-btn').addEventListener('click', function(){
       sessionStorage.setItem(MODE_KEY,'log');
@@ -72,7 +72,7 @@
     sessionStorage.setItem(SESSION_KEY,'1');
     // If mode already known from URL param, skip chooser
     var mode = sessionStorage.getItem(MODE_KEY);
-    if(mode === 'demo'){ dismissGate(function(){ if(typeof showDemo==='function') showDemo(); }); return; }
+    if(mode === 'demo'){ dismissGate(function(){ if(typeof showApp==='function') showApp(); }); return; }
     if(mode === 'log'){ dismissGate(function(){ if(typeof showDataPortal==='function') showDataPortal(); }); return; }
     var pwWrap = g.querySelector('#sw-pw-wrap');
     var err = g.querySelector('#sw-err');
@@ -94,7 +94,7 @@
       setTimeout(function(){ chooser.style.opacity='1'; }, 30);
       document.getElementById('sw-demo-btn').addEventListener('click', function(){
         sessionStorage.setItem(MODE_KEY,'demo');
-        dismissGate(function(){ if(typeof showDemo==='function') showDemo(); });
+        dismissGate(function(){ if(typeof showApp==='function') showApp(); });
       });
       document.getElementById('sw-log-btn').addEventListener('click', function(){
         sessionStorage.setItem(MODE_KEY,'log');
