@@ -3428,7 +3428,7 @@ window.swDemoSubmit = function(e){
       <span class="pill stop" onclick="jumpToAlerts('critical')" style="cursor:pointer" title="5 Critical Alerts">5 Crit</span>
       <span class="pill warn" onclick="jumpToAlerts('warnings')" style="cursor:pointer" title="6 Warnings">6 Warn</span>
       <div class="pill live"><div class="pdot"></div>Live</div>
-      <div id="live-clock" style="font-family:var(--mono);font-size:8px;color:#3A5A72;white-space:nowrap;flex-shrink:0"></div><button class="logout-btn" onclick="sessionStorage.setItem('sw_mode_v3','log');showDataPortal();" style="margin-right:4px">→ LOG</button><button class="logout-btn" onclick="showLanding()">Exit</button>
+      <div id="live-clock" style="font-family:var(--mono);font-size:8px;color:#3A5A72;white-space:nowrap;flex-shrink:0"></div><button class="logout-btn" onclick="sessionStorage.setItem('sw_mode_v3','log');showDataPortal();">→ LOG</button>
     </div>
   </div>
 
@@ -5209,7 +5209,6 @@ window.loadDocuments = loadDocuments;
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         <div id="portal-user-pill" style="font-family:var(--mono);font-size:10px;color:#00C4D4;background:rgba(0,196,212,0.08);padding:4px 10px;border:1px solid rgba(0,196,212,0.3);border-radius:3px;white-space:nowrap">● WILL — LOGGED IN</div>
         <button onclick="sessionStorage.setItem('sw_mode_v3','demo');showApp();" style="font-family:var(--mono);font-size:9px;padding:5px 12px;border:1px solid rgba(0,196,212,0.4);color:#00C4D4;background:transparent;cursor:pointer;border-radius:3px;white-space:nowrap">→ DEMO</button>
-        <button onclick="showLanding()" style="font-family:var(--mono);font-size:9px;padding:5px 12px;border:1px solid #1A3350;color:#3A5A72;background:transparent;cursor:pointer;border-radius:3px;white-space:nowrap">Logout</button>
       </div>
     </div>
     <!-- PORTAL TAB BAR -->
