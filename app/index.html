@@ -4984,8 +4984,9 @@ async function sendAi(){
     if(!apiKey){msgs.push({r:'agent',c:'No API key set. Please paste your Anthropic API key in the bar below and click ACTIVATE.'});var tp5=document.getElementById('typing');if(tp5)tp5.remove();loading=false;btn.disabled=false;renderMsgs();return;}
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1000,system:swGetSys(),messages:msgs.map(m=>({role:m.r==='agent'?'assistant':'user',content:m.c}))})});
     const data=await res.json();
-    msgs.push({r:'agent',c:data.content.map(x=>x.text||'').join('')});
-  }catch(e){msgs.push({r:'agent',c:'Connection error — please try again.'});}
+    if(!res.ok){ msgs.push({r:'agent',c:'API error '+res.status+': '+(data.error&&data.error.message||JSON.stringify(data))}); }
+    else { msgs.push({r:'agent',c:data.content.map(x=>x.text||'').join('')}); }
+  }catch(e){msgs.push({r:'agent',c:'Connection error: '+e.message});}
   const tp2=document.getElementById('typing');if(tp2)tp2.remove();
   loading=false;btn.disabled=false;renderMsgs();
 }
