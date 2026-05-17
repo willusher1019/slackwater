@@ -1339,7 +1339,7 @@ function sendAi(){
     if(q.includes('drew') || q.includes('call') || q.includes('prep')){
       demoReply = "Prep for Drew call — 18:00 today.\n\nKey points to lead with:\n• Two founding incidents: 07 May (£7,200 lost, tidal window) and 11 May (full day lost, 1 absentee cascade). Both preventable.\n• Slackwater logged both in real time. Constraint taxonomy, labour impact, root cause, preventability rating — all captured.\n• The system already runs. This isn't a pitch for something theoretical.\n\nWhat to show him:\n1. The nightly brief — tonight's GO/DELAY verdict with exact reasoning.\n2. The task log — events categorised by constraint type.\n3. The tidal forecast — decision-ready, not just data.\n\nSuggested ask: \"Is there someone at Balfour Beatty on this programme you'd introduce me to?\"\n\nDrew is the gateway, not the buyer. Protect the relationship. Don't ask for anything that puts him in a difficult position with BB or the EA client.";
     } else if(q.includes('ptw') || q.includes('permit') || q.includes('leaf g')){
-      demoReply = "Leaf G PTW — status update.\n\nPTW for Leaf G is pending EA director sign-off. As of this morning no confirmation received.\n\nIf cleared today:\n• Anode cutting Leaf G can resume tomorrow — tidal window 08:25–12:15 gives approximately 3h 50m usable access.\n• Wind forecast 7 m/s — below all thresholds. No crane restrictions.\n• Crew: confirm 6-person minimum by 19:00 tonight. C. James and F. Mensah still require CTC before leaf access is permissible.\n\nRecommendation: Chase EA director confirmation before 15:00. If not received, issue DELAY verdict for Leaf G tomorrow and redeploy crew to Leaf B taping continuation.\n\nHot Works Permit expires in 1 day — raise renewal regardless of PTW outcome.";
+      demoReply = "Leaf G PTW — status update.\n\nPTW for Leaf G is pending EA director sign-off. As of this morning no confirmation received.\n\nIf cleared today:\n• Anode cutting Leaf G can resume tomorrow — tidal window 08:25–12:15 gives approximately 3h 50m usable access.\n• Wind forecast 7 m/s — crane operational (threshold 10 m/s). Wind does not restrict arm or leaf operations.\n• Crew: confirm 6-person minimum by 19:00 tonight. C. James and F. Mensah still require CTC before leaf access is permissible.\n\nRecommendation: Chase EA director confirmation before 15:00. If not received, issue DELAY verdict for Leaf G tomorrow and redeploy crew to Leaf B taping continuation.\n\nHot Works Permit expires in 1 day — raise renewal regardless of PTW outcome.";
     } else if(q.includes('critical path') || q.includes('first bolt') || q.includes('leaf b')){
       demoReply = "Critical path to first bolt — Leaf B.\n\nBlocking items in sequence:\n1. Confined Space Permit — MISSING. No leaf access without it. Raise today.\n2. RAMS renewal — expired 10 May. Must be reissued before works resume.\n3. Scaffold inspection — expires in 2 days. Book now or Leaf B access closes.\n4. CTC clearance — C. James and F. Mensah cannot enter leaf until resolved. Estimated 48h to clear.\n\nEarliest realistic first bolt: Thursday 15 May — assuming Confined Space Permit raised today, RAMS reissued by tomorrow, scaffold inspection booked Wednesday.\n\nIf any of the above slips by 24h, first bolt moves to Monday 19 May.\n\nAction: Escalate Confined Space Permit to BB site manager before end of today.";
     } else if(q.includes('tomorrow') || q.includes('mobilise') || q.includes('mobilize') || q.includes('go') || q.includes('brief')){
@@ -1349,7 +1349,7 @@ function sendAi(){
     } else if(q.includes('cost') || q.includes('waste') || q.includes('labour') || q.includes('idle')){
       demoReply = "Labour waste summary — Thames Barrier programme.\n\nLogged to date:\n• 07 May: £7,200 estimated direct labour cost. Zero output. Constraint: tidal window + EA gate check overrun.\n• 11 May: £2,840 estimated direct labour cost. Zero primary output. Constraint: minimum crew + unscheduled inspection.\n\nTotal logged waste: ~£10,040 across 2 operational days.\n\nPreventable fraction: 100% of logged events assessed as foreseeable and preventable.\n\nProjected programme exposure (if pattern holds):\nAt current frequency (1 significant stand-down per 3 operational days), estimated monthly productive time loss: 8–10 days. At £4,500/day average direct cost: ~£40,000/month in preventable waste.\n\nThis is the number that matters to a Commercial Director.";
     } else if(q.includes('weather') || q.includes('wind') || q.includes('tide') || q.includes('window')){
-      demoReply = "Live forecast — Thames Barrier.\n\nToday: Wind 12 m/s — Leaf access marginal. Apollo crane suspended (threshold 10 m/s). Tidal window closed 11:30–15:00.\n\nTomorrow (Tue 13 May): Wind 7 m/s — all thresholds clear. Tidal window 08:25–12:15. Best operational day this week. Recommend full crew mobilisation if permits resolved.\n\nWed 14 May: Wind 9 m/s — works viable, crane marginal.\nThu 15 May: Wind 14 m/s — approaching hard stop. Plan reduced operations.\nFri 16 May: Wind 17 m/s — all works suspended.\n\nWeekend: 17–19 m/s both days. No operational window.\n\nRecommendation: Concentrate all permit resolution and crew confirmation today. Tomorrow is the week's best window — do not waste it on an unresolved Confined Space Permit.";
+      demoReply = "Live forecast — Thames Barrier.\n\nToday: Wind 12 m/s — Apollo crane suspended (threshold 10 m/s). Leaf and arm access unaffected by wind. Tidal window closed 11:30–15:00.\n\nTomorrow (Tue 13 May): Wind 7 m/s — crane operational. Tidal window 08:25–12:15. Best operational day this week. Recommend full crew mobilisation if permits resolved.\n\nWed 14 May: Wind 9 m/s — crane marginal, leaf operations unaffected.\nThu 15 May: Wind 14 m/s — crane suspended, leaf and arm works can proceed.\nFri 16 May: Wind 17 m/s — crane suspended, leaf operations unaffected.\n\nWeekend: 17–19 m/s both days. Crane suspended. Leaf access available subject to tidal windows and permits.\n\nRecommendation: Concentrate all permit resolution and crew confirmation today. Tomorrow is the week's best window — do not waste it on an unresolved Confined Space Permit.";
     } else {
       demoReply = "Slackwater — Thames Barrier operational status.\n\nSite: Thames Barrier, Woolwich SE18. Programme: Monel Bolt Replacement. Leaves B and G. 1,200 bolts total.\n\nCurrent status:\n• 5 critical alerts outstanding\n• Hot Works Permit: 1 day remaining\n• Confined Space Permit: MISSING\n• C. James, F. Mensah: no CTC — leaf access blocked\n• Leaf G PTW: pending EA director\n• Tomorrow's window: 08:25–12:15 (viable — wind 7 m/s)\n\nTomorrow's verdict: CONDITIONAL GO — Leaf B taping only. Requires full crew confirmation by 19:00 tonight.\n\nWhat do you need — permit status, crew readiness, tidal forecast, or incident analysis?\n\n[Demo mode — connect an Anthropic API key below for live AI responses]";
     }
@@ -1362,7 +1362,7 @@ function sendAi(){
   }
   // Pull any additional context saved by the READ DOCUMENT feature
   var _rdCtx = (function(){ try{ var s=localStorage.getItem('sw_doc_context'); return s ? '\n\nDOCUMENT CONTEXT (read from site photos):\n'+s : ''; }catch(e){ return ''; } })();
-  var SYS = "You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme. Respond clearly in plain English. Be specific — name people, permits, exact thresholds. You are a decision-support tool. Your job is to help the site team mobilise correctly each morning.\n\nTODAY: " + swToday() + "\n\nPROGRAMME: Monel Bolt Fixing Replacement — Thames Barrier, Woolwich. Client framework: SCAPE Civil Engineers. Contractor: Balfour Beatty. Programme document: 4 Week Look Ahead w/c 20.04.2026. ZEROHARM safety framework in operation.\n\nSITE: Thames Barrier, Woolwich. LEAVES: B (Bravo) and G (Golf). BOLTS: 1,200 total. PIERS: 1–9. Active work piers: 3, 4, 8, 9. MOB area is crew base.\n\nPERSONNEL: Will — forward-deployed programme lead. Sam — on-site team. Nick — topman. Hugh, Scott, Idris — dive team (DiveCo). Hogie, Jack — standby crew. ERT required for all dive operations. Kaefer — blasting contractor (mobilising late May). AllTask — scaffold contractor. Apollo — cradle/rig contractor. EA — Environment Agency (gate closure authority). BB — Balfour Beatty (principal contractor).\n\nCONSTRAINTS:\n- Wind hard stop 15 m/s (all works)\n- 10 m/s (Apollo crane only)\n- No leaf access ±90 mins high water (tidal window)\n- CTC mandatory for all personnel\n- DiveCo ERT mandatory before any leaf access\n- No crane lifts over water during arm operations\n- Confined space permits (CS-GB-MW series) required for all leaf and end box access\n- ZEROHARM board must show active PTW before works commence\n\nPROGRAMME — GATE BRAVO STATUS (as of mid-May 2026):\n- DiveCo set up CS: 33% complete. Deep clean of leaf and end boxes in progress. Top row gate arm clean: not started.\n- Scaffold works: AllTask installing walkway and working platforms in Gate B leaf (Mon 11 May → Mon 18 May). Scaffold floor in gate arm follows (Tue 19 → Thu 21 May).\n- TWC sign-off temporary works Gate B: Thu 21 May.\n- Kaefer induction and mobilisation: Fri 22 May.\n- Blasting external bolts on hinges: Tue 26 May → Wed 03 Jun (Kaefer, 7 days).\n- GATE CLOSURE MISS flagged: 04.06.2026.\n- CE blasting underside of hinge within gate arm: Mon 08 Jun → Fri 19 Jun (Kaefer).\n- CE blasting underside of fixed within gate arm: Mon 22 Jun → Fri 03 Jul (Kaefer).\n\nPROGRAMME — GATE GOLF STATUS (as of mid-May 2026):\n- DiveCo set up CS: 29% complete. Deep clean of leaf and end boxes ongoing. Top row gate arm: not started.\n- Apollo Cradle: Install rig cables and winches Wed 13 May. Hang cradle and adjust Thu 14 May.\n- CE removal of cathodic protection: Thu 14 May (1 day, DiveCo).\n- GATE CLOSURE MISS flagged: 06.05.2026 (already passed) and 15.05.2026.\n- CE removal of cathodic protection continuation: Mon 18 → Wed 20 May (3 days, DiveCo).\n- Scaffold works: Remove hatch north end Gate G leaf (Fri 17 Apr, done). AllTask walkway platforms Gate G (Mon 20 Apr → Tue 28 Apr). Platform between Pier 4 and gate: Fri 22 May → Wed 27 May (AllTask).\n- TWC sign-off temporary works Gate G: Wed 27 May.\n- Kaefer blasting Gate G: Mon 08 Jun → Wed 17 Jun (8 days). Then hinge underside: Thu 18 Jun → Wed 01 Jul. Fixed underside: Mon 06 Jul → Fri 17 Jul.\n\nWEEK OF 18 MAY (from site whiteboard):\n- Gate Bravo: AllTask leaf internal scaffold installation. DiveCo leaf cleaning dams. Nitrogen work. Bravo nitrogen.\n- Gate Golf: DiveCo arm cleaning. Kaefer induction.\n- EA-Pellicani approvals: active.\n\nGATE CLOSURE SCHEDULE (EA controlled):\n- MISS: 06.05.2026 (passed)\n- MISS: 04.06.2026 (upcoming — programme already flagging as a miss)\n- HIT: 06.07.2026\n- MISS: 03.08.2026\n- MISS: 14.09.2026\n- HIT: 11.10.2026\n\nKGV WORKS (barge operations, 19% complete):\n- Barge 1: delivered scaffold materials Gate G, Cradle 1 for Pier 9. Offload and install Cradle 1 on Pier 9: 5 days ending Thu 07 May.\n- Barge 2: scaffold materials Gate B, Cradle 2 for Pier 4. Offload and install Cradle 2 on Pier 4: 4 days Fri 08 May → Wed 13 May.\n\nTASK LOG (chronological):\n- 07 May: Anode cutting Leaf G, 09:20–11:52, 24 anodes, 6.3 min each, 2 workers. 13 total on task.\n- 08 May: Anode taping Leaf B, 09:45–11:00, 24 anodes, 3.1 min each, 2 workers.\n- 08 May: Anode cutting Leaf B (afternoon), 13:35–14:35 — aborted at 12/24, rising tide.\n- 14 May: 07:30 briefing. 08:20 DiveCo brief. 08:50 Hugh, Scott, Idris enter leaf — end box cleaning (water ingress from prior jet washing). Hugh out 09:09. 11:00–11:45 mandatory mental health talk. 11:45–13:30 lunch. 13:30 trolley retrieval. 13:45 loading anodes pier 8. 14:00–14:50 anode removal: 48 anodes off piers 3/4, 48 off piers 8/9 (96 total). 14:53 back in MOB. Nick topman. Hogie and Jack standby — not deployed.\n\nMOBILISATION BASELINE: 33 mins from MOB to arm." + _rdCtx;
+  var SYS = "You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme. Respond clearly in plain English. Be specific — name people, permits, exact thresholds. You are a decision-support tool. Your job is to help the site team mobilise correctly each morning.\n\nTODAY: " + swToday() + "\n\nPROGRAMME: Monel Bolt Fixing Replacement — Thames Barrier, Woolwich. Client framework: SCAPE Civil Engineers. Contractor: Balfour Beatty. Programme document: 4 Week Look Ahead w/c 20.04.2026. ZEROHARM safety framework in operation.\n\nSITE: Thames Barrier, Woolwich. LEAVES: B (Bravo) and G (Golf). BOLTS: 1,200 total. PIERS: 1–9. Active work piers: 3, 4, 8, 9. MOB area is crew base.\n\nPERSONNEL: Will — forward-deployed programme lead. Sam — on-site team. Nick — topman. Hugh, Scott, Idris — dive team (DiveCo). Hogie, Jack — standby crew. ERT required for all dive operations. Kaefer — blasting contractor (mobilising late May). AllTask — scaffold contractor. Apollo — cradle/rig contractor. EA — Environment Agency (gate closure authority). BB — Balfour Beatty (principal contractor).\n\nCONSTRAINTS:\n- Wind: Apollo crane hard stop 10 m/s. Wind does NOT affect arm access, leaf operations, or DiveCo works — only crane operations are wind-restricted.\n- No leaf access ±90 mins high water (tidal window)\n- CTC mandatory for all personnel\n- DiveCo ERT mandatory before any leaf access\n- No crane lifts over water during arm operations\n- Confined space permits (CS-GB-MW series) required for all leaf and end box access\n- ZEROHARM board must show active PTW before works commence\n\nPROGRAMME — GATE BRAVO STATUS (as of mid-May 2026):\n- DiveCo set up CS: 33% complete. Deep clean of leaf and end boxes in progress. Top row gate arm clean: not started.\n- Scaffold works: AllTask installing walkway and working platforms in Gate B leaf (Mon 11 May → Mon 18 May). Scaffold floor in gate arm follows (Tue 19 → Thu 21 May).\n- TWC sign-off temporary works Gate B: Thu 21 May.\n- Kaefer induction and mobilisation: Fri 22 May.\n- Blasting external bolts on hinges: Tue 26 May → Wed 03 Jun (Kaefer, 7 days).\n- GATE CLOSURE MISS flagged: 04.06.2026.\n- CE blasting underside of hinge within gate arm: Mon 08 Jun → Fri 19 Jun (Kaefer).\n- CE blasting underside of fixed within gate arm: Mon 22 Jun → Fri 03 Jul (Kaefer).\n\nPROGRAMME — GATE GOLF STATUS (as of mid-May 2026):\n- DiveCo set up CS: 29% complete. Deep clean of leaf and end boxes ongoing. Top row gate arm: not started.\n- Apollo Cradle: Install rig cables and winches Wed 13 May. Hang cradle and adjust Thu 14 May.\n- CE removal of cathodic protection: Thu 14 May (1 day, DiveCo).\n- GATE CLOSURE MISS flagged: 06.05.2026 (already passed) and 15.05.2026.\n- CE removal of cathodic protection continuation: Mon 18 → Wed 20 May (3 days, DiveCo).\n- Scaffold works: Remove hatch north end Gate G leaf (Fri 17 Apr, done). AllTask walkway platforms Gate G (Mon 20 Apr → Tue 28 Apr). Platform between Pier 4 and gate: Fri 22 May → Wed 27 May (AllTask).\n- TWC sign-off temporary works Gate G: Wed 27 May.\n- Kaefer blasting Gate G: Mon 08 Jun → Wed 17 Jun (8 days). Then hinge underside: Thu 18 Jun → Wed 01 Jul. Fixed underside: Mon 06 Jul → Fri 17 Jul.\n\nWEEK OF 18 MAY (from site whiteboard):\n- Gate Bravo: AllTask leaf internal scaffold installation. DiveCo leaf cleaning dams. Nitrogen work. Bravo nitrogen.\n- Gate Golf: DiveCo arm cleaning. Kaefer induction.\n- EA-Pellicani approvals: active.\n\nGATE CLOSURE SCHEDULE (EA controlled):\n- MISS: 06.05.2026 (passed)\n- MISS: 04.06.2026 (upcoming — programme already flagging as a miss)\n- HIT: 06.07.2026\n- MISS: 03.08.2026\n- MISS: 14.09.2026\n- HIT: 11.10.2026\n\nKGV WORKS (barge operations, 19% complete):\n- Barge 1: delivered scaffold materials Gate G, Cradle 1 for Pier 9. Offload and install Cradle 1 on Pier 9: 5 days ending Thu 07 May.\n- Barge 2: scaffold materials Gate B, Cradle 2 for Pier 4. Offload and install Cradle 2 on Pier 4: 4 days Fri 08 May → Wed 13 May.\n\nTASK LOG (chronological):\n- 07 May: Anode cutting Leaf G, 09:20–11:52, 24 anodes, 6.3 min each, 2 workers. 13 total on task.\n- 08 May: Anode taping Leaf B, 09:45–11:00, 24 anodes, 3.1 min each, 2 workers.\n- 08 May: Anode cutting Leaf B (afternoon), 13:35–14:35 — aborted at 12/24, rising tide.\n- 14 May: 07:30 briefing. 08:20 DiveCo brief. 08:50 Hugh, Scott, Idris enter leaf — end box cleaning (water ingress from prior jet washing). Hugh out 09:09. 11:00–11:45 mandatory mental health talk. 11:45–13:30 lunch. 13:30 trolley retrieval. 13:45 loading anodes pier 8. 14:00–14:50 anode removal: 48 anodes off piers 3/4, 48 off piers 8/9 (96 total). 14:53 back in MOB. Nick topman. Hogie and Jack standby — not deployed.\n\nMOBILISATION BASELINE: 33 mins from MOB to arm." + _rdCtx;
   var history = msgs.map(function(m){ return {role: m.r==='agent'?'assistant':'user', content: m.c}; });
   fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -3645,7 +3645,7 @@ window.swDemoSubmit = function(e){
               <div style="font-size:13px;font-weight:700;color:#F59E0B;letter-spacing:0.2px">Wind Sat/Sun 17–19 m/s — full stand-down</div>
               <div style="font-family:var(--mono);font-size:9px;color:#8896A5;flex-shrink:0">WEATHER ↓</div>
             </div>
-            <div style="display:none;font-size:12px;color:#A8C4DC;line-height:1.7;padding:10px;background:#060E18;border-radius:4px;border:1px solid #1A3350;margin-top:4px">Wind forecast Saturday 17 m/s, Sunday 19 m/s — both above the 15 m/s site hard stop. All works suspended both days. Notify all contractors by 19:00 Friday.</div>
+            <div style="display:none;font-size:12px;color:#A8C4DC;line-height:1.7;padding:10px;background:#060E18;border-radius:4px;border:1px solid #1A3350;margin-top:4px">Wind forecast Saturday 17 m/s, Sunday 19 m/s — both above Apollo crane hard stop 10 m/s. Crane suspended both days. Arm access, leaf ops, and DiveCo works unaffected by wind. Notify Apollo by 19:00 Friday.</div>
 
             <div style="height:1px;background:#E2E6EA"></div>
             <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -4788,7 +4788,7 @@ const CDATA={
   alltask:{title:'All Task — Works Progress',note:'F. Mensah has no CTC clearance and cannot access the barrier. Scaffold inspection Leaf B expires in 2 days. CTC register expires 15 May.',
     works:[{t:'Leaf B scaffold sections 1 & 2',p:100,s:'COMPLETE',l:'B',b:null},{t:'Leaf B scaffold section 3 upper',p:65,s:'IN PROGRESS',l:'B',b:null},{t:'Leaf B scaffold handover to BB',p:0,s:'BLOCKED',l:'B',b:'Section 3 must reach 100% first'},{t:'Leaf G scaffold sections 1 & 2',p:20,s:'IN PROGRESS',l:'G',b:'PTW Leaf G pending'},{t:'Leaf G scaffold section 3 upper',p:0,s:'BLOCKED',l:'G',b:'Dependent on sections 1 & 2'}],
     staff:[{n:"P. O'Brien",r:'Scaffold Supervisor',c:true,t:'06:00'},{n:'G. Fernandez',r:'Advanced Scaffolder',c:true,t:'06:00'},{n:'N. Carter',r:'Scaffolder',c:true,t:'06:00'},{n:'B. Ahmed',r:'Scaffolder',c:true,t:'06:00'},{n:'L. Quinn',r:'Scaffolder',c:true,t:'06:30'},{n:'F. Mensah',r:'Trainee Scaffolder',c:false,t:'N/A'}]},
-  apollo:{title:'Apollo Crane Services — Works Progress',note:'Wind hard stop for crane ops: 10 m/s — lower than general 15 m/s site limit. No crane lifts over water while DiveCo ERT diving. Wind forecast Sat/Sun 17–19 m/s — all works suspended. Best crane window: Tuesday 13 May.',
+  apollo:{title:'Apollo Crane Services — Works Progress',note:'Wind hard stop for crane ops: 10 m/s. No crane lifts over water while DiveCo ERT diving. Wind forecast Sat/Sun 17–19 m/s — crane suspended both days (arm/leaf/dive ops unaffected). Best crane window: Tuesday 13 May.',
     works:[{t:'Crane installation — south bank',p:80,s:'IN PROGRESS',l:null,b:null},{t:'Lift plan approval — Leaf B',p:100,s:'COMPLETE',l:'B',b:null},{t:'Lift plan approval — Leaf G',p:0,s:'BLOCKED',l:'G',b:'Leaf G PTW required first'},{t:'Materials lift to Leaf B',p:0,s:'BLOCKED',l:'B',b:'Wind 11 m/s above crane threshold 10 m/s. No lifts during DiveCo diving.'},{t:'Materials lift to Leaf G',p:0,s:'BLOCKED',l:'G',b:'PTW and lift plan both pending'}],
     staff:[{n:'B. Crane',r:'Appointed Person (Lifting)',c:true,t:'06:30'},{n:'T. Rigby',r:'Crane Operator',c:true,t:'06:30'},{n:'S. Holt',r:'Slinger / Signaller',c:true,t:'06:30'},{n:'P. Doyle',r:'Crane Supervisor',c:true,t:'07:00'}]}
 };
@@ -4798,8 +4798,7 @@ function swGetSys(){ return `You are Slackwater — AI operational intelligence 
 TODAY: ${swToday()}. SITE: Thames Barrier, Woolwich. LEAVES: B and G. BOLTS: 1,200 total (600 per leaf). Target: November 2026.
 
 CONFIRMED CONSTRAINTS:
-- Wind hard stop ALL works: 15 m/s
-- Wind hard stop CRANE (Apollo only): 10 m/s  
+- Wind hard stop CRANE (Apollo only): 10 m/s — arm access, leaf ops, and DiveCo works are NOT wind-restricted
 - No leaf access within 90 minutes of high water
 - Falling tide = lower risk. Rising tide = higher risk.
 - CTC clearance: mandatory for all personnel, no exceptions
@@ -4817,7 +4816,7 @@ CRITICAL ISSUES: BB Hot Works Permit expires tomorrow. Confined Space Permit mis
 
 TOMORROW (Thu 08 May): Tidal window 05:10–08:55 (3h 45m, falling, good). Wind 11 m/s — works OK, Apollo crane suspended. Verdict: PROCEED WITH CONDITIONS. Priority: Leaf B bolt survey completion (85% done).
 
-WEEKEND: Sat wind 17 m/s, Sun wind 19 m/s — all works suspended both days.
+WEEKEND: Sat wind 17 m/s, Sun wind 19 m/s — Apollo crane suspended both days. Arm access, leaf ops, DiveCo works unaffected by wind.
 BEST WINDOW: Tuesday 13 May — 4h+ falling tide, wind 7 m/s.
 WORKING HOURS: 07:00–17:00. Overtime 1.5x outside those hours.`; }
 
@@ -7216,7 +7215,7 @@ async function genNightlyBrief(ci){
       '• Gusts: ' + lw.gust + ' m/s\n' +
       '• Temperature: ' + lw.temp + '°C\n' +
       '• Lightning / thunderstorm active: ' + (lwThunder ? 'YES — works are currently stopped under the lightning rule' : 'No') + '\n' +
-      '• Wind status: ' + (lwThunder ? 'THUNDER STOP' : lw.wind>=15 ? 'ALL STOP (>15 m/s)' : lw.wind>=10 ? 'CRANE STOP (>10 m/s)' : 'ALL CLEAR');
+      '• Wind status: ' + (lwThunder ? 'THUNDER STOP' : lw.wind>=10 ? 'CRANE STOP (>10 m/s — arm/leaf/dive ops unaffected)' : 'ALL CLEAR');
     if(!lwThunder && window._swLastThunderTime){
       var elapsed = (new Date() - window._swLastThunderTime)/60000;
       var remaining = Math.max(0, 30-elapsed);
@@ -7226,11 +7225,10 @@ async function genNightlyBrief(ci){
 
   /* Build hard rules string from programme rules + checklist */
   var hardRulesStr = '';
-  if(progRules.windHardStop || progRules.minimumCrew || progRules.source){
+  if(progRules.windCraneStop || progRules.minimumCrew || progRules.source){
     hardRulesStr += '\n\nPROGRAMME RULES — FROM UPLOADED DOCUMENTS (contractual, non-negotiable):';
     if(progRules.source) hardRulesStr += '\nSource: ' + progRules.source;
-    if(progRules.windHardStop) hardRulesStr += '\n• Wind hard stop ALL works: ' + progRules.windHardStop + ' m/s — VERDICT MUST BE DELAY if exceeded';
-    if(progRules.windCraneStop) hardRulesStr += '\n• Wind hard stop CRANE: ' + progRules.windCraneStop + ' m/s';
+    if(progRules.windCraneStop) hardRulesStr += '\n• Wind hard stop CRANE only (Apollo): ' + progRules.windCraneStop + ' m/s — arm/leaf/dive ops unaffected by wind';
     if(progRules.minimumCrew) hardRulesStr += '\n• Minimum crew: ' + progRules.minimumCrew + ' persons — VERDICT MUST BE DELAY if not confirmed';
     if(progRules.tidalAccessMinutes) hardRulesStr += '\n• Tidal exclusion: ' + progRules.tidalAccessMinutes + ' min from high water';
     if(progRules.accessConditions) hardRulesStr += '\n• Access: ' + progRules.accessConditions;
@@ -7251,11 +7249,10 @@ async function genNightlyBrief(ci){
     }
   }
 
-  var windStop = progRules.windHardStop || 15;
   var craneStop = progRules.windCraneStop || 10;
   var minCrew = progRules.minimumCrew ? progRules.minimumCrew + ' persons' : '4 ERT minimum (DiveCo)';
 
-  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (these are HARD RULES — do not override under any circumstances):\n- Lightning / thunderstorm: IMMEDIATE STOP. 30-minute clear rule.\n- Wind hard stop ALL works: ' + windStop + ' m/s\n- Wind hard stop CRANE (Apollo): ' + craneStop + ' m/s\n- Minimum crew: ' + minCrew + '\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48' +
+  var prompt = 'You are Slackwater — AI operational intelligence for the Thames Barrier Monel Bolt Replacement programme (Woolwich, SE18). Generate tonight\'s operational brief.\n\nTODAY: ' + today + '\n\nSITE CONSTRAINTS (these are HARD RULES — do not override under any circumstances):\n- Lightning / thunderstorm: IMMEDIATE STOP. 30-minute clear rule.\n- Wind does NOT stop arm, leaf, or dive operations. Wind only affects crane (Apollo hard stop: ' + craneStop + ' m/s).\n- Minimum crew: ' + minCrew + '\n- No leaf access within 90 mins of high water\n- CTC clearance mandatory for all personnel\n- EA can suspend works without notice\n- BOLTS: 1,200 total. ANODES CUT TO DATE: 48' +
     hardRulesStr + liveWxContext + checklistStr + forcedVerdictStr +
     '\n\n' + taskSummary + '\n\n' + eventSummary +
     '\n\nGenerate a brief covering:\n1. VERDICT: GO / DELAY / CANCEL for tomorrow\'s primary task. State reason in one sentence. Hard rules override everything.\n2. SUMMARY: 2-3 sentences on today and tomorrow\'s plan.\n3. BLOCKERS: Outstanding issues before mobilisation.\n4. ACTIONS REQUIRED TONIGHT: Specific, named, timed.\n5. DRAFT WORKFORCE NOTIFICATION: WhatsApp-style, max 120 words.\n6. MOST EXPOSED ASSUMPTION: One sentence — what single condition, if it changes, flips this verdict. Format: "This verdict assumes [X]. If [Y changes], revert to DELAY."\n\nBe specific. Use names from data. State tidal windows. Do NOT refuse or hedge.\n\nFormat with clear plain-text section headers (no markdown asterisks).';
@@ -7571,7 +7568,7 @@ window.ofEmergencyLog = function(type){
 
   /* Also put a description in the Quick Log box so it's clear what happened */
   var inp = document.getElementById('of-quick-inp');
-  var labels = { lightning: 'Lightning stand-down — all 14 personnel', wind: 'Wind stop — all works suspended', tide: 'Tidal window closed — leaf access suspended' };
+  var labels = { lightning: 'Lightning stand-down — all 14 personnel', wind: 'Wind stop — Apollo crane suspended (arm/leaf ops unaffected)', tide: 'Tidal window closed — leaf access suspended' };
   if(inp) inp.value = labels[type] || '';
 
   var status = document.getElementById('of-quick-status');
@@ -8215,16 +8212,12 @@ window.swUpdateBcWindStatus = function(){
   if(!windEl || !statusEl) return;
   var v = parseFloat(windEl.value);
   var progRules = swGetProgrammeRules();
-  var hardStop  = progRules.windHardStop  || 15;
   var craneStop = progRules.windCraneStop || 10;
   if(isNaN(v)){
     statusEl.textContent = '';
     statusEl.style.color = '#3A5A72';
-  } else if(v >= hardStop){
-    statusEl.textContent = 'ALL STOP (' + v + ' m/s)';
-    statusEl.style.color = '#FF4444';
   } else if(v >= craneStop){
-    statusEl.textContent = 'CRANE STOP (' + v + ' m/s)';
+    statusEl.textContent = 'CRANE STOP (' + v + ' m/s) — arm/leaf ops unaffected';
     statusEl.style.color = '#F59E0B';
   } else {
     statusEl.textContent = 'ALL CLEAR (' + v + ' m/s)';
@@ -8248,7 +8241,7 @@ window.swRenderBcRules = function(){
   var r = swGetProgrammeRules();
   var lines = [];
   if(r.source)              lines.push('Source: ' + r.source);
-  if(r.windHardStop)        lines.push('Wind hard stop (all works): ' + r.windHardStop + ' m/s');
+  if(r.windCraneStop)       lines.push('Wind hard stop (crane only): ' + r.windCraneStop + ' m/s — arm/leaf/dive ops not wind-restricted');
   if(r.windCraneStop)       lines.push('Wind hard stop (crane): ' + r.windCraneStop + ' m/s');
   if(r.minimumCrew)         lines.push('Minimum crew: ' + r.minimumCrew + ' persons');
   if(r.tidalAccessMinutes)  lines.push('Tidal exclusion: ' + r.tidalAccessMinutes + ' min from HW');
@@ -8266,7 +8259,6 @@ window.swEvalRuleEngine = function(){
   var alertEl = document.getElementById('bc-rule-alert');
   var runBtn  = document.getElementById('bc-run-btn');
   var progRules = swGetProgrammeRules();
-  var hardStop  = progRules.windHardStop  || 15;
   var craneStop = progRules.windCraneStop || 10;
 
   var windEl = document.getElementById('bc-wind');
@@ -8275,10 +8267,9 @@ window.swEvalRuleEngine = function(){
   var triggers = [];
   var forcedVerdict = null;
 
-  /* Wind — ALL STOP */
-  if(!isNaN(wind) && wind >= hardStop){
-    triggers.push('• Wind ' + wind + ' m/s ≥ ' + hardStop + ' m/s hard stop — all works must cease');
-    forcedVerdict = 'DELAY';
+  /* Wind — CRANE ONLY (does not stop arm/leaf/dive ops) */
+  if(!isNaN(wind) && wind >= craneStop){
+    triggers.push('• Wind ' + wind + ' m/s ≥ ' + craneStop + ' m/s — Apollo crane suspended. Arm and leaf operations unaffected.');
   }
 
   /* Crew not confirmed */
