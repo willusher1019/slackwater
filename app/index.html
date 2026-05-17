@@ -1234,10 +1234,8 @@ function showApp(){
   try{
     var saved = localStorage.getItem('sw_api_key');
     if(saved){ window._swApiKey = saved; setTimeout(activateKeyBar, 100); }
-    else if(!window._swIsAdmin){ var bar=document.getElementById('api-key-bar'); if(bar) bar.style.display='none'; }
+    // API key bar always visible when no key stored
   }catch(e){}
-  // Hide key management for non-admin users
-  if(!window._swIsAdmin){ setTimeout(function(){ var bar=document.getElementById('api-key-bar'); if(bar) bar.style.display='none'; },150); }
   if(!msgs.length){
     msgs = [{r:'agent',c:"Slackwater online — Thames Barrier, Leaves B and G.\n\nTask log updated:\n• Anode cutting Leaf G: 2h 32m, 24 anodes, 6.3 min each\n• Anode taping Leaf B: 1h 15m, 24 anodes, 3.1 min each\n• Anode cutting Leaf B (afternoon): aborted at 14:35 — 12 of 24 cut\n\nFive critical alerts outstanding. Mobilising 22 of 30 tomorrow.\n\nWhat do you need?"}];
     renderMsgs();
