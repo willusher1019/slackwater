@@ -7652,7 +7652,7 @@ async function ofLoadFromAirtable(){
     if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">● FETCHING LOGS…</div>';
   }
   try{
-    var url = 'https://api.airtable.com/v0/'+AT_TABLE_ID+'/'+AT_TABLE_NAME+'?pageSize=100&sort%5B0%5D%5Bfield%5D=Date&sort%5B0%5D%5Bdirection%5D=desc';
+    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/tblF4dC20yuzWVGDO?pageSize=100';
     var all = [];
     var offset = null;
     do {
@@ -7700,6 +7700,8 @@ async function ofLoadFromAirtable(){
       };
     });
 
+    // Sort newest first
+    events.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
     // Save to localStorage as cache and render
     ofSave(events);
     ofRender(events);
