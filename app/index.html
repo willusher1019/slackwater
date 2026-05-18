@@ -4600,15 +4600,15 @@ Slackwater — Thames Barrier Operations</div>
         <div class="of-row">
           <div class="of-section">
             <div class="of-label">Labour Affected</div>
-            <input type="number" class="of-input" id="of-labour" placeholder="People" min="0" max="999">
+            <input type="number" class="of-input" id="of-labour" placeholder="People" min="0" max="999" oninput="ofAutoCalcCost()">
           </div>
           <div class="of-section">
             <div class="of-label">Time Lost (hrs)</div>
-            <input type="number" class="of-input" id="of-hours" placeholder="0.0" step="0.5" min="0">
+            <input type="number" class="of-input" id="of-hours" placeholder="0.0" step="0.5" min="0" oninput="ofAutoCalcCost()">
           </div>
           <div class="of-section">
-            <div class="of-label">Est. Cost (£)</div>
-            <input type="number" class="of-input" id="of-cost-inp" placeholder="0" step="100" min="0">
+            <div class="of-label">Est. Cost (£) <span id="of-cost-auto" style="font-size:8px;color:#00C4D4;letter-spacing:1px;display:none">AUTO</span></div>
+            <input type="number" class="of-input" id="of-cost-inp" placeholder="0" step="100" min="0" oninput="ofCostManualOverride()">
           </div>
         </div>
 
@@ -7715,6 +7715,28 @@ function ofSave(events){
   localStorage.setItem(OPLOG_KEY, JSON.stringify(events));
 }
 
+// Auto cost calculation — labour × hours × £85/person/hr
+var OF_COST_MANUAL = false;
+window.ofAutoCalcCost = function(){
+  if(OF_COST_MANUAL) return; // user typed a value, don't override
+  var labour = parseInt(document.getElementById('of-labour').value) || 0;
+  var hours = parseFloat(document.getElementById('of-hours').value) || 0;
+  var costInp = document.getElementById('of-cost-inp');
+  var autoTag = document.getElementById('of-cost-auto');
+  if(labour && hours){
+    costInp.value = Math.round(labour * hours * 85);
+    if(autoTag) autoTag.style.display = 'inline';
+  } else {
+    costInp.value = '';
+    if(autoTag) autoTag.style.display = 'none';
+  }
+};
+window.ofCostManualOverride = function(){
+  var autoTag = document.getElementById('of-cost-auto');
+  OF_COST_MANUAL = true;
+  if(autoTag) autoTag.style.display = 'none';
+};
+
 // Submit
 window.ofSubmit = function(){
   var site = document.getElementById('of-site').value;
@@ -7783,7 +7805,7 @@ window.ofSubmit = function(){
     if(event.constraintType) coreFields['Constraint Type'] = event.constraintType;
     if(event.labourAffected) coreFields['Labour Affected'] = event.labourAffected;
     if(event.timeLostHrs) coreFields['Time Lost (hrs)'] = event.timeLostHrs;
-    if(event.estimatedCost) coreFields['Estimated Cost (£)'] = event.estimatedCost;
+    coreFields['Estimated Cost (£)'] = event.estimatedCost || 0; // always send, auto-calculated
     if(event.preventability) coreFields['Preventability'] = event.preventability;
     if(event.causeCat) coreFields['Cause'] = event.causeCat;
     if(event.rootCause) coreFields['Root Cause'] = event.rootCause;
@@ -7805,6 +7827,9 @@ window.ofSubmit = function(){
 };
 
 window.ofClearForm = function(){
+  OF_COST_MANUAL = false; // reset manual override flag
+  var autoTag = document.getElementById('of-cost-auto');
+  if(autoTag) autoTag.style.display = 'none';
   ['of-site','of-pkg','of-labour','of-hours','of-cost-inp','of-cause','of-recovery-other','of-lessons','of-chain-type','of-chain-ref','of-recovery-hrs'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = id==='of-site'?'':id==='of-date'?el.value:'';
