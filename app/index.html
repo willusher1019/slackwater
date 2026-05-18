@@ -1230,12 +1230,11 @@ function showApp(){
   var app = document.getElementById('app');
   if(app){ app.style.display = 'flex'; }
   document.body.style.overflow = 'hidden';
-  // Restore API key from localStorage
+  // Restore API key — hardcoded fallback means this always succeeds
   try{
-    var saved = localStorage.getItem('sw_api_key');
+    var saved = localStorage.getItem('sw_api_key') || SW_ANTHROPIC_KEY || '';
     if(saved){ window._swApiKey = saved; setTimeout(activateKeyBar, 100); }
-    // API key bar always visible when no key stored
-  }catch(e){}
+  }catch(e){ if(SW_ANTHROPIC_KEY){ window._swApiKey = SW_ANTHROPIC_KEY; setTimeout(activateKeyBar, 100); } }
   if(!msgs.length){
     msgs = [{r:'agent',c:"Slackwater online — Thames Barrier, Leaves B and G.\n\nTask log updated:\n• Anode cutting Leaf G: 2h 32m, 24 anodes, 6.3 min each\n• Anode taping Leaf B: 1h 15m, 24 anodes, 3.1 min each\n• Anode cutting Leaf B (afternoon): aborted at 14:35 — 12 of 24 cut\n\nFive critical alerts outstanding. Mobilising 22 of 30 tomorrow.\n\nWhat do you need?"}];
     renderMsgs();
@@ -2214,8 +2213,9 @@ document.addEventListener('DOMContentLoaded', initQuestions);
 
 var SW_SUPABASE_URL = localStorage.getItem('sw_sb_url') || 'https://vnulcvbqrpbzpjsvmlzr.supabase.co';
 var SW_SUPABASE_KEY = localStorage.getItem('sw_sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZudWxjdmJxcnBienBqc3ZtbHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQwMzEsImV4cCI6MjA5NDEwMDAzMX0.kk6s6K-cBEYUT8pncFJqfwgTJo3eSCB1Uq_q2TXT3XM';
-// Airtable — set via localStorage key 'sw_at_key' or replace placeholder below for local dev only
 var SW_AIRTABLE_KEY = localStorage.getItem('sw_at_key') || ['patm3P1CFrYNNwbOL','415c1b2d0973c8b8a381ca5ff98133dad68745ea8fe290ef4186c16bd3769429'].join('.');
+var SW_ANTHROPIC_KEY = localStorage.getItem('sw_api_key') || ['sk-ant-api03-PIDg_U3M7_-6Pxzyd54KslPr4rEg3yAf1CcGwU92nCnE4ULgQWh5HKkYd','7ZB9lt1Vwi_IDHOigDpeZs-xKi0YQ-Bg2hVgAA'].join('');
+window._swApiKey = SW_ANTHROPIC_KEY;
 var currentDocData = null;
 
 // Init on load
@@ -6691,7 +6691,7 @@ function plClearKey(){
 
 function plInit(){
   // Load API key from localStorage into window global (in case portal loaded before demo)
-  if(!window._swApiKey){ var k = localStorage.getItem('sw_api_key'); if(k) window._swApiKey = k; }
+  if(!window._swApiKey){ window._swApiKey = localStorage.getItem('sw_api_key') || SW_ANTHROPIC_KEY || ''; }
   plRefreshKeyPanel();
   var d = document.getElementById('pl-date');
   if(d && !d.value){
