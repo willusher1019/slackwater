@@ -7708,6 +7708,8 @@ async function ofLoadFromAirtable(){
     // Save to localStorage as cache and render
     ofSave(events);
     ofRender(events);
+    // Auto-refresh stats after every Airtable sync
+    if(typeof dpLoadStats==='function') dpLoadStats();
   } catch(e){ console.warn('ofLoadFromAirtable failed:', e); }
 }
 
@@ -7824,6 +7826,10 @@ window.ofSubmit = function(){
   ofClearForm();
   btn.disabled = false;
   btn.textContent = 'LOG EVENT →';
+  // Refresh stats immediately after logging an event
+  if(typeof dpLoadStats==='function') dpLoadStats();
+  // Push to Airtable and re-sync to confirm record saved
+  setTimeout(function(){ if(window.ofLoadFromAirtable) window.ofLoadFromAirtable(); }, 3000);
 };
 
 window.ofClearForm = function(){
@@ -8225,6 +8231,11 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(swLiveWeatherPoll, 1500);
   setInterval(swLiveWeatherPoll, 5 * 60 * 1000);
   setInterval(swRenderLiveWx, 60 * 1000); /* refresh countdown every minute */
+
+  /* Auto-sync operational log from Airtable every 5 minutes — no manual intervention needed */
+  setInterval(function(){
+    if(window.ofLoadFromAirtable) window.ofLoadFromAirtable();
+  }, 5 * 60 * 1000);
 });
 
 window.swLiveWeatherPoll = swLiveWeatherPoll;
