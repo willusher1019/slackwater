@@ -1221,8 +1221,11 @@ function showDataPortal(){
   document.body.style.overflow = 'auto';
   setTimeout(function(){
     if(window.dlInit) window.dlInit();
-    if(window.dpShowTab) window.dpShowTab('tasklog');
-    setTimeout(function(){ if(typeof dpLoadStats==='function') dpLoadStats(); }, 500);
+    if(window.dpShowTab) window.dpShowTab('oplog');
+    setTimeout(function(){
+      if(typeof dpLoadStats==='function') dpLoadStats();
+      if(typeof ofLoadFromAirtable==='function') ofLoadFromAirtable();
+    }, 300);
   }, 200);
 }
 function showApp(){
@@ -7638,6 +7641,15 @@ function ofLoad(){
 async function ofLoadFromAirtable(){
   var atKey = ofGetAtKey();
   if(!atKey) return;
+  // Show loading state in feed
+  var feed = document.getElementById('of-feed');
+  var empty = document.getElementById('of-empty-state');
+  var fc = document.getElementById('of-feed-count');
+  if(feed && (!feed.querySelector('.of-event'))){
+    if(empty) empty.style.display = 'none';
+    if(fc) fc.textContent = 'Loading from Airtable…';
+    if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">● FETCHING LOGS…</div>';
+  }
   try{
     var url = 'https://api.airtable.com/v0/'+AT_TABLE_ID+'/'+AT_TABLE_NAME+'?pageSize=100&sort%5B0%5D%5Bfield%5D=Date&sort%5B0%5D%5Bdirection%5D=desc';
     var all = [];
@@ -7650,7 +7662,12 @@ async function ofLoadFromAirtable(){
       offset = data.offset || null;
     } while(offset);
 
-    if(!all.length) return;
+    if(!all.length){
+      if(fc) fc.textContent = '0 events in Airtable';
+      if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">No events found in Airtable Operational Log table.</div>';
+      if(empty) empty.style.display = 'block';
+      return;
+    }
 
     // Map Airtable fields → event object format
     var events = all.map(function(r){
