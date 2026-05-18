@@ -1224,8 +1224,8 @@ function showDataPortal(){
     if(window.dpShowTab) window.dpShowTab('oplog');
     setTimeout(function(){
       if(typeof dpLoadStats==='function') dpLoadStats();
-      if(typeof ofLoadFromAirtable==='function') ofLoadFromAirtable();
-    }, 300);
+      if(window.ofLoadFromAirtable) window.ofLoadFromAirtable();
+    }, 600);
   }, 200);
 }
 function showApp(){
@@ -4712,7 +4712,10 @@ Slackwater — Thames Barrier Operations</div>
 
         <div class="of-feed-head">
           <div class="of-feed-title">EVENT FEED — NEWEST FIRST</div>
-          <div class="of-feed-count" id="of-feed-count"></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button onclick="window.ofLoadFromAirtable&&window.ofLoadFromAirtable()" style="font-family:var(--mono);font-size:8px;color:#00C4D4;background:none;border:1px solid rgba(0,196,212,0.3);padding:3px 8px;border-radius:3px;cursor:pointer;letter-spacing:1px">↻ SYNC</button>
+            <div class="of-feed-count" id="of-feed-count"></div>
+          </div>
         </div>
 
         <div id="of-feed">
@@ -6463,7 +6466,7 @@ function dpShowTab(tab){
       btn.style.background = t===tab ? 'rgba(0,196,212,0.05)' : 'transparent';
     }
   });
-  if(tab==='oplog'){ if(typeof ofMountInPortal==='function') ofMountInPortal(); if(typeof ofShowAtStatus==='function') ofShowAtStatus(); if(typeof ofRender==='function') ofRender(typeof ofLoad==='function' ? ofLoad() : []); if(typeof ofLoadFromAirtable==='function') ofLoadFromAirtable(); }
+  if(tab==='oplog'){ if(typeof window.ofMountInPortal==='function') window.ofMountInPortal(); if(typeof window.ofShowAtStatus==='function') window.ofShowAtStatus(); }
   if(tab==='tasklog'){ dpLoadStats(); plInit(); }
   if(tab==='readdoc'){ rdInit(); }
   if(tab==='intelligence'){ siRender(); siSyncFromSupabase(); }
@@ -7150,9 +7153,7 @@ function ofMountInPortal(){
   // MOVE children (not clone) so element IDs exist only in dp-oplog, never duplicated
   while(src.firstChild){ target.appendChild(src.firstChild); }
   target.dataset.mounted = '1';
-  // Render localStorage cache immediately, then refresh from Airtable
   ofRender(ofLoad());
-  ofLoadFromAirtable();
 }
 
 async function genNightlyBrief(ci){
@@ -8044,6 +8045,7 @@ window.ofLoad = ofLoad;
 window.ofMountInPortal = ofMountInPortal;
 window.ofShowAtStatus = ofShowAtStatus;
 window.ofInitDate = ofInitDate;
+window.ofLoadFromAirtable = ofLoadFromAirtable;
 
 </script>
 
