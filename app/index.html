@@ -7772,36 +7772,30 @@ window.ofSubmit = function(){
   ofSave(events);
   swDupMark(ofFp);
 
-  // Push to Airtable (requires "Operational Log" table in your Airtable base)
+  // Push to Airtable — core fields only to avoid 422 from missing schema fields
   var atKey = ofGetAtKey();
   if(atKey){
+    var coreFields = {};
+    if(event.date) coreFields['Date'] = event.date;
+    if(event.site) coreFields['Site'] = event.site;
+    if(event.workPackage) coreFields['Work Package'] = event.workPackage;
+    if(event.eventType) coreFields['Event Type'] = event.eventType;
+    if(event.constraintType) coreFields['Constraint Type'] = event.constraintType;
+    if(event.labourAffected) coreFields['Labour Affected'] = event.labourAffected;
+    if(event.timeLostHrs) coreFields['Time Lost (hrs)'] = event.timeLostHrs;
+    if(event.estimatedCost) coreFields['Estimated Cost (£)'] = event.estimatedCost;
+    if(event.preventability) coreFields['Preventability'] = event.preventability;
+    if(event.causeCat) coreFields['Cause'] = event.causeCat;
+    if(event.rootCause) coreFields['Root Cause'] = event.rootCause;
+    if(event.recoveryAction) coreFields['Recovery Action'] = event.recoveryAction;
+    if(event.lessonsLearned) coreFields['Lessons Learned'] = event.lessonsLearned;
     fetch('https://api.airtable.com/v0/'+AT_TABLE_ID+'/'+AT_TABLE_NAME, {
       method:'POST',
       headers:{'Authorization':'Bearer '+atKey,'Content-Type':'application/json'},
-      body: JSON.stringify({ fields: {
-        'Date': event.date,
-        'Site': event.site,
-        'Work Package': event.workPackage,
-        'Event Type': event.eventType,
-        'Constraint Type': event.constraintType,
-        'Labour Affected': event.labourAffected,
-        'Time Lost (hrs)': event.timeLostHrs,
-        'Estimated Cost (£)': event.estimatedCost,
-        'Preventability': event.preventability,
-        'Cause': event.causeCat,
-        'Root Cause': event.rootCause,
-        'Recovery Action': event.recoveryAction,
-        'Lessons Learned': event.lessonsLearned,
-        'Chain Type': event.chainType,
-        'Chain Reference': event.chainRef,
-        'Impact Classification': event.impactClass,
-        'Symptom': event.symptom,
-        'Recovery Duration (hrs)': event.recoveryDurationHrs,
-        'Recovery Effectiveness': event.recoveryEffectiveness,
-        'Evidence Source': event.evidenceSource,
-        'Data Confidence': event.dataConfidence
-      }})
-    }).catch(function(){});
+      body: JSON.stringify({ fields: coreFields })
+    }).then(function(r){
+      if(!r.ok) console.warn('Airtable save error:', r.status);
+    }).catch(function(e){ console.warn('Airtable save failed:', e); });
   }
 
   ofRender(events);
