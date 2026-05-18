@@ -2648,7 +2648,7 @@ function submitTask(){
   if(!task || !date){ alert('Please fill in at least the task name and date.'); return; }
 
   // Read key at submit time (not page load) so it's always current
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
   if(!atKey){ alert('No Airtable key connected — go to OPERATIONAL LOG tab and connect your key first.'); return; }
 
   var taskFp = [date, task.slice(0,30)].join('|');
@@ -2752,7 +2752,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 /* ── LIVE WASTE COUNTER — pulls from Airtable Operational Log ── */
 async function swLoadWasteCounter(){
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
   if(!atKey) return; // show hardcoded defaults if no key
   try {
     var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Operational%20Log?pageSize=100';
@@ -3358,7 +3358,7 @@ lines.forEach((line, i) => {
 
     <!-- Admin bypass — subtle, bottom of page -->
     <div style="margin-top:80px;padding-top:24px;border-top:1px solid #0F1E2E;text-align:center">
-      <button onclick="(function(){ var k=localStorage.getItem('sw_at_key'); if(k) showApp(); else showDataLogin(); })()" style="font-family:var(--mono);font-size:8px;color:#162840;background:none;border:none;cursor:pointer;letter-spacing:1px;transition:color 0.15s" onmouseover="this.style.color='#3A5A72'" onmouseout="this.style.color='#162840'">admin</button>
+      <button onclick="(function(){ var k=localStorage.getItem('sw_at_key')||SW_AIRTABLE_KEY; if(k) showApp(); else showDataLogin(); })()" style="font-family:var(--mono);font-size:8px;color:#162840;background:none;border:none;cursor:pointer;letter-spacing:1px;transition:color 0.15s" onmouseover="this.style.color='#3A5A72'" onmouseout="this.style.color='#162840'">admin</button>
     </div>
 
   </div>
@@ -4891,7 +4891,7 @@ function selC(id){
   else{showTab('contractors',null);document.querySelectorAll('.tab').forEach(b=>{if(b.textContent.includes('CONTRACTORS'))b.classList.add('on');});}
 }
 async function dpLoadContractors(){
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
   if(!atKey) return;
   try {
     var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Task%20Log?pageSize=100&fields%5B%5D=Task%20Name&fields%5B%5D=Date&fields%5B%5D=Contractor&fields%5B%5D=Crew%20Size&fields%5B%5D=Time%20In&fields%5B%5D=Location&fields%5B%5D=Notes';
@@ -5149,7 +5149,7 @@ function loadDocuments(){
   container.innerHTML = html;
 
   // Also try to overlay from Airtable if key present
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
   if(atKey){
     fetch('https://api.airtable.com/v0/appy8H4ScWKSrFOI5/Documents?pageSize=100', {
       headers:{'Authorization':'Bearer '+atKey}
@@ -6703,7 +6703,7 @@ function plInit(){
 /* ── AUTO STATS — pulls live from Airtable ── */
 async function dpLoadStats(){
   var FLOOR_ARM_MINS = 287; // 4h 47m
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
   if(!atKey) return;
   try {
     /* ── Task Log ── */
@@ -7061,7 +7061,7 @@ function plRemoveOp(i){ plParsed.opEvents.splice(i,1); plRender(); }
 async function plSaveAll(){
   var btn = document.getElementById('pl-save-btn');
   var saveStatus = document.getElementById('pl-save-status');
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
   if(!atKey){ alert('No Airtable key set.'); return; }
   if(!plParsed.tasks.length && !plParsed.opEvents.length){ alert('Nothing to save.'); return; }
   var plFp = 'batch|' + (plParsed.tasks.length||0) + 't|' + (plParsed.opEvents.length||0) + 'e|' + (plParsed._batchId||'');
@@ -7155,7 +7155,7 @@ async function genNightlyBrief(ci){
   if(!out) return;
 
   var apiKey = window._swApiKey || localStorage.getItem('sw_api_key') || '';
-  var atKey = localStorage.getItem('sw_at_key') || '';
+  var atKey = localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || '';
 
   if(!apiKey){
     out.style.display='block';
@@ -7277,7 +7277,7 @@ async function genNightlyBrief(ci){
 
     var briefPlain = text; // keep raw text for clipboard
     /* Count logged events for attribution line */
-    var evCount = 0; try{ var _atk2=localStorage.getItem('sw_at_key'); if(_atk2){ var _er2=JSON.parse((window._swLastOpFetch)||'{}'); evCount=(_er2.records||[]).length; } }catch(e2){}
+    var evCount = 0; try{ var _atk2=localStorage.getItem('sw_at_key')||SW_AIRTABLE_KEY; if(_atk2){ var _er2=JSON.parse((window._swLastOpFetch)||'{}'); evCount=(_er2.records||[]).length; } }catch(e2){}
     var progRulesAttrib = (function(){ try{ var r=JSON.parse(localStorage.getItem('sw_programme_rules')||'{}'); return r.source ? ' · rules: '+r.source : ''; }catch(e){ return ''; } })();
     var attrLine = 'CONSTRAINT FORECAST · ' + today.split(',')[0] + ' · ' + timeStr + progRulesAttrib;
     out.innerHTML = '<div class="bcard"><div class="bhdr"><div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:5px">' + attrLine + '</div><div class="bv ' + verdictClass + '">' + verdictText.toUpperCase() + '</div></div><div style="display:flex;align-items:center;gap:10px"><div class="bgen">Generated: ' + today.split(',')[0] + ' · ' + timeStr + '</div><button id="brief-copy-btn" onclick="swCopyBrief()" style="font-family:var(--mono);font-size:9px;padding:4px 12px;background:transparent;border:1px solid #1A3350;color:#3A5A72;cursor:pointer;border-radius:3px;white-space:nowrap">Copy brief</button></div></div><div class="bbody"><div id="brief-text-content" style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;font-family:var(--mono);font-size:12px">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div></div>';
@@ -7580,7 +7580,7 @@ window.ofEmergencyLog = function(type){
 };
 
 // Load Airtable key
-function ofGetAtKey(){ return localStorage.getItem('sw_at_key') || ''; }
+function ofGetAtKey(){ return localStorage.getItem('sw_at_key') || SW_AIRTABLE_KEY || ''; }
 
 function ofSaveAtKey(){
   var v = document.getElementById('of-at-inp').value.trim();
