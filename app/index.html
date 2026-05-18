@@ -7641,31 +7641,34 @@ function ofLoad(){
 // Load events from Airtable and merge with localStorage
 async function ofLoadFromAirtable(){
   var atKey = ofGetAtKey();
-  if(!atKey) return;
-  // Show loading state in feed
   var feed = document.getElementById('of-feed');
   var empty = document.getElementById('of-empty-state');
   var fc = document.getElementById('of-feed-count');
-  if(feed && (!feed.querySelector('.of-event'))){
-    if(empty) empty.style.display = 'none';
-    if(fc) fc.textContent = 'Loading from Airtable…';
-    if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">● FETCHING LOGS…</div>';
+  if(!atKey){
+    if(fc) fc.textContent = 'No Airtable key';
+    return;
   }
+  if(feed){ if(empty) empty.style.display='none'; if(fc) fc.textContent='Syncing…'; feed.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">● SYNCING WITH AIRTABLE…</div>'; }
   try{
-    var url = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/tblF4dC20yuzWVGDO?pageSize=100';
     var all = [];
     var offset = null;
     do {
-      var fetchUrl = url + (offset ? '&offset='+offset : '');
-      var res = await fetch(fetchUrl, { headers:{ 'Authorization':'Bearer '+atKey } });
-      var data = await res.json();
+      var fetchUrl = 'https://api.airtable.com/v0/appy8H4ScWKSrFOI5/tblF4dC20yuzWVGDO?pageSize=100' + (offset ? '&offset='+encodeURIComponent(offset) : '');
+      var res = await fetch(fetchUrl, { headers:{ 'Authorization':'Bearer '+atKey, 'Content-Type':'application/json' } });
+      var raw = await res.text();
+      if(!res.ok){
+        if(fc) fc.textContent = 'API error '+res.status;
+        if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#FF4444;padding:20px;letter-spacing:1px">Airtable error '+res.status+': '+raw.slice(0,200)+'</div>';
+        return;
+      }
+      var data = JSON.parse(raw);
       if(data.records) all = all.concat(data.records);
       offset = data.offset || null;
     } while(offset);
 
     if(!all.length){
       if(fc) fc.textContent = '0 events in Airtable';
-      if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">No events found in Airtable Operational Log table.</div>';
+      if(feed) feed.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:#3A5A72;padding:20px;text-align:center;letter-spacing:1px">Airtable Operational Log is empty.</div>';
       if(empty) empty.style.display = 'block';
       return;
     }
